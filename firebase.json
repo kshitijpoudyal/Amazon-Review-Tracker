@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "productreview-52e51"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

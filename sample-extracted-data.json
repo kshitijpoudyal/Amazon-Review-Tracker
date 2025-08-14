@@ -1,0 +1,34 @@
+{
+  "amazonOrder": {
+    "orderNumber": "112-6133423-9920252",
+    "orderDate": "August 10, 2025",
+    "orderTotal": 44.29,
+    "items": [
+      {
+        "quantity": 1,
+        "name": "NIOWS Solar Pathway Lights Outdoor Waterproof - 8 Pack",
+        "price": 39.9
+      }
+    ]
+  },
+  "extractionPatterns": {
+    "emails": [
+      "support@example.com",
+      "admin@company.org"
+    ],
+    "phoneNumbers": [
+      "(555) 123-4567",
+      "+1-800-555-0123"
+    ],
+    "dates": [
+      "12/25/2024",
+      "2024-12-25",
+      "March 15, 2025"
+    ],
+    "amounts": [
+      45.99,
+      1234.56,
+      39.9
+    ]
+  }
+}
