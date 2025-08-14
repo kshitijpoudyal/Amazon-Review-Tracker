@@ -228,7 +228,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                 
                 {/* Dropdown Menu */}
                 {showDropdown === index && (
-                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
+                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                     <button
                       onClick={() => handleEditProduct(product)}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -256,9 +256,9 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
 
       {/* Desktop Table Layout */}
       <div className="hidden md:block">
-        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto border border-gray-200 rounded-xl">
+        <div className="overflow-x-auto max-h-[93vh] overflow-y-auto border border-gray-200 rounded-xl">
           <table className="w-full bg-white shadow-md">
-            <thead className="gradient-bg sticky top-0 z-20 shadow-sm">
+            <thead className="gradient-bg sticky top-0 z-5 shadow-sm">
             <tr>
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Item ({products.length})
@@ -325,7 +325,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                   {(() => {
                     const status = getProductStatus(product);
                     return (
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
+                      <span className={`inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider ${status.color}`}>
                         {status.label}
                       </span>
                     );
@@ -368,7 +368,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                   
                   {/* Dropdown Menu */}
                   {showDropdown === index && (
-                    <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
+                    <div className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
                       <button
                         onClick={() => handleEditProduct(product)}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
