@@ -54,7 +54,8 @@ function App() {
   const stats = useMemo(() => {
     if (!data) return null;
 
-    const products = data.products.filter(p => p.item);
+    // Use filtered products instead of all products
+    const products = filteredProducts.filter(p => p.item);
     const completedOrders = products.filter(p => 
       p.orderPlaced && 
       p.orderDelivered && 
@@ -102,7 +103,7 @@ function App() {
       netDelta,
       remainingRefund
     };
-  }, [data]);
+  }, [filteredProducts]); // Changed dependency from [data] to [filteredProducts]
 
   if (loading) {
     return (
@@ -145,14 +146,17 @@ function App() {
           <StatCard 
             value={stats?.completedOrders || '-'} 
             label="Completed Orders" 
+            className="text-green-600"
           />
           <StatCard 
             value={stats ? `$${stats.totalPaid.toFixed(2)}` : '-'} 
             label="Total Paid" 
+            className="text-yellow-600"
           />
           <StatCard 
             value={stats ? `$${stats.totalReceived.toFixed(2)}` : '-'} 
             label="Total Received" 
+            className="text-green-600"
           />
           <StatCard 
             value={stats ? `$${stats.remainingRefund.toFixed(2)}` : '-'} 
