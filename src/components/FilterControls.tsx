@@ -19,7 +19,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
   onDeltaFilterChange,
 }) => {
   return (
-    <div className="bg-white p-8 border-b border-gray-200">
+    <div className="bg-white p-4 border-b border-gray-200">
       <div className="flex flex-wrap gap-4 items-center">
         <input
           type="text"

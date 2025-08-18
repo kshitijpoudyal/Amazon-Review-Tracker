@@ -83,9 +83,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAdd, onCancel }) => {
   };
 
   const modalContent = (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center p-4">
       <div
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full overflow-hidden relative flex flex-col"
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -117,10 +117,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAdd, onCancel }) => {
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 p-4 sm:p-6">
-          <div className="space-y-6">
-            {/* Receipt Upload Section */}
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Receipt Upload Section - Desktop */}
+            <div className="hidden sm:block bg-gray-50 rounded-lg p-4 border border-gray-200">
               <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
                 <span className="mr-2">📄</span>
                 Import from Receipt (Optional)
@@ -129,6 +128,26 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAdd, onCancel }) => {
               <p className="text-xs text-gray-500 mt-2">
                 Upload a receipt to automatically fill the form fields below
               </p>
+            </div>
+
+            {/* Receipt Upload Button - Mobile */}
+            <div className="sm:hidden">
+              <button
+                type="button"
+                className="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors"
+                onClick={() => {
+                  // Trigger the hidden ImageUploader
+                  const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                  if (fileInput) fileInput.click();
+                }}
+              >
+                <span className="mr-2">📄</span>
+                <span className="text-base font-medium">Upload Receipt</span>
+              </button>
+              {/* Hidden ImageUploader for mobile */}
+              <div className="hidden">
+                <ImageUploader onDataExtracted={handleReceiptDataExtracted} />
+              </div>
             </div>
 
             {/* Manual Entry Form */}
@@ -201,7 +220,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAdd, onCancel }) => {
               </div>
             </div>
           </div>
-        </div>
 
         {/* Sticky Footer with Action Buttons */}
         <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4 sm:p-6 rounded-b-lg">
