@@ -55,55 +55,59 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
     if (product.isVoid) {
       return { label: 'Void', color: 'bg-gray-100 text-gray-800' };
     }
-    
-    // Complete: When all columns are filled
-    if (product.orderPlaced && 
-        product.orderDelivered && 
-        product.reviewAdded && 
-        product.reviewLive && 
-        product.reviewSSSent &&
-        product.paid !== null &&
-        product.received !== null) {
+
+    // Helper function to check if financial data is complete
+    const hasFinancialData = product.paid !== null && product.received !== null;
+    const hasPaidAmount = product.paid !== null;
+    const hasReceivedAmount = product.received !== null;
+
+    // Helper function to check workflow completion
+    const workflowSteps = {
+      ordered: product.orderPlaced,
+      delivered: product.orderDelivered,
+      reviewAdded: product.reviewAdded,
+      reviewLive: product.reviewLive,
+      screenshotSent: product.reviewSSSent
+    };
+
+    // Complete: All workflow steps and financial data complete
+    if (Object.values(workflowSteps).every(Boolean) && hasFinancialData) {
       return { label: 'Complete', color: 'bg-green-100 text-green-800' };
     }
-    
-    // Pending Refund: When reviewSSSent is true but received is null
-    if (product.reviewSSSent && product.received === null) {
-      return { label: 'Pending Refund', color: 'bg-blue-100 text-blue-800' };
-    }
-    
-    // Review Pending: When true for reviewAdded but false for reviewLive
-    if (product.reviewAdded && !product.reviewLive) {
-      return { label: 'Review Pending', color: 'bg-yellow-100 text-yellow-800' };
-    }
-    
-    // Review Not Added: When true for orderDelivered but false for reviewAdded
-    if (product.orderDelivered && !product.reviewAdded) {
-      return { label: 'Review Not Added', color: 'bg-orange-100 text-orange-800' };
-    }
-    
-    // New: When an item is ordered but not yet delivered
-    if (product.orderPlaced && !product.orderDelivered) {
-      return { label: 'New', color: 'bg-indigo-100 text-indigo-800' };
+
+    // Refund Pending: Screenshot sent but no refund received yet
+    if (workflowSteps.screenshotSent && hasPaidAmount && !hasReceivedAmount) {
+      return { label: 'Refund Pending', color: 'bg-blue-100 text-blue-800' };
     }
 
-     if (product.reviewLive && !product.reviewSSSent) {
+    // Send Screenshot: Review is live but screenshot not sent yet
+    if (workflowSteps.reviewLive && !workflowSteps.screenshotSent && hasPaidAmount) {
       return { label: 'Send Screenshot', color: 'bg-indigo-100 text-indigo-800' };
     }
+
+    // Review Pending: Review added but not live yet
+    if (workflowSteps.reviewAdded && !workflowSteps.reviewLive && hasPaidAmount) {
+      return { label: 'Review Pending', color: 'bg-yellow-100 text-yellow-800' };
+    }
+
+    // Review Not Added: Order delivered but review not added yet
+    if (workflowSteps.delivered && !workflowSteps.reviewAdded && hasPaidAmount) {
+      return { label: 'Review Not Added', color: 'bg-orange-100 text-orange-800' };
+    }
+
+    // Order Placed: Order placed but not delivered yet
+    if (workflowSteps.ordered && !workflowSteps.delivered && hasPaidAmount) {
+      return { label: 'Order Placed', color: 'bg-purple-100 text-purple-800' };
+    }
+
+    // Not Started: No workflow progress
+    if (!workflowSteps.ordered) {
+      return { label: 'Not Started', color: 'bg-gray-100 text-gray-800' };
+    }
     
-    return { label: 'Not Started', color: 'bg-gray-100 text-gray-800' };
+    // Fallback for edge cases
+    return { label: 'Status Unknown', color: 'bg-gray-100 text-gray-800' };
   };
-  const getStatusBadge = (status: boolean) => (
-    <span
-      className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-        status
-          ? 'bg-green-100 text-green-800'
-          : 'bg-red-100 text-red-800'
-      }`}
-    >
-      {status ? 'TRUE' : 'FALSE'}
-    </span>
-  );
 
   const getDeltaClass = (delta: number | null) => {
     if (delta === null) return 'text-gray-500';
@@ -171,8 +175,8 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                 </span>
               </div>
 
-              {/* Status Grid */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Status Grid - Hidden, keeping only financial info visible */}
+              {/* <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Order Placed:</span>
                   {getStatusBadge(product.orderPlaced)}
@@ -193,7 +197,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                   <span className="text-sm text-gray-600">SS Sent:</span>
                   {getStatusBadge(product.reviewSSSent)}
                 </div>
-              </div>
+              </div> */}
 
               {/* Financial Info */}
               <div className="border-t pt-3 mb-3">
@@ -269,7 +273,8 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+              {/* Hidden columns */}
+              {/* <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Order Placed
               </th>
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
@@ -283,7 +288,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
               </th>
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Screenshot Sent
-              </th>
+              </th> */}
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Paid
               </th>
@@ -331,7 +336,8 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                     );
                   })()}
                 </td>
-                <td className="px-3 py-4 text-sm">
+                {/* Hidden columns */}
+                {/* <td className="px-3 py-4 text-sm">
                   {getStatusBadge(product.orderPlaced)}
                 </td>
                 <td className="px-3 py-4 text-sm">
@@ -345,7 +351,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                 </td>
                 <td className="px-3 py-4 text-sm">
                   {getStatusBadge(product.reviewSSSent)}
-                </td>
+                </td> */}
                 <td className="px-3 py-4 text-sm font-mono font-semibold">
                   {formatCurrency(product.paid)}
                 </td>

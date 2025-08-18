@@ -206,11 +206,10 @@ function App() {
               >
                 <option value="">All Statuses</option>
                 <option value="complete">Complete</option>
-                <option value="pending-refund">Pending Refund</option>
+                <option value="refund-pending">Refund Pending</option>
                 <option value="review-pending">Review Pending</option>
                 <option value="review-not-added">Review Not Added</option>
-                <option value="new">New</option>
-                <option value="not-started">Not Started</option>
+                <option value="order-placed">Order Placed</option>
                 <option value="void">Void</option>
               </select>
             </div>

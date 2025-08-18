@@ -40,7 +40,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
           <option value="new">New</option>
           <option value="review-not-added">Review Not Added</option>
           <option value="review-pending">Review Pending</option>
-          <option value="pending-refund">Pending Refund</option>
+          <option value="refund-pending">Refund Pending</option>
           <option value="complete">Complete</option>
           <option value="void">Void</option>
         </select>

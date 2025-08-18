@@ -18,8 +18,8 @@ export const useProductFilters = (products: Product[]) => {
       if (statusFilter === 'void') {
         // Void: When product is marked as void
         matchesStatus = product.isVoid === true;
-      } else if (statusFilter === 'new') {
-        // New: When an item is ordered but not yet delivered (and not void)
+      } else if (statusFilter === 'order-placed') {
+        // Order Placed: When an item is ordered but not yet delivered (and not void)
         matchesStatus = !product.isVoid && product.orderPlaced && !product.orderDelivered;
       } else if (statusFilter === 'review-not-added') {
         // Review Not Added: When true for orderDelivered but false for reviewAdded (and not void)
@@ -27,8 +27,8 @@ export const useProductFilters = (products: Product[]) => {
       } else if (statusFilter === 'review-pending') {
         // Review Pending: When true for reviewAdded but false for reviewLive (and not void)
         matchesStatus = !product.isVoid && product.reviewAdded && !product.reviewLive;
-      } else if (statusFilter === 'pending-refund') {
-        // Pending Refund: When reviewSSSent is true but received is null (and not void)
+      } else if (statusFilter === 'refund-pending') {
+        // Refund Pending: When reviewSSSent is true but received is null (and not void)
         matchesStatus = !product.isVoid && product.reviewSSSent && product.received === null;
       } else if (statusFilter === 'complete') {
         // Complete: When all columns are filled (and not void)
