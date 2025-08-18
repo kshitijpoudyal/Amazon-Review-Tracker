@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../types/Product';
 import EditProductModal from './EditProductModal';
+import { getProductStatus } from '../utils/productStatus';
 
 interface ProductTableProps {
   products: Product[];
@@ -49,65 +50,6 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  const getProductStatus = (product: Product) => {
-    // Void: When product is marked as void
-    if (product.isVoid) {
-      return { label: 'Void', color: 'bg-gray-100 text-gray-800' };
-    }
-
-    // Helper function to check if financial data is complete
-    const hasFinancialData = product.paid !== null && product.received !== null;
-    const hasPaidAmount = product.paid !== null;
-    const hasReceivedAmount = product.received !== null;
-
-    // Helper function to check workflow completion
-    const workflowSteps = {
-      ordered: product.orderPlaced,
-      delivered: product.orderDelivered,
-      reviewAdded: product.reviewAdded,
-      reviewLive: product.reviewLive,
-      screenshotSent: product.reviewSSSent
-    };
-
-    // Complete: All workflow steps and financial data complete
-    if (Object.values(workflowSteps).every(Boolean) && hasFinancialData) {
-      return { label: 'Complete', color: 'bg-green-100 text-green-800' };
-    }
-
-    // Refund Pending: Screenshot sent but no refund received yet
-    if (workflowSteps.screenshotSent && hasPaidAmount && !hasReceivedAmount) {
-      return { label: 'Refund Pending', color: 'bg-blue-100 text-blue-800' };
-    }
-
-    // Send Screenshot: Review is live but screenshot not sent yet
-    if (workflowSteps.reviewLive && !workflowSteps.screenshotSent && hasPaidAmount) {
-      return { label: 'Send Screenshot', color: 'bg-indigo-100 text-indigo-800' };
-    }
-
-    // Review Pending: Review added but not live yet
-    if (workflowSteps.reviewAdded && !workflowSteps.reviewLive && hasPaidAmount) {
-      return { label: 'Review Pending', color: 'bg-yellow-100 text-yellow-800' };
-    }
-
-    // Review Not Added: Order delivered but review not added yet
-    if (workflowSteps.delivered && !workflowSteps.reviewAdded && hasPaidAmount) {
-      return { label: 'Review Not Added', color: 'bg-orange-100 text-orange-800' };
-    }
-
-    // Order Placed: Order placed but not delivered yet
-    if (workflowSteps.ordered && !workflowSteps.delivered && hasPaidAmount) {
-      return { label: 'Order Placed', color: 'bg-purple-100 text-purple-800' };
-    }
-
-    // Not Started: No workflow progress
-    if (!workflowSteps.ordered) {
-      return { label: 'Not Started', color: 'bg-gray-100 text-gray-800' };
-    }
-    
-    // Fallback for edge cases
-    return { label: 'Status Unknown', color: 'bg-gray-100 text-gray-800' };
-  };
 
   const getDeltaClass = (delta: number | null) => {
     if (delta === null) return 'text-gray-500';

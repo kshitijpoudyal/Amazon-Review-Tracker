@@ -23,5 +23,5 @@ export interface ProductData {
   };
 }
 
-export type StatusFilter = '' | 'order-placed' | 'review-not-added' | 'review-pending' | 'pending-refund' | 'complete' | 'void';
+export type StatusFilter = '' | 'order-placed' | 'add-review' | 'review-pending' | 'send-screenshot' |'refund-pending' | 'complete' | 'void';
 export type DeltaFilter = '' | 'positive' | 'negative' | 'zero';

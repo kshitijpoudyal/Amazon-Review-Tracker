@@ -1,4 +1,5 @@
 import { Product, StatusFilter, DeltaFilter } from '../types/Product';
+import { getProductStatusType } from '../utils/productStatus';
 
 export const useProductFilters = (products: Product[]) => {
   const applyFilters = (
@@ -13,37 +14,28 @@ export const useProductFilters = (products: Product[]) => {
       // Search filter
       const matchesSearch = product.item.toLowerCase().includes(searchTerm.toLowerCase());
 
-            // Status filter
+      // Status filter
       let matchesStatus = true;
-      if (statusFilter === 'void') {
-        // Void: When product is marked as void
-        matchesStatus = product.isVoid === true;
-      } else if (statusFilter === 'order-placed') {
-        // Order Placed: When an item is ordered but not yet delivered (and not void)
-        matchesStatus = !product.isVoid && product.orderPlaced && !product.orderDelivered;
-      } else if (statusFilter === 'review-not-added') {
-        // Review Not Added: When true for orderDelivered but false for reviewAdded (and not void)
-        matchesStatus = !product.isVoid && product.orderDelivered && !product.reviewAdded;
-      } else if (statusFilter === 'review-pending') {
-        // Review Pending: When true for reviewAdded but false for reviewLive (and not void)
-        matchesStatus = !product.isVoid && product.reviewAdded && !product.reviewLive;
-      } else if (statusFilter === 'refund-pending') {
-        // Refund Pending: When reviewSSSent is true but received is null (and not void)
-        matchesStatus = !product.isVoid && product.reviewSSSent && product.received === null;
-      } else if (statusFilter === 'complete') {
-        // Complete: When all columns are filled (and not void)
-        matchesStatus = !product.isVoid && product.orderPlaced && 
-                      product.orderDelivered && 
-                      product.reviewAdded && 
-                      product.reviewLive && 
-                      product.reviewSSSent &&
-                      product.paid !== null &&
-                      product.received !== null;
+      if (statusFilter) {
+        const productStatusType = getProductStatusType(product);
+        
+        // Map filter values to status types
+        const statusMapping: Record<string, string> = {
+          'void': 'void',
+          'complete': 'complete',
+          'refund-pending': 'refund-pending',
+          'review-pending': 'review-pending',
+          'send-screenshot': 'send-screenshot',
+          'add-review': 'add-review',
+          'order-placed': 'order-placed'
+        };
+        
+        matchesStatus = productStatusType === statusMapping[statusFilter];
       }
 
       // Delta filter
       let matchesDelta = true;
-      if (deltaFilter && product.delta !== null) {
+      if (deltaFilter && product.delta !== null && product.paid !== null && product.received !== null) {
         const delta = product.delta;
         if (deltaFilter === 'positive') {
           matchesDelta = delta > 0;
