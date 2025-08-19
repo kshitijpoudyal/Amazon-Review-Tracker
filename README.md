@@ -6,7 +6,8 @@ A modern React.js dashboard application built with TypeScript, Vite, Tailwind CS
 
 ## Features
 
-- ✅ **Cloud Storage**: All data stored in Firebase Firestore
+- 🔐 **User Authentication**: Secure login with email/password and Google authentication
+- ✅ **Cloud Storage**: All data stored in Firebase Firestore with user-specific collections
 - ✅ **Real-time Sync**: Changes synchronized across all devices
 - ✅ **Automatic Backups**: Every save creates a backup in Firestore
 - ✅ **Product Management**: Add, edit, void products with status tracking
@@ -46,10 +47,22 @@ Access the dashboard at: **http://localhost:3000** (or the next available port)
 ## Firebase Project Details
 - **Project ID**: `productreview-52e51`
 - **Database**: Firestore
+- **Authentication**: Email/Password and Google Sign-In
 - **Collections**: 
-  - `products` - Individual product records
-  - `dashboard` - Summary statistics
-  - `backups` - Automatic backup records
+  - `users/{userId}/products` - User-specific product records
+  - `users/{userId}/dashboard` - User-specific summary statistics
+  - `users/{userId}` - User profile information
+
+## Authentication
+
+### First Time Setup
+1. **Create Account**: Choose "Create Account" and enter your email and password, or use Google Sign-In
+2. **User Data**: Your profile and product data are automatically created and stored securely
+3. **Data Isolation**: Each user has their own separate data collection - no data is shared between users
+
+### Sign In Methods
+- **Email/Password**: Standard authentication with secure password requirements
+- **Google Sign-In**: Quick access using your Google account
 
 ## Usage
 

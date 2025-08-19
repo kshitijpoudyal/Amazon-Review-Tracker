@@ -12,18 +12,24 @@ import {
 import { db } from '../firebase/config';
 import { Product, ProductData } from '../types/Product';
 
-export const useFirebaseData = () => {
+export const useFirebaseData = (userId?: string) => {
   const [data, setData] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
     const fetchData = useCallback(async () => {
-    console.log('🔄 Fetching data from Firebase...');
+    if (!userId) {
+      setLoading(false);
+      setData(null);
+      return;
+    }
+
+    console.log('🔄 Fetching data from Firebase for user:', userId);
     setLoading(true);
     setError(null);
 
     try {
-      const productsSnap = await getDocs(collection(db, 'products'));
+      const productsSnap = await getDocs(collection(db, 'users', userId, 'products'));
 
       const products: Product[] = productsSnap.docs.map(doc => {
         const data = doc.data();
@@ -61,9 +67,11 @@ export const useFirebaseData = () => {
       setLoading(false);
       console.log('✅ Fetch operation completed');
     }
-  }, []);
+  }, [userId]);
 
   const saveProductToFirebase = async (product: Product): Promise<boolean> => {
+    if (!userId) return false;
+
     try {
       console.log('🔄 Updating existing product:', product.item, 'ID:', product.id);
       
@@ -74,7 +82,7 @@ export const useFirebaseData = () => {
         return false;
       }
       
-      const productRef = doc(db, 'products', product.id);
+      const productRef = doc(db, 'users', userId, 'products', product.id);
       
       const productData = {
         ...product,
@@ -92,6 +100,8 @@ export const useFirebaseData = () => {
   };
 
   const addProductToFirebase = async (product: Product): Promise<boolean> => {
+    if (!userId) return false;
+
     try {
       const productData = {
         ...product,
@@ -99,7 +109,7 @@ export const useFirebaseData = () => {
         updatedAt: serverTimestamp()
       };
 
-      const docRef = await addDoc(collection(db, 'products'), productData);
+      const docRef = await addDoc(collection(db, 'users', userId, 'products'), productData);
       
       // Update the document with its own ID
       await updateDoc(docRef, {
@@ -115,8 +125,10 @@ export const useFirebaseData = () => {
   };
 
   const updateSummaryInFirebase = async (summary: any): Promise<boolean> => {
+    if (!userId) return false;
+
     try {
-      const summaryRef = doc(db, 'dashboard', 'summary');
+      const summaryRef = doc(db, 'users', userId, 'dashboard', 'summary');
       
       await setDoc(summaryRef, {
         ...summary,
@@ -132,8 +144,10 @@ export const useFirebaseData = () => {
   };
 
   const deleteProductFromFirebase = async (productId: string): Promise<boolean> => {
+    if (!userId) return false;
+
     try {
-      const productRef = doc(db, 'products', productId);
+      const productRef = doc(db, 'users', userId, 'products', productId);
       await deleteDoc(productRef);
       return true;
     } catch (err) {
@@ -145,7 +159,7 @@ export const useFirebaseData = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   return {
     data,
