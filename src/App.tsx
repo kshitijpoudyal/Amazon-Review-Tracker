@@ -233,11 +233,11 @@ function App() {
         />
 
         {/* Public Page Link - only show in private mode */}
-        {!isPublicMode && (
+        {/* {!isPublicMode && (
           <div className="px-8 pt-4">
             <PublicPageLink user={user} />
           </div>
-        )}
+        )} */}
 
         {/* Product Table */}
         <div className="p-8">
