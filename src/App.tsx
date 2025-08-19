@@ -7,7 +7,6 @@ import AddProductForm from './components/AddProductForm';
 import FilterControls from './components/FilterControls';
 import LoginScreen from './components/LoginScreen';
 import AppHeader from './components/AppHeader';
-import PublicPageLink from './components/PublicPageLink';
 import { useProductCrudFirebase } from './hooks/useProductCrudFirebase';
 import { useProductFilters } from './hooks/useProductFilters';
 import { useAuth } from './hooks/useAuth';
