@@ -190,7 +190,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                     <button
                       onClick={() => {
                         if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-                          onDeleteProduct(product.id);
+                          onDeleteProduct?.(product.id);
                         }
                         setShowDropdown(null);
                       }}
