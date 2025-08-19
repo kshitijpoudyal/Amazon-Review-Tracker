@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import StatCard from './components/StatCard';
 import ProductTable from './components/ProductTable';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -6,16 +7,26 @@ import AddProductForm from './components/AddProductForm';
 import FilterControls from './components/FilterControls';
 import LoginScreen from './components/LoginScreen';
 import AppHeader from './components/AppHeader';
+import PublicPageLink from './components/PublicPageLink';
 import { useProductCrudFirebase } from './hooks/useProductCrudFirebase';
 import { useProductFilters } from './hooks/useProductFilters';
 import { useAuth } from './hooks/useAuth';
+import { useUserData } from './hooks/useUserData';
 import { StatusFilter, DeltaFilter } from './types/Product';
 
 function App() {
-  // Authentication
+  // Check if we're in public user page mode
+  const { username } = useParams<{ username: string }>();
+  const isPublicMode = !!username;
+
+  // Authentication (only for private mode)
   const { user, logout } = useAuth();
 
-  // Use Firebase only for data storage
+  // Data fetching - use different hooks based on mode
+  const privateData = useProductCrudFirebase(user?.uid);
+  const publicData = useUserData(username);
+
+  // Choose the appropriate data source
   const {
     data,
     loading,
@@ -23,7 +34,14 @@ function App() {
     updateProduct,
     addProduct,
     deleteProduct,
-  } = useProductCrudFirebase(user?.uid);
+  } = isPublicMode ? {
+    data: publicData.data,
+    loading: publicData.loading,
+    error: publicData.error,
+    updateProduct: async () => false, // No-op in public mode
+    addProduct: async () => false,    // No-op in public mode
+    deleteProduct: async () => false, // No-op in public mode
+  } : privateData;
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
@@ -111,8 +129,8 @@ function App() {
     };
   }, [filteredProducts]); // Changed dependency from [data] to [filteredProducts]
 
-  // Show login screen if not authenticated
-  if (!user) {
+  // Show login screen if not authenticated AND not in public mode
+  if (!user && !isPublicMode) {
     return <LoginScreen onLoginSuccess={() => {}} />;
   }
 
@@ -131,7 +149,17 @@ function App() {
       <div className="min-h-screen gradient-bg p-5">
         <div className="max-w-7xl mx-auto glass-effect rounded-3xl shadow-card overflow-hidden">
           <div className="text-center py-16 text-red-600">
-            <p className="text-lg">Error loading data: {error}</p>
+            <p className="text-lg">
+              {isPublicMode 
+                ? `Error loading user data: ${error}` 
+                : `Error loading data: ${error}`
+              }
+            </p>
+            {isPublicMode && error === 'User not found' && (
+              <p className="text-sm mt-2 text-gray-600">
+                User "{username}" not found
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -142,7 +170,16 @@ function App() {
     <div className="min-h-screen gradient-bg-1 p-5">
       <div className="max-w-8xl mx-auto glass-effect rounded-2xl shadow-card overflow-hidden">
         {/* Header */}
-        <AppHeader user={user} onLogout={logout} />
+        {isPublicMode ? (
+          <div className="gradient-bg text-white p-8 text-center">
+            <h1 className="text-4xl font-bold mb-3 text-shadow-lg">
+              {publicData.userProfile?.displayName || publicData.userProfile?.email || username}'s Amazon Review Dashboard
+            </h1>
+            <p className="text-blue-100">Public View - Read Only</p>
+          </div>
+        ) : (
+          <AppHeader user={user!} onLogout={logout} />
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-5 p-8 bg-gray-50 border-b border-gray-200">
@@ -190,21 +227,30 @@ function App() {
             setStatusFilter('');
             setDeltaFilter('');
           }}
-          showAddProduct={() => setShowAddForm(true)}
+          showAddProduct={isPublicMode ? undefined : () => setShowAddForm(true)}
           loading={loading}
+          readOnly={isPublicMode}
         />
+
+        {/* Public Page Link - only show in private mode */}
+        {!isPublicMode && (
+          <div className="px-8 pt-4">
+            <PublicPageLink user={user} />
+          </div>
+        )}
 
         {/* Product Table */}
         <div className="p-8">
           <ProductTable 
             products={filteredProducts} 
-            onUpdateProduct={updateProduct}
-            onDeleteProduct={deleteProduct}
+            onUpdateProduct={isPublicMode ? undefined : updateProduct}
+            onDeleteProduct={isPublicMode ? undefined : deleteProduct}
+            readOnly={isPublicMode}
           />
         </div>
 
-        {/* Add Product Modal */}
-        {showAddForm && (
+        {/* Add Product Modal - only in private mode */}
+        {!isPublicMode && showAddForm && (
           <AddProductForm
             onAdd={(product) => {
               addProduct(product);

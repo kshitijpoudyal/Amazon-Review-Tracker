@@ -1,19 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only access their own data
+    // Users can only access their own data for write operations
+    // But allow public read access for user pages
     match /users/{userId} {
-      // Allow users to read and write their own profile
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow public read access to user profiles (for user pages)
+      allow read: if true;
+      // Allow users to write only their own profile
+      allow write: if request.auth != null && request.auth.uid == userId;
       
-      // Allow users to read and write their own products
+      // Allow public read access to products (for user pages)
+      // Allow users to write only their own products
       match /products/{productId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
       }
       
-      // Allow users to read and write their own dashboard data
+      // Allow public read access to dashboard data (for user pages)
+      // Allow users to write only their own dashboard data
       match /dashboard/{document} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
       }
     }
   }
