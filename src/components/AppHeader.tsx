@@ -11,8 +11,30 @@ const AppHeader: React.FC<AppHeaderProps> = ({ user, onLogout }) => {
 
   return (
     <div className="gradient-bg text-white p-8">
-      <div className="flex justify-between items-center">
-        <div className="text-center flex-1">
+      {/* Mobile Layout - Stack vertically */}
+      <div className="md:hidden">
+        <div className="mb-4">
+          <h1 className="text-3xl font-bold text-shadow-lg text-left">
+            Amazon Review Products Dashboard
+          </h1>
+        </div>
+        <div className="flex justify-between items-center">
+          <div className="text-left">
+            <p className="text-sm text-blue-100">Welcome back,</p>
+            <p className="font-medium">{displayName}</p>
+          </div>
+          <button
+            onClick={onLogout}
+            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-sm font-medium border border-white/30"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Layout - Side by side */}
+      <div className="hidden md:flex justify-between items-center">
+        <div className="text-left">
           <h1 className="text-4xl font-bold mb-3 text-shadow-lg">
             Amazon Review Products Dashboard
           </h1>
