@@ -4,11 +4,17 @@ import ProductTable from './components/ProductTable';
 import LoadingSpinner from './components/LoadingSpinner';
 import AddProductForm from './components/AddProductForm';
 import FilterControls from './components/FilterControls';
+import LoginScreen from './components/LoginScreen';
+import AppHeader from './components/AppHeader';
 import { useProductCrudFirebase } from './hooks/useProductCrudFirebase';
 import { useProductFilters } from './hooks/useProductFilters';
+import { useAuth } from './hooks/useAuth';
 import { StatusFilter, DeltaFilter } from './types/Product';
 
 function App() {
+  // Authentication
+  const { user, logout } = useAuth();
+
   // Use Firebase only for data storage
   const {
     data,
@@ -17,7 +23,7 @@ function App() {
     updateProduct,
     addProduct,
     deleteProduct,
-  } = useProductCrudFirebase();
+  } = useProductCrudFirebase(user?.uid);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
@@ -105,6 +111,11 @@ function App() {
     };
   }, [filteredProducts]); // Changed dependency from [data] to [filteredProducts]
 
+  // Show login screen if not authenticated
+  if (!user) {
+    return <LoginScreen onLoginSuccess={() => {}} />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg p-5">
@@ -131,11 +142,7 @@ function App() {
     <div className="min-h-screen gradient-bg-1 p-5">
       <div className="max-w-8xl mx-auto glass-effect rounded-2xl shadow-card overflow-hidden">
         {/* Header */}
-        <div className="gradient-bg text-white p-8 text-center">
-          <h1 className="text-4xl font-bold mb-3 text-shadow-lg">
-            Amazon Review Products Dashboard
-          </h1>
-        </div>
+        <AppHeader user={user} onLogout={logout} />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-5 p-8 bg-gray-50 border-b border-gray-200">

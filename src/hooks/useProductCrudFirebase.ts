@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Product } from '../types/Product';
 import { useFirebaseData } from './useFirebaseData';
 
-export const useProductCrudFirebase = () => {
+export const useProductCrudFirebase = (userId?: string) => {
   const { 
     data: firebaseData, 
     loading, 
@@ -12,7 +12,7 @@ export const useProductCrudFirebase = () => {
     deleteProduct: deleteFromFirebase,
     updateSummary: updateSummaryFirebase,
     refetch
-  } = useFirebaseData();
+  } = useFirebaseData(userId);
   
   const [isSaving, setIsSaving] = useState(false);
 
