@@ -35,14 +35,21 @@ export const useProductFilters = (products: Product[]) => {
 
       // Delta filter
       let matchesDelta = true;
-      if (deltaFilter && product.delta !== null && product.paid !== null && product.received !== null) {
-        const delta = product.delta;
-        if (deltaFilter === 'positive') {
-          matchesDelta = delta > 0;
-        } else if (deltaFilter === 'negative') {
-          matchesDelta = delta < 0;
-        } else if (deltaFilter === 'zero') {
-          matchesDelta = delta === 0;
+      if (deltaFilter) {
+        // Only apply delta filter to products with valid paid, received, and delta values
+        if (product.delta !== null && product.paid !== null && product.received !== null) {
+          const delta = product.delta;
+          
+          if (deltaFilter === 'positive') {
+            matchesDelta = delta > 0;
+          } else if (deltaFilter === 'negative') {
+            matchesDelta = delta < 0;
+          } else if (deltaFilter === 'zero') {
+            matchesDelta = delta === 0;
+          }
+        } else {
+          // If delta filter is active but product has null values, exclude it
+          matchesDelta = false;
         }
       }
 
