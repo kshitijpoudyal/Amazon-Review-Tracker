@@ -6,12 +6,12 @@ import { getAuth } from 'firebase/auth';
 // Your web app's Firebase configuration
 // To get these values: Firebase Console > Project Settings > General > Web apps
 const firebaseConfig = {
-  apiKey: "AIzaSyDK3rKnONH8QKX9V-ZeKrVe4v0tLr2QrYs", // Replace with your actual API key
+  apiKey: "AIzaSyA2tHEvgf-V9QcYWFCf2Q7TZv9wG4rFycw",
   authDomain: "productreview-52e51.firebaseapp.com",
   projectId: "productreview-52e51",
-  storageBucket: "productreview-52e51.appspot.com", 
-  messagingSenderId: "101210868462203000846",
-  appId: "1:101210868462203000846:web:abc123def456789" // Replace with your actual app ID
+  storageBucket: "productreview-52e51.firebasestorage.app", 
+  messagingSenderId: "342787037666",
+  appId: "1:342787037666:web:da524575500029a12181bb"
 };
 
 // Initialize Firebase
