@@ -5,11 +5,17 @@ import { getProductStatus } from '../utils/productStatus';
 
 interface ProductTableProps {
   products: Product[];
-  onUpdateProduct: (index: number, updatedProduct: Product) => void;
-  onDeleteProduct: (productId: string) => void;
+  onUpdateProduct?: (index: number, updatedProduct: Product) => void;
+  onDeleteProduct?: (productId: string) => void;
+  readOnly?: boolean;
 }
 
-const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, onDeleteProduct }) => {
+const ProductTable: React.FC<ProductTableProps> = ({ 
+  products, 
+  onUpdateProduct, 
+  onDeleteProduct, 
+  readOnly = false 
+}) => {
   console.log('ProductTable received products:', products);
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,7 +31,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
 
   const handleSaveProduct = (updatedProduct: Product) => {
     const productIndex = products.findIndex(p => p.id === updatedProduct.id);
-    if (productIndex !== -1) {
+    if (productIndex !== -1 && onUpdateProduct) {
       onUpdateProduct(productIndex, updatedProduct);
     }
     setIsModalOpen(false);
@@ -184,7 +190,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                     <button
                       onClick={() => {
                         if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-                          onDeleteProduct(product.id);
+                          onDeleteProduct?.(product.id);
                         }
                         setShowDropdown(null);
                       }}
@@ -240,9 +246,11 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Delta
               </th>
-              <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                Actions
-              </th>
+              {!readOnly && (
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -303,40 +311,42 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onUpdateProduct, 
                 <td className={`px-3 py-4 text-sm font-mono font-semibold ${getDeltaClass(product.delta)}`}>
                   {formatCurrency(product.delta)}
                 </td>
-                <td className="px-3 py-4 text-sm relative dropdown-container">
-                  <button
-                    onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                    className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center"
-                    title="More actions"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-                    </svg>
-                  </button>
-                  
-                  {/* Dropdown Menu */}
-                  {showDropdown === index && (
-                    <div className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
-                      <button
-                        onClick={() => handleEditProduct(product)}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-                            onDeleteProduct(product.id);
-                          }
-                          setShowDropdown(null);
-                        }}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </td>
+                {!readOnly && (
+                  <td className="px-3 py-4 text-sm relative dropdown-container">
+                    <button
+                      onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+                      className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center"
+                      title="More actions"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                      </svg>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showDropdown === index && (
+                      <div className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
+                        <button
+                          onClick={() => handleEditProduct(product)}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (product.id && window.confirm('Are you sure you want to delete this product?')) {
+                              onDeleteProduct?.(product.id);
+                            }
+                            setShowDropdown(null);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
