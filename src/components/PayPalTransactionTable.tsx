@@ -1,16 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { PayPalTransaction } from '../types/PayPalTransaction';
+import { Product } from '../types/Product';
+import { ProductDropdown } from './ProductDropdown';
 
 interface PayPalTransactionTableProps {
   transactions: PayPalTransaction[];
+  products?: Product[];
   loading?: boolean;
+  productsLoading?: boolean;
   onDeleteTransaction?: (transactionId: string) => Promise<boolean>;
+  onUpdateProductLink?: (transactionId: string, productId: string | null) => Promise<boolean>;
 }
 
 export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   transactions,
+  products = [],
   loading = false,
-  onDeleteTransaction
+  productsLoading = false,
+  onDeleteTransaction,
+  onUpdateProductLink
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -212,6 +220,9 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Transaction ID
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Product Link
+              </th>
               {onDeleteTransaction && (
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -261,6 +272,24 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                   {transaction.transactionId}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {onUpdateProductLink ? (
+                    <ProductDropdown
+                      products={products}
+                      selectedProductId={transaction.linkedProductId || null}
+                      onProductSelect={async (productId: string | null) => {
+                        if (transaction.id) {
+                          await onUpdateProductLink(transaction.id, productId);
+                        }
+                      }}
+                      disabled={loading}
+                      size="small"
+                      loading={productsLoading}
+                    />
+                  ) : (
+                    <span className="text-gray-400 text-xs">No mapping available</span>
+                  )}
                 </td>
                 {onDeleteTransaction && (
                   <td className="px-6 py-4 whitespace-nowrap text-center">

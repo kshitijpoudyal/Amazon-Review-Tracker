@@ -5,6 +5,7 @@ import {
   doc, 
   addDoc, 
   deleteDoc,
+  updateDoc,
   serverTimestamp,
   query,
   where,
@@ -154,6 +155,29 @@ export const usePayPalTransactions = (userId?: string) => {
     return { added, skipped, withdrawalSkipped };
   };
 
+  const updateTransactionProductLink = async (transactionId: string, linkedProductId: string | null): Promise<boolean> => {
+    if (!userId) return false;
+
+    try {
+      const transactionRef = doc(db, 'users', userId, 'paypal_transactions', transactionId);
+      await updateDoc(transactionRef, {
+        linkedProductId: linkedProductId || null,
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log('✅ PayPal transaction product link updated:', transactionId, 'linked to:', linkedProductId);
+      
+      // Refresh data after update
+      await fetchTransactions();
+      
+      return true;
+    } catch (err) {
+      console.error('Error updating PayPal transaction product link:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update product link');
+      return false;
+    }
+  };
+
   const deleteTransactionFromFirebase = async (transactionId: string): Promise<boolean> => {
     if (!userId) return false;
 
@@ -180,6 +204,7 @@ export const usePayPalTransactions = (userId?: string) => {
     refetch: fetchTransactions,
     addTransaction: addTransactionToFirebase,
     importTransactions: importTransactionsFromCSV,
-    deleteTransaction: deleteTransactionFromFirebase
+    deleteTransaction: deleteTransactionFromFirebase,
+    updateProductLink: updateTransactionProductLink
   };
 };
