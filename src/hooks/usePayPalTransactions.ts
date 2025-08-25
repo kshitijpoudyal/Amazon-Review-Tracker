@@ -1,0 +1,185 @@
+import { useState, useEffect, useCallback } from 'react';
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  addDoc, 
+  deleteDoc,
+  serverTimestamp,
+  query,
+  where,
+  orderBy
+} from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { PayPalTransaction, PayPalTransactionData } from '../types/PayPalTransaction';
+
+export const usePayPalTransactions = (userId?: string) => {
+  const [data, setData] = useState<PayPalTransactionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchTransactions = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      setData(null);
+      return;
+    }
+
+    console.log('🔄 Fetching PayPal transactions from Firebase for user:', userId);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const transactionsRef = collection(db, 'users', userId, 'paypal_transactions');
+      // Simplified query with single orderBy to avoid composite index requirement
+      const transactionsQuery = query(transactionsRef, orderBy('date', 'desc'));
+      const transactionsSnap = await getDocs(transactionsQuery);
+
+      const transactions: PayPalTransaction[] = transactionsSnap.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data
+        } as PayPalTransaction;
+      });
+
+      // Client-side sorting by date and time (most recent first)
+      transactions.sort((a, b) => {
+        // First sort by date
+        const dateComparison = b.date.localeCompare(a.date);
+        if (dateComparison !== 0) {
+          return dateComparison;
+        }
+        // If dates are equal, sort by time
+        return b.time.localeCompare(a.time);
+      });
+
+      console.log(`💰 Found ${transactions.length} PayPal transactions in Firebase`);
+
+      // Calculate summary from transactions
+      const summary = {
+        totalIncome: transactions
+          .filter(t => t.status === 'Completed' && t.amount > 0)
+          .reduce((sum, transaction) => sum + transaction.amount, 0),
+        totalFees: transactions
+          .filter(t => t.status === 'Completed')
+          .reduce((sum, transaction) => sum + Math.abs(transaction.fees), 0),
+        netIncome: transactions
+          .filter(t => t.status === 'Completed')
+          .reduce((sum, transaction) => sum + transaction.total, 0),
+        transactionCount: transactions.length
+      };
+
+      const transactionData: PayPalTransactionData = {
+        transactions,
+        summary
+      };
+
+      console.log('✅ Successfully loaded PayPal transactions from Firebase:', {
+        transactionCount: transactions.length,
+        summary
+      });
+      setData(transactionData);
+    } catch (error) {
+      console.error('❌ Error fetching PayPal transactions:', error);
+      setError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  const addTransactionToFirebase = async (transaction: PayPalTransaction): Promise<boolean> => {
+    if (!userId) return false;
+
+    try {
+      // Skip "User Initiated Withdrawal" transactions
+      if (transaction.type === 'User Initiated Withdrawal') {
+        console.log('⚠️ Skipping User Initiated Withdrawal transaction:', transaction.transactionId);
+        return false;
+      }
+
+      // Check if transaction with same transactionId already exists
+      const existingQuery = query(
+        collection(db, 'users', userId, 'paypal_transactions'),
+        where('transactionId', '==', transaction.transactionId)
+      );
+      const existingSnap = await getDocs(existingQuery);
+
+      if (!existingSnap.empty) {
+        console.log('⚠️ Transaction already exists:', transaction.transactionId);
+        return false; // Transaction already exists
+      }
+
+      const transactionData = {
+        ...transaction,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      await addDoc(collection(db, 'users', userId, 'paypal_transactions'), transactionData);
+      
+      console.log('✅ PayPal transaction added to Firebase:', transaction.transactionId);
+      return true;
+    } catch (err) {
+      console.error('Error adding PayPal transaction to Firebase:', err);
+      setError(err instanceof Error ? err.message : 'Failed to add transaction');
+      return false;
+    }
+  };
+
+  const importTransactionsFromCSV = async (transactions: PayPalTransaction[]): Promise<{ added: number; skipped: number; withdrawalSkipped: number }> => {
+    if (!userId) return { added: 0, skipped: 0, withdrawalSkipped: 0 };
+
+    let added = 0;
+    let skipped = 0;
+    let withdrawalSkipped = 0;
+
+    for (const transaction of transactions) {
+      if (transaction.type === 'User Initiated Withdrawal') {
+        withdrawalSkipped++;
+        continue;
+      }
+      
+      const success = await addTransactionToFirebase(transaction);
+      if (success) {
+        added++;
+      } else {
+        skipped++;
+      }
+    }
+
+    // Refresh data after import
+    await fetchTransactions();
+
+    return { added, skipped, withdrawalSkipped };
+  };
+
+  const deleteTransactionFromFirebase = async (transactionId: string): Promise<boolean> => {
+    if (!userId) return false;
+
+    try {
+      const transactionRef = doc(db, 'users', userId, 'paypal_transactions', transactionId);
+      await deleteDoc(transactionRef);
+      console.log('✅ PayPal transaction deleted from Firebase:', transactionId);
+      return true;
+    } catch (err) {
+      console.error('Error deleting PayPal transaction from Firebase:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete transaction');
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch: fetchTransactions,
+    addTransaction: addTransactionToFirebase,
+    importTransactions: importTransactionsFromCSV,
+    deleteTransaction: deleteTransactionFromFirebase
+  };
+};
