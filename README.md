@@ -13,7 +13,10 @@ A modern React.js dashboard application built with TypeScript, Vite, Tailwind CS
 - ✅ **Product Management**: Add, edit, void products with status tracking
 - ✅ **Advanced Filtering**: Filter by status, search, and financial deltas
 - ✅ **Financial Tracking**: Track paid amounts, received amounts, and profit/loss
-- 📱 **Responsive Design**: Mobile-first design that works on all devices
+- � **PayPal Integration**: Import and manage PayPal transactions with CSV upload
+- 📊 **Transaction Analytics**: Track PayPal income, fees, and transaction history
+- 🔄 **Duplicate Prevention**: Automatic detection and prevention of duplicate transactions
+- �📱 **Responsive Design**: Mobile-first design that works on all devices
 - ⚡ **Fast Performance**: Built with Vite for lightning-fast development and builds
 - 🎨 **Modern UI**: Beautiful gradient design with glass-morphism effects
 
@@ -72,6 +75,13 @@ Access the dashboard at: **http://localhost:3000** (or the next available port)
 3. **Void Products**: Use the void checkbox in edit mode to mark items as void
 4. **Save Changes**: Click "Save to Firebase" to persist changes to the cloud
 
+### PayPal Transaction Management
+1. **Access Dashboard**: Navigate to the PayPal tab in the main navigation
+2. **Import Transactions**: Upload PayPal CSV files using drag & drop
+3. **View Analytics**: Monitor income, fees, and net earnings in real-time
+4. **Filter & Search**: Find specific transactions using advanced filters
+5. **Duplicate Prevention**: System automatically prevents duplicate imports
+
 ### Data Operations
 - **Export**: Download current data as JSON
 - **Refresh**: Pull latest data from Firebase
@@ -104,7 +114,14 @@ src/
 │   └── config.ts       # Firebase app configuration
 └── types/              # TypeScript definitions
     └── Product.ts      # Product-related types
+    └── PayPalTransaction.ts # PayPal transaction types
 ```
+
+## Documentation
+
+- **PayPal Dashboard**: See [README-PAYPAL-DASHBOARD.md](README-PAYPAL-DASHBOARD.md) for detailed PayPal transaction management documentation
+- **Firebase Setup**: See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for Firebase configuration
+- **Product URL Feature**: See [PRODUCT-URL-FEATURE.md](PRODUCT-URL-FEATURE.md) for product URL functionality
 
 ## Firebase Console Access
 - **Main Console**: https://console.firebase.google.com/project/productreview-52e51
