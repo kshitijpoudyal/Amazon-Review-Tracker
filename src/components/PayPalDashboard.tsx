@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { usePayPalTransactions } from '../hooks/usePayPalTransactions';
+import { useProductCrudFirebase } from '../hooks/useProductCrudFirebase';
 import { PayPalCSVImporter } from './PayPalCSVImporter';
 import { PayPalTransactionTable } from './PayPalTransactionTable';
 import { AddPayPalTransactionForm } from './AddPayPalTransactionForm';
@@ -17,8 +18,12 @@ export const PayPalDashboard: React.FC = () => {
     importTransactions,
     addTransaction,
     deleteTransaction,
+    updateProductLink,
     refetch
   } = usePayPalTransactions(user?.uid);
+
+  // Fetch products for mapping
+  const { data: productData, loading: productsLoading } = useProductCrudFirebase(user?.uid);
 
   const handleImport = async (transactions: any[]) => {
     const result = await importTransactions(transactions);
@@ -33,6 +38,14 @@ export const PayPalDashboard: React.FC = () => {
 
   const handleAddTransaction = async (transaction: any) => {
     const success = await addTransaction(transaction);
+    if (success) {
+      await refetch();
+    }
+    return success;
+  };
+
+  const handleUpdateProductLink = async (transactionId: string, productId: string | null) => {
+    const success = await updateProductLink(transactionId, productId);
     if (success) {
       await refetch();
     }
@@ -129,8 +142,11 @@ export const PayPalDashboard: React.FC = () => {
         {/* Transactions Table */}
         <PayPalTransactionTable
           transactions={data?.transactions || []}
+          products={productData?.products || []}
           loading={loading}
+          productsLoading={productsLoading}
           onDeleteTransaction={handleDeleteTransaction}
+          onUpdateProductLink={handleUpdateProductLink}
         />
 
         {/* Add Transaction Form Modal */}
@@ -138,6 +154,7 @@ export const PayPalDashboard: React.FC = () => {
           <AddPayPalTransactionForm
             onAddTransaction={handleAddTransaction}
             onCancel={() => setShowAddForm(false)}
+            products={productData?.products || []}
             isLoading={loading}
           />
         )}

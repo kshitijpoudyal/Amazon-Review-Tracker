@@ -14,6 +14,7 @@ export interface PayPalTransaction {
   receiptId?: string;
   transactionId: string; // Unique PayPal transaction ID
   itemTitle?: string;
+  linkedProductId?: string; // NEW: Link to Product ID for mapping
   createdAt?: any; // Firebase timestamp
   updatedAt?: any; // Firebase timestamp
 }
