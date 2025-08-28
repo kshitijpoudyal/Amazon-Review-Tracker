@@ -176,7 +176,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
                 </div>
                 {/* Products List */}
                 <div className="overflow-x-auto border border-gray-200 rounded">
-                  {/* No Product Option
+                  {/* No Product Option */}
                   <button
                     type="button"
                     onClick={() => handleProductSelect(null)}
@@ -186,7 +186,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
                   >
                     <span className="font-medium">No Product Linked</span>
                     <div className="text-sm text-gray-500">Remove product link</div>
-                  </button> */}
+                  </button>
 
 
                   <ul role="list" className="divide-y divide-gray-100 dark:divide-white/5"> 

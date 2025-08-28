@@ -128,11 +128,6 @@ function App() {
     };
   }, [filteredProducts]); // Changed dependency from [data] to [filteredProducts]
 
-  // Show login screen if not authenticated AND not in public mode
-  if (!user && !isPublicMode) {
-    return <LoginScreen onLoginSuccess={() => {}} />;
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg p-5">
@@ -143,6 +138,11 @@ function App() {
     );
   }
 
+    // Show login screen if not authenticated AND not in public mode
+  if (!user && !isPublicMode && !loading) {
+    return <LoginScreen onLoginSuccess={() => {}} />;
+  }
+  
   if (error) {
     return (
       <div className="min-h-screen gradient-bg p-5">
@@ -231,13 +231,6 @@ function App() {
           readOnly={isPublicMode}
         />
 
-        {/* Public Page Link - only show in private mode */}
-        {/* {!isPublicMode && (
-          <div className="px-8 pt-4">
-            <PublicPageLink user={user} />
-          </div>
-        )} */}
-
         {/* Product Table */}
         <div className="p-8">
           <ProductTable 
@@ -245,6 +238,7 @@ function App() {
             onUpdateProduct={isPublicMode ? undefined : updateProduct}
             onDeleteProduct={isPublicMode ? undefined : deleteProduct}
             readOnly={isPublicMode}
+            userId={isPublicMode ? undefined : user?.uid}
           />
         </div>
 
