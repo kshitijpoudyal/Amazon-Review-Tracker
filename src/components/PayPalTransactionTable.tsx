@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Product } from '../types/Product';
 import { ProductDropdown } from './ProductDropdown';
@@ -20,27 +20,25 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   onDeleteTransaction,
   onUpdateProductLink
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [sortField, setSortField] = useState<keyof PayPalTransaction>('date');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [showDropdown, setShowDropdown] = useState<number | null>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('.dropdown-container')) {
+        setShowDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const filteredAndSortedTransactions = useMemo(() => {
-    let filtered = transactions.filter(transaction => {
-      const matchesSearch = !searchTerm || 
-        transaction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.itemTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesType = !typeFilter || transaction.type === typeFilter;
-
-      return matchesSearch && matchesType;
-    });
-
-    // Sort transactions
-    filtered.sort((a, b) => {
-      // First priority: Unlinked transactions at the top
+    // Sort transactions with unlinked ones first
+    return [...transactions].sort((a, b) => {
       const aLinked = !!a.linkedProductId;
       const bLinked = !!b.linkedProductId;
       
@@ -48,36 +46,10 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         return aLinked ? 1 : -1; // Unlinked (false) comes first
       }
 
-      // Second priority: Sort by the selected field
-      let aValue = a[sortField];
-      let bValue = b[sortField];
-
-      // Handle numeric values
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-
-      // Handle string values
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-
-      return 0;
+      // Sort by date (newest first)
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
-
-    return filtered;
-  }, [transactions, searchTerm, typeFilter, sortField, sortDirection]);
-
-  const handleSort = (field: keyof PayPalTransaction) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('desc');
-    }
-  };
+  }, [transactions]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -86,223 +58,282 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     }).format(amount);
   };
 
-  const uniqueTypes = [...new Set(transactions.map(t => t.type))];
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
 
-  if (loading) {
+  if (transactions.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
+      <div className="text-center py-16 text-gray-500">
+        <p className="text-lg">No PayPal transactions found.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600">
-        <h2 className="text-xl font-bold text-white">PayPal Transactions</h2>
-        <p className="text-blue-100">
-          Showing {filteredAndSortedTransactions.length} of {transactions.length} transactions
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="px-6 py-4 bg-gray-50 border-b">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <input
-              type="text"
-              placeholder="Search name, transaction ID, or item..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Type
-            </label>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Types</option>
-              {uniqueTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('date')}
-              >
-                Date/Time {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('name')}
-              >
-                Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('type')}
-              >
-                Type {sortField === 'type' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th 
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('amount')}
-              >
-                Amount {sortField === 'amount' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th 
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('fees')}
-              >
-                Fees {sortField === 'fees' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th 
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('total')}
-              >
-                Net Received {sortField === 'total' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Transaction ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Product Link
-              </th>
-              {onDeleteTransaction && (
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAndSortedTransactions.map((transaction) => (
-              <tr 
-                key={transaction.id} 
-                className={`hover:bg-gray-50 ${
-                  !transaction.linkedProductId 
-                    ? 'bg-orange-50 border-l-4 border-orange-400' 
-                    : ''
-                }`}
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div>
-                    <div className="font-medium">{transaction.date}</div>
-                    <div className="text-gray-500">{transaction.time}</div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900">
-                  <div>
-                    <div className="font-medium">{transaction.name}</div>
-                    {transaction.itemTitle && (
-                      <div className="text-gray-500 text-xs truncate max-w-xs">
-                        {transaction.itemTitle}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+    <>
+      {/* Mobile Card Layout */}
+      <div className="block md:hidden space-y-4">
+        {filteredAndSortedTransactions.map((transaction, index) => (
+          <div key={transaction.id} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+            {/* Header */}
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg text-gray-900 mb-1">{transaction.name}</h3>
+                <p className="text-sm text-gray-600">
+                  {formatDate(transaction.date)} • {transaction.time}
+                </p>
+                {transaction.itemTitle && (
+                  <p className="text-sm text-gray-500 truncate">{transaction.itemTitle}</p>
+                )}
+              </div>
+              <div className="flex flex-col items-end space-y-1">
+                <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-100 text-blue-800">
                   {transaction.type}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
+                </span>
+                {!transaction.linkedProductId && (
+                  <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-orange-100 text-orange-800">
+                    Unlinked
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Financial Info */}
+            <div className="border-t pt-3 mb-3">
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="text-center">
+                  <p className="text-gray-600 mb-1">Amount</p>
+                  <p className={`font-mono font-semibold ${transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(transaction.amount)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-red-600">
-                  {formatCurrency(transaction.fees)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold">
-                  <span className={transaction.total >= 0 ? 'text-green-600' : 'text-red-600'}>
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-600 mb-1">Fees</p>
+                  <p className="font-mono font-semibold text-red-600">{formatCurrency(transaction.fees)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-600 mb-1">Net Received</p>
+                  <p className={`font-mono font-semibold ${transaction.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(transaction.total)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                  {transaction.transactionId}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-2">
-                    {!transaction.linkedProductId && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                        Unlinked
-                      </span>
-                    )}
-                    {onUpdateProductLink ? (
-                      <ProductDropdown
-                        products={products}
-                        selectedProductId={transaction.linkedProductId || null}
-                        onProductSelect={async (productId: string | null) => {
-                          if (transaction.id) {
-                            await onUpdateProductLink(transaction.id, productId);
-                          }
-                        }}
-                        disabled={loading}
-                        size="small"
-                        loading={productsLoading}
-                      />
-                    ) : (
-                      <span className="text-gray-400 text-xs">No mapping available</span>
-                    )}
-                  </div>
-                </td>
-                {onDeleteTransaction && (
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Product Link */}
+            <div className="border-t pt-3 mb-3">
+              <p className="text-sm text-gray-600 mb-2">Product Link:</p>
+              {onUpdateProductLink ? (
+                <ProductDropdown
+                  products={products}
+                  selectedProductId={transaction.linkedProductId || null}
+                  onProductSelect={async (productId: string | null) => {
+                    if (transaction.id) {
+                      await onUpdateProductLink(transaction.id, productId);
+                    }
+                  }}
+                  disabled={loading}
+                  size="small"
+                  loading={productsLoading}
+                />
+              ) : (
+                <span className="text-gray-400 text-xs">No mapping available</span>
+              )}
+            </div>
+
+            {/* Transaction ID */}
+            <div className="border-t pt-3 mb-3">
+              <p className="text-sm text-gray-600 mb-1">Transaction ID:</p>
+              <p className="text-xs font-mono text-gray-700">{transaction.transactionId}</p>
+            </div>
+
+            {/* Actions */}
+            {onDeleteTransaction && (
+              <div className="flex justify-end relative dropdown-container">
+                <button
+                  onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+                  className="px-3 py-2 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                  </svg>
+                </button>
+                
+                {/* Dropdown Menu */}
+                {showDropdown === index && (
+                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                     <button
                       onClick={async () => {
-                        if (transaction.id && confirm('Are you sure you want to delete this transaction?')) {
+                        if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
                           await onDeleteTransaction(transaction.id);
                         }
+                        setShowDropdown(null);
                       }}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                     >
-                      🗑️
+                      Delete
                     </button>
-                  </td>
+                  </div>
                 )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Empty State */}
-      {filteredAndSortedTransactions.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">💳</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions found</h3>
-          <p className="text-gray-500">
-            {transactions.length === 0 
-              ? 'Import your first PayPal CSV file to get started'
-              : 'Try adjusting your filters to see more transactions'
-            }
-          </p>
+      {/* Desktop Table Layout */}
+      <div className="hidden md:block">
+        <div className="overflow-x-auto max-h-[93vh] overflow-y-auto border border-gray-200 rounded-xl">
+          <table className="w-full bg-white shadow-md">
+            <thead className="gradient-bg sticky top-0 z-5 shadow-sm">
+              <tr>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Date/Time ({filteredAndSortedTransactions.length})
+                </th>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Fees
+                </th>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Net Received
+                </th>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Transaction ID
+                </th>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Product Link
+                </th>
+                {onDeleteTransaction && (
+                  <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                    Actions
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAndSortedTransactions.map((transaction, index) => (
+                <tr
+                  key={transaction.id}
+                  className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
+                    !transaction.linkedProductId ? 'bg-orange-50' : ''
+                  }`}
+                >
+                  <td className="px-3 py-4 text-sm">
+                    <div>
+                      <div className="font-medium">{formatDate(transaction.date)}</div>
+                      <div className="text-gray-500">{transaction.time}</div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-4 text-sm text-gray-900">
+                    <div>
+                      <div className="font-medium">{transaction.name}</div>
+                      {transaction.itemTitle && (
+                        <div className="text-gray-500 text-xs truncate max-w-xs">
+                          {transaction.itemTitle}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-4 text-sm">
+                    <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-blue-100 text-blue-800">
+                      {transaction.type}
+                    </span>
+                  </td>
+                  <td className="px-3 py-4 text-sm font-mono font-semibold">
+                    <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      {formatCurrency(transaction.amount)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-4 text-sm font-mono font-semibold text-red-600">
+                    {formatCurrency(transaction.fees)}
+                  </td>
+                  <td className="px-3 py-4 text-sm font-mono font-semibold">
+                    <span className={transaction.total >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      {formatCurrency(transaction.total)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-4 text-sm text-gray-500 font-mono">
+                    {transaction.transactionId}
+                  </td>
+                  <td className="px-3 py-4 text-sm">
+                    <div className="flex flex-col space-y-1">
+                      {!transaction.linkedProductId && (
+                        <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
+                          Unlinked
+                        </span>
+                      )}
+                      {onUpdateProductLink ? (
+                        <ProductDropdown
+                          products={products}
+                          selectedProductId={transaction.linkedProductId || null}
+                          onProductSelect={async (productId: string | null) => {
+                            if (transaction.id) {
+                              await onUpdateProductLink(transaction.id, productId);
+                            }
+                          }}
+                          disabled={loading}
+                          size="small"
+                          loading={productsLoading}
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-xs">No mapping available</span>
+                      )}
+                    </div>
+                  </td>
+                  {onDeleteTransaction && (
+                    <td className="px-3 py-4 text-sm relative dropdown-container">
+                      <button
+                        onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+                        className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center"
+                        title="More actions"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                        </svg>
+                      </button>
+                      
+                      {/* Dropdown Menu */}
+                      {showDropdown === index && (
+                        <div className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
+                          <button
+                            onClick={async () => {
+                              if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
+                                await onDeleteTransaction(transaction.id);
+                              }
+                              setShowDropdown(null);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 };
