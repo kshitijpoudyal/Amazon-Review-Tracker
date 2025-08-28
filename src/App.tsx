@@ -1,17 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import StatCard from './components/StatCard';
+import StatsGrid from './components/StatsGrid';
 import ProductTable from './components/ProductTable';
 import LoadingSpinner from './components/LoadingSpinner';
 import AddProductForm from './components/AddProductForm';
 import FilterControls from './components/FilterControls';
 import LoginScreen from './components/LoginScreen';
 import AppHeader from './components/AppHeader';
-import { useProductCrudFirebase } from './hooks/useProductCrudFirebase';
 import { useProductFilters } from './hooks/useProductFilters';
 import { useAuth } from './hooks/useAuth';
-import { useUserData } from './hooks/useUserData';
-import { StatusFilter, DeltaFilter } from './types/Product';
+import { useDataSource } from './hooks/useDataSource';
+import { useProductStats } from './hooks/useProductStats';
+import { useSortedProducts } from './hooks/useSortedProducts';
+import { StatusFilter, DeltaFilter, Product } from './types/Product';
 
 function App() {
   // Check if we're in public user page mode
@@ -21,11 +22,7 @@ function App() {
   // Authentication (only for private mode)
   const { user, logout } = useAuth();
 
-  // Data fetching - use different hooks based on mode
-  const privateData = useProductCrudFirebase(user?.uid);
-  const publicData = useUserData(username);
-
-  // Choose the appropriate data source
+  // Data source management with optimized hook
   const {
     data,
     loading,
@@ -33,100 +30,41 @@ function App() {
     updateProduct,
     addProduct,
     deleteProduct,
-  } = isPublicMode ? {
-    data: publicData.data,
-    loading: publicData.loading,
-    error: publicData.error,
-    updateProduct: async () => false, // No-op in public mode
-    addProduct: async () => false,    // No-op in public mode
-    deleteProduct: async () => false, // No-op in public mode
-  } : privateData;
+    userProfile,
+  } = useDataSource(isPublicMode, user?.uid, username);
   
+  // State management
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
   const [deltaFilter, setDeltaFilter] = useState<DeltaFilter>('');
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // Product filtering and sorting
   const { applyFilters } = useProductFilters(data?.products || []);
+  const filteredProducts = useSortedProducts(applyFilters, searchTerm, statusFilter, deltaFilter);
 
-  const filteredProducts = useMemo(() => {
-    const filtered = applyFilters(searchTerm, statusFilter, deltaFilter);
-    // Sort by order date (most recent first), then by item name
-    return filtered.sort((a, b) => {
-      // Handle items without order dates - they appear last
-      if (!a.orderDate && !b.orderDate) {
-        return a.item.localeCompare(b.item);
-      }
-      if (!a.orderDate) return 1; // a goes after b
-      if (!b.orderDate) return -1; // a goes before b
-      
-      // Both have order dates - sort by date (most recent first)
-      const dateA = new Date(a.orderDate);
-      const dateB = new Date(b.orderDate);
-      const dateDiff = dateB.getTime() - dateA.getTime();
-      
-      // If dates are the same, sort by item name
-      if (dateDiff === 0) {
-        return a.item.localeCompare(b.item);
-      }
-      
-      return dateDiff;
-    });
-  }, [applyFilters, searchTerm, statusFilter, deltaFilter]);
+  // Stats calculation
+  const stats = useProductStats(filteredProducts);
 
-  const stats = useMemo(() => {
-    if (!data) return null;
+  // Callback handlers
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm('');
+    setStatusFilter('');
+    setDeltaFilter('');
+  }, []);
 
-    // Use filtered products instead of all products
-    const products = filteredProducts.filter(p => p.item);
-    const completedOrders = products.filter(p => 
-      p.orderPlaced && 
-      p.orderDelivered && 
-      p.reviewAdded && 
-      p.reviewLive && 
-      p.reviewSSSent &&
-      p.paid !== null &&
-      p.received !== null
-    ).length;
+  const handleAddProduct = useCallback((product: Product) => {
+    addProduct(product);
+    setShowAddForm(false);
+  }, [addProduct]);
 
-    let totalPaid = 0;
-    let totalReceived = 0;
-    let netDelta = 0;
-    let remainingRefund = 0;
+  const handleShowAddForm = useCallback(() => setShowAddForm(true), []);
+  const handleCancelAddForm = useCallback(() => setShowAddForm(false), []);
 
-    products.forEach(product => {
-      if (product.paid !== null && !isNaN(product.paid)) {
-        totalPaid += product.paid;
-      }
-      if (product.received !== null && !isNaN(product.received)) {
-        totalReceived += product.received;
-      }
-      if (product.delta !== null && !isNaN(product.delta)) {
-        netDelta += product.delta;
-      }
-
-      // Calculate remaining refund for incomplete orders
-      const isComplete = product.orderPlaced && 
-                        product.orderDelivered && 
-                        product.reviewAdded && 
-                        product.reviewLive && 
-                        product.reviewSSSent &&
-                        product.received !== null && !isNaN(product.received);
-      
-      if (!isComplete && product.paid !== null && !isNaN(product.paid)) {
-        remainingRefund += product.paid;
-      }
-    });
-
-    return {
-      totalProducts: products.length,
-      completedOrders,
-      totalPaid,
-      totalReceived,
-      netDelta,
-      remainingRefund
-    };
-  }, [filteredProducts]); // Changed dependency from [data] to [filteredProducts]
+  // Show login screen if not authenticated AND not in public mode
+  if (!user && !isPublicMode) {
+    return <LoginScreen onLoginSuccess={() => {}} />;
+  }
 
   if (loading) {
     return (
@@ -138,11 +76,6 @@ function App() {
     );
   }
 
-    // Show login screen if not authenticated AND not in public mode
-  if (!user && !isPublicMode && !loading) {
-    return <LoginScreen onLoginSuccess={() => {}} />;
-  }
-  
   if (error) {
     return (
       <div className="min-h-screen gradient-bg p-5">
@@ -172,7 +105,7 @@ function App() {
         {isPublicMode ? (
           <div className="gradient-bg text-white p-8 text-center">
             <h1 className="text-4xl font-bold mb-3 text-shadow-lg">
-              {publicData.userProfile?.displayName || publicData.userProfile?.email || username}'s Amazon Review Dashboard
+              {userProfile?.displayName || userProfile?.email || username}'s Amazon Review Dashboard
             </h1>
             <p className="text-blue-100">Public View - Read Only</p>
           </div>
@@ -181,37 +114,7 @@ function App() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-5 p-8 bg-gray-50 border-b border-gray-200">
-          <StatCard 
-            value={stats?.totalProducts || '-'} 
-            label="Total Products" 
-          />
-          <StatCard 
-            value={stats?.completedOrders || '-'} 
-            label="Completed Orders" 
-            className="text-green-600"
-          />
-          <StatCard 
-            value={stats ? `$${stats.totalPaid.toFixed(2)}` : '-'} 
-            label="Total Paid" 
-            className="text-yellow-600"
-          />
-          <StatCard 
-            value={stats ? `$${stats.totalReceived.toFixed(2)}` : '-'} 
-            label="Total Received" 
-            className="text-green-600"
-          />
-          <StatCard 
-            value={stats ? `$${stats.remainingRefund.toFixed(2)}` : '-'} 
-            label="Remaining Refund"
-            className="text-orange-600"
-          />
-          <StatCard 
-            value={stats ? `$${stats.netDelta.toFixed(2)}` : '-'} 
-            label="Net Profit/Loss"
-            className={stats && stats.netDelta >= 0 ? 'text-green-600' : 'text-red-600'}
-          />
-        </div>
+        <StatsGrid stats={stats} />
 
         {/* Filter Controls */}
         <FilterControls
@@ -221,12 +124,8 @@ function App() {
           onSearchChange={setSearchTerm}
           onStatusFilterChange={setStatusFilter}
           onDeltaFilterChange={setDeltaFilter}
-          onClearFilters={() => {
-            setSearchTerm('');
-            setStatusFilter('');
-            setDeltaFilter('');
-          }}
-          showAddProduct={isPublicMode ? undefined : () => setShowAddForm(true)}
+          onClearFilters={handleClearFilters}
+          showAddProduct={isPublicMode ? undefined : handleShowAddForm}
           loading={loading}
           readOnly={isPublicMode}
         />
@@ -245,11 +144,8 @@ function App() {
         {/* Add Product Modal - only in private mode */}
         {!isPublicMode && showAddForm && (
           <AddProductForm
-            onAdd={(product) => {
-              addProduct(product);
-              setShowAddForm(false);
-            }}
-            onCancel={() => setShowAddForm(false)}
+            onAdd={handleAddProduct}
+            onCancel={handleCancelAddForm}
           />
         )}
       </div>
