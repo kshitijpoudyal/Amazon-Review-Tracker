@@ -65,7 +65,7 @@ export const usePayPalTransactions = (userId?: string) => {
           .reduce((sum, transaction) => sum + transaction.amount, 0),
         totalFees: transactions
           .reduce((sum, transaction) => sum + Math.abs(transaction.fees), 0),
-        netIncome: transactions
+        netReceivedTotal: transactions
           .reduce((sum, transaction) => sum + transaction.total, 0),
         transactionCount: transactions.length
       };
