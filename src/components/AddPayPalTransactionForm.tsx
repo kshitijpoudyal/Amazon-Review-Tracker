@@ -18,7 +18,6 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
     timeZone: 'PST', // Default timezone
     name: '',
     type: 'General Payment',
-    status: 'Completed',
     currency: 'USD',
     amount: '',
     fees: '',
@@ -100,7 +99,6 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
       timeZone: formData.timeZone,
       name: formData.name.trim(),
       type: formData.type,
-      status: formData.status,
       currency: formData.currency,
       amount: parseFloat(formData.amount),
       fees: parseFloat(formData.fees) || 0,
@@ -135,13 +133,6 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
     'Payment Review Hold',
     'Instant Payment Review (IPR) reversal',
     'Payment Review Release'
-  ];
-
-  const transactionStatuses = [
-    'Completed',
-    'Pending',
-    'Reversed',
-    'Cancelled'
   ];
 
   return (
@@ -242,24 +233,6 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                 >
                   {transactionTypes.map(type => (
                     <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isLoading}
-                >
-                  {transactionStatuses.map(status => (
-                    <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
               </div>

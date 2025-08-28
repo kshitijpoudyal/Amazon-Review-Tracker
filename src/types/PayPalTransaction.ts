@@ -5,7 +5,6 @@ export interface PayPalTransaction {
   timeZone: string;
   name: string;
   type: string;
-  status: string;
   currency: string;
   amount: number;
   fees: number;

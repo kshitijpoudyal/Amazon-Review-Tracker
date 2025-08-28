@@ -17,7 +17,6 @@ export const parsePayPalCSV = (csvContent: string): PayPalTransaction[] => {
     time: headers.findIndex(h => h === 'time'),
     name: headers.findIndex(h => h === 'name'),
     type: headers.findIndex(h => h === 'type'),
-    status: headers.findIndex(h => h === 'status'),
     amount: headers.findIndex(h => h === 'amount'),
     fees: headers.findIndex(h => h === 'fees'),
     total: headers.findIndex(h => h === 'total'),
@@ -53,7 +52,6 @@ export const parsePayPalCSV = (csvContent: string): PayPalTransaction[] => {
       const time = fields[columnMap.time]?.trim() || '';
       const name = fields[columnMap.name]?.trim() || '';
       const type = fields[columnMap.type]?.trim() || '';
-      const status = fields[columnMap.status]?.trim() || '';
       const amount = fields[columnMap.amount]?.trim() || '0';
       const fees = fields[columnMap.fees]?.trim() || '0';
       const total = fields[columnMap.total]?.trim() || '0';
@@ -77,7 +75,6 @@ export const parsePayPalCSV = (csvContent: string): PayPalTransaction[] => {
         timeZone: 'PST', // Default timezone since it's not in the simplified format
         name,
         type,
-        status,
         currency: 'USD', // Default currency since it's not in the simplified format
         amount: parseFloat(amount) || 0,
         fees: parseFloat(fees) || 0,
@@ -144,7 +141,7 @@ export const validatePayPalCSV = (csvContent: string): { isValid: boolean; error
     const headerLine = lines[0];
     const headers = parseCSVLine(headerLine).map(h => h.trim().toLowerCase());
     
-    const requiredColumns = ['date', 'time', 'name', 'type', 'status', 'amount', 'fees', 'total', 'transaction id'];
+    const requiredColumns = ['date', 'time', 'name', 'type', 'amount', 'fees', 'total', 'transaction id'];
     
     const missingColumns = requiredColumns.filter(col => 
       !headers.some(header => header === col || (col === 'transaction id' && header === 'transactionid'))
@@ -161,10 +158,10 @@ export const validatePayPalCSV = (csvContent: string): { isValid: boolean; error
     const firstDataLine = lines[1];
     const fields = parseCSVLine(firstDataLine);
     
-    if (fields.length < 9) {
+    if (fields.length < 8) {
       return { 
         isValid: false, 
-        error: 'Data rows must contain at least 9 fields (Date, Time, Name, Type, Status, Amount, Fees, Total, Transaction ID)' 
+        error: 'Data rows must contain at least 8 fields (Date, Time, Name, Type, Amount, Fees, Total, Transaction ID)' 
       };
     }
 
