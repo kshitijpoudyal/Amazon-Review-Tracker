@@ -115,8 +115,8 @@ export const PayPalDashboard: React.FC = () => {
               className="text-red-600"
             />
             <StatCard
-              value={`$${data.summary.netIncome.toFixed(2)}`}
-              label="Net Income"
+              value={`$${data.summary.netReceivedTotal.toFixed(2)}`}
+              label="Net Received Total"
               className="text-blue-600"
             />
             <StatCard

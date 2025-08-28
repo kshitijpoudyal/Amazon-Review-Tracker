@@ -185,7 +185,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('total')}
               >
-                Net {sortField === 'total' && (sortDirection === 'asc' ? '↑' : '↓')}
+                Net Received {sortField === 'total' && (sortDirection === 'asc' ? '↑' : '↓')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Transaction ID

@@ -23,7 +23,7 @@ export interface PayPalTransactionData {
   summary: {
     totalIncome: number;
     totalFees: number;
-    netIncome: number;
+    netReceivedTotal: number;
     transactionCount: number;
   };
 }
