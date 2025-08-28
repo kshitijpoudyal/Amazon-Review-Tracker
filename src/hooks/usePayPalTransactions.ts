@@ -61,13 +61,11 @@ export const usePayPalTransactions = (userId?: string) => {
       // Calculate summary from transactions
       const summary = {
         totalIncome: transactions
-          .filter(t => t.status === 'Completed' && t.amount > 0)
+          .filter(t => t.amount > 0)
           .reduce((sum, transaction) => sum + transaction.amount, 0),
         totalFees: transactions
-          .filter(t => t.status === 'Completed')
           .reduce((sum, transaction) => sum + Math.abs(transaction.fees), 0),
         netIncome: transactions
-          .filter(t => t.status === 'Completed')
           .reduce((sum, transaction) => sum + transaction.total, 0),
         transactionCount: transactions.length
       };
@@ -207,7 +205,7 @@ export const usePayPalTransactions = (userId?: string) => {
 
       // Calculate total received amount from all linked transactions
       const linkedTransactions = transactions.filter(
-        transaction => transaction.linkedProductId === productId && transaction.status === 'Completed'
+        transaction => transaction.linkedProductId === productId
       );
       
       const totalReceived = linkedTransactions.reduce(

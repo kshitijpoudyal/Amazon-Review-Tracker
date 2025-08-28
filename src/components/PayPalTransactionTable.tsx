@@ -21,7 +21,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   onUpdateProductLink
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [sortField, setSortField] = useState<keyof PayPalTransaction>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -34,10 +33,9 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         transaction.itemTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = !statusFilter || transaction.status === statusFilter;
       const matchesType = !typeFilter || transaction.type === typeFilter;
 
-      return matchesSearch && matchesStatus && matchesType;
+      return matchesSearch && matchesType;
     });
 
     // Sort transactions
@@ -70,7 +68,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     });
 
     return filtered;
-  }, [transactions, searchTerm, statusFilter, typeFilter, sortField, sortDirection]);
+  }, [transactions, searchTerm, typeFilter, sortField, sortDirection]);
 
   const handleSort = (field: keyof PayPalTransaction) => {
     if (sortField === field) {
@@ -88,22 +86,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     }).format(amount);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'reversed':
-        return 'bg-red-100 text-red-800';
-      case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-blue-100 text-blue-800';
-    }
-  };
-
-  const uniqueStatuses = [...new Set(transactions.map(t => t.status))];
   const uniqueTypes = [...new Set(transactions.map(t => t.type))];
 
   if (loading) {
@@ -133,7 +115,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
       {/* Filters */}
       <div className="px-6 py-4 bg-gray-50 border-b">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search
@@ -145,21 +127,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Statuses</option>
-              {uniqueStatuses.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -201,12 +168,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 onClick={() => handleSort('type')}
               >
                 Type {sortField === 'type' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('status')}
-              >
-                Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
               </th>
               <th 
                 className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -267,11 +228,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {transaction.type}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
-                    {transaction.status}
-                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                   <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
