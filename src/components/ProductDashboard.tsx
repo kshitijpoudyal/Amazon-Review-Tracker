@@ -1,16 +1,25 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import StatsGrid from './StatsGrid';
 import ProductTable from './ProductTable';
-import LoadingSpinner from './LoadingSpinner';
 import AddProductForm from './AddProductForm';
-import FilterControls from './FilterControls';
 import { useProductFilters } from '../hooks/useProductFilters';
+import { useGenericFilters } from '../hooks/useGenericFilters';
+import { useDashboardState } from '../hooks/useDashboardState';
 import { useAuth } from '../hooks/useAuth';
 import { useDataSource } from '../hooks/useDataSource';
 import { useProductStats } from '../hooks/useProductStats';
 import { useSortedProducts } from '../hooks/useSortedProducts';
 import { StatusFilter, DeltaFilter, Product } from '../types/Product';
+import { 
+  DashboardContainer, 
+  DashboardStats, 
+  DashboardError, 
+  DashboardLoading, 
+  DashboardSection,
+  GenericFilterControls,
+  FilterControlConfig,
+  ActionButton
+} from './common';
 
 function ProductDashboard() {
   // Check if we're in public user page mode
@@ -19,6 +28,27 @@ function ProductDashboard() {
 
   // Authentication (only for private mode)
   const { user } = useAuth();
+
+  // Dashboard state management
+  const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
+
+  // Filter state management
+  const { 
+    updateFilter, 
+    clearFilters: clearAllFilters,
+    getFilterValue 
+  } = useGenericFilters({
+    initialFilters: {
+      searchTerm: '',
+      statusFilter: '',
+      deltaFilter: ''
+    }
+  });
+
+  // Extract filter values for backward compatibility
+  const searchTerm = getFilterValue('searchTerm');
+  const statusFilter = getFilterValue('statusFilter') as StatusFilter;
+  const deltaFilter = getFilterValue('deltaFilter') as DeltaFilter;
 
   // Data source management with optimized hook
   const {
@@ -31,12 +61,6 @@ function ProductDashboard() {
     userProfile,
   } = useDataSource(isPublicMode, user?.uid, username);
   
-  // State management
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
-  const [deltaFilter, setDeltaFilter] = useState<DeltaFilter>('');
-  const [showAddForm, setShowAddForm] = useState(false);
-
   // Product filtering and sorting
   const { applyFilters } = useProductFilters(data?.products || []);
   const filteredProducts = useSortedProducts(applyFilters, searchTerm, statusFilter, deltaFilter);
@@ -45,19 +69,64 @@ function ProductDashboard() {
   const stats = useProductStats(filteredProducts);
 
   // Callback handlers
-  const handleClearFilters = useCallback(() => {
-    setSearchTerm('');
-    setStatusFilter('');
-    setDeltaFilter('');
-  }, []);
-
   const handleAddProduct = useCallback((product: Product) => {
     addProduct(product);
-    setShowAddForm(false);
-  }, [addProduct]);
+    handleHideAddForm();
+  }, [addProduct, handleHideAddForm]);
 
-  const handleShowAddForm = useCallback(() => setShowAddForm(true), []);
-  const handleCancelAddForm = useCallback(() => setShowAddForm(false), []);
+  // Configure filter controls
+  const filterConfigs: FilterControlConfig[] = [
+    {
+      type: 'search',
+      key: 'searchTerm',
+      placeholder: 'Search products...',
+      value: searchTerm,
+      onChange: (value) => updateFilter('searchTerm', value)
+    },
+    {
+      type: 'select',
+      key: 'statusFilter',
+      value: statusFilter,
+      onChange: (value) => updateFilter('statusFilter', value),
+      options: [
+        { value: '', label: 'All Statuses' },
+        { value: 'order-placed', label: 'Order Placed' },
+        { value: 'add-review', label: 'Add Review' },
+        { value: 'review-pending', label: 'Review Pending' },
+        { value: 'send-screenshot', label: 'Send Screenshot' },
+        { value: 'refund-pending', label: 'Refund Pending' },
+        { value: 'complete', label: 'Complete' },
+        { value: 'void', label: 'Void' }
+      ]
+    },
+    {
+      type: 'select',
+      key: 'deltaFilter',
+      value: deltaFilter,
+      onChange: (value) => updateFilter('deltaFilter', value),
+      options: [
+        { value: '', label: 'All Deltas' },
+        { value: 'positive', label: 'Positive' },
+        { value: 'negative', label: 'Negative' },
+        { value: 'zero', label: 'Zero' }
+      ]
+    }
+  ];
+
+  // Configure action buttons
+  const actionButtons: ActionButton[] = !isPublicMode ? [
+    {
+      label: 'Add Product',
+      onClick: handleShowAddForm,
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      ),
+      variant: 'primary',
+      disabled: loading
+    }
+  ] : [];
 
   // Return null if user is not authenticated and not in public mode
   // App.tsx will handle showing LoginScreen
@@ -66,33 +135,60 @@ function ProductDashboard() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner />
-      </div>
-    );
+    return <DashboardLoading message="Loading products..." />;
   }
 
   if (error) {
     return (
-      <div className="text-center py-16 text-red-600">
-        <p className="text-lg">
-          {isPublicMode 
-            ? `Error loading user data: ${error}` 
-            : `Error loading data: ${error}`
-          }
-        </p>
-        {isPublicMode && error === 'User not found' && (
+      <DashboardError 
+        error={isPublicMode 
+          ? `Error loading user data: ${error}` 
+          : `Error loading data: ${error}`
+        }
+        additionalInfo={isPublicMode && error === 'User not found' ? (
           <p className="text-sm mt-2 text-gray-600">
             User "{username}" not found
           </p>
-        )}
-      </div>
+        ) : undefined}
+      />
     );
   }
 
+  // Prepare stats data for the common component
+  const statsData = stats ? [
+    {
+      value: stats.totalProducts || '-',
+      label: "Total Products"
+    },
+    {
+      value: stats.completedOrders || '-',
+      label: "Completed Orders",
+      className: "text-green-600"
+    },
+    {
+      value: `$${stats.totalPaid.toFixed(2)}`,
+      label: "Total Paid",
+      className: "text-yellow-600"
+    },
+    {
+      value: `$${stats.totalReceived.toFixed(2)}`,
+      label: "Total Received",
+      className: "text-green-600"
+    },
+    {
+      value: `$${stats.remainingRefund.toFixed(2)}`,
+      label: "Remaining Refund",
+      className: "text-orange-600"
+    },
+    {
+      value: `$${stats.netDelta.toFixed(2)}`,
+      label: "Net Profit/Loss",
+      className: stats.netDelta >= 0 ? 'text-green-600' : 'text-red-600'
+    }
+  ] : [];
+
   return (
-    <div className="space-y-8">
+    <DashboardContainer>
       {/* Public mode header */}
       {isPublicMode && (
         <div className="gradient-bg text-white p-8 text-center rounded-2xl">
@@ -104,24 +200,19 @@ function ProductDashboard() {
       )}
 
       {/* Stats Cards */}
-      <StatsGrid stats={stats} />
+      <DashboardStats stats={statsData} loading={loading} />
 
       {/* Filter Controls */}
-      <FilterControls
-        searchTerm={searchTerm}
-        statusFilter={statusFilter}
-        deltaFilter={deltaFilter}
-        onSearchChange={setSearchTerm}
-        onStatusFilterChange={setStatusFilter}
-        onDeltaFilterChange={setDeltaFilter}
-        onClearFilters={handleClearFilters}
-        showAddProduct={isPublicMode ? undefined : handleShowAddForm}
+      <GenericFilterControls
+        filters={filterConfigs}
+        actions={actionButtons}
+        onClearFilters={clearAllFilters}
         loading={loading}
         readOnly={isPublicMode}
       />
 
       {/* Product Table */}
-      <div className="p-8">
+      <DashboardSection border={false}>
         <ProductTable 
           products={filteredProducts} 
           onUpdateProduct={isPublicMode ? undefined : updateProduct}
@@ -129,16 +220,16 @@ function ProductDashboard() {
           readOnly={isPublicMode}
           userId={isPublicMode ? undefined : user?.uid}
         />
-      </div>
+      </DashboardSection>
 
       {/* Add Product Modal - only in private mode */}
       {!isPublicMode && showAddForm && (
         <AddProductForm
           onAdd={handleAddProduct}
-          onCancel={handleCancelAddForm}
+          onCancel={handleHideAddForm}
         />
       )}
-    </div>
+    </DashboardContainer>
   );
 }
 

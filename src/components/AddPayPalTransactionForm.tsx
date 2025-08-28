@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { PayPalTransaction } from '../types/PayPalTransaction';
+import { PayPalCSVImporter } from './PayPalCSVImporter';
 
 interface AddPayPalTransactionFormProps {
   onAddTransaction: (transaction: PayPalTransaction) => Promise<boolean>;
+  onImportTransactions?: (transactions: PayPalTransaction[]) => Promise<{ added: number; skipped: number; withdrawalSkipped?: number }>;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
 export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> = ({
   onAddTransaction,
+  onImportTransactions,
   onCancel,
   isLoading = false
 }) => {
+  const [activeTab, setActiveTab] = useState<'manual' | 'import'>('manual');
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     time: new Date().toTimeString().split(' ')[0], // Current time in HH:MM:SS format
@@ -123,6 +127,18 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
     }
   };
 
+  const handleImportComplete = async (transactions: PayPalTransaction[]) => {
+    if (onImportTransactions) {
+      const result = await onImportTransactions(transactions);
+      // Close modal after successful import
+      if (result.added > 0) {
+        onCancel();
+      }
+      return result;
+    }
+    return { added: 0, skipped: 0 };
+  };
+
   const transactionTypes = [
     'General Payment',
     'Express Checkout Payment',
@@ -150,7 +166,36 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('manual')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'manual'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Manual Entry
+              </button>
+              <button
+                onClick={() => setActiveTab('import')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'import'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Import CSV
+              </button>
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'manual' ? (
+            /* Manual Entry Form */
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Date & Time */}
               <div>
@@ -405,6 +450,14 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
               </button>
             </div>
           </form>
+          ) : (
+            /* CSV Import Tab */
+            <div className="space-y-4">
+              <PayPalCSVImporter
+                onImportComplete={handleImportComplete}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
