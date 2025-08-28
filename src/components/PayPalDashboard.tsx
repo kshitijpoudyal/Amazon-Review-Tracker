@@ -60,6 +60,16 @@ export const PayPalDashboard: React.FC = () => {
     return success;
   };
 
+  // Calculate unlinked transactions
+  const unlinkedTransactionsCount = data?.transactions.filter(
+    transaction => !transaction.linkedProductId
+  ).length || 0;
+
+  // Calculate total amount of unlinked transactions
+  const unlinkedTransactionsAmount = data?.transactions
+    .filter(transaction => !transaction.linkedProductId)
+    .reduce((total, transaction) => total + transaction.total, 0) || 0;
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 flex items-center justify-center">
@@ -93,7 +103,7 @@ export const PayPalDashboard: React.FC = () => {
 
         {/* Summary Cards */}
         {data && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
             <StatCard
               value={`$${data.summary.totalIncome.toFixed(2)}`}
               label="Total Income"
@@ -113,6 +123,16 @@ export const PayPalDashboard: React.FC = () => {
               value={data.summary.transactionCount}
               label="Transactions"
               className="text-purple-600"
+            />
+            <StatCard
+              value={unlinkedTransactionsCount}
+              label="Unlinked Count"
+              className="text-orange-600"
+            />
+            <StatCard
+              value={`$${unlinkedTransactionsAmount.toFixed(2)}`}
+              label="Unlinked Amount"
+              className="text-orange-600"
             />
           </div>
         )}
@@ -154,7 +174,6 @@ export const PayPalDashboard: React.FC = () => {
           <AddPayPalTransactionForm
             onAddTransaction={handleAddTransaction}
             onCancel={() => setShowAddForm(false)}
-            products={productData?.products || []}
             isLoading={loading}
           />
         )}

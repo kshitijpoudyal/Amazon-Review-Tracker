@@ -42,6 +42,15 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
     // Sort transactions
     filtered.sort((a, b) => {
+      // First priority: Unlinked transactions at the top
+      const aLinked = !!a.linkedProductId;
+      const bLinked = !!b.linkedProductId;
+      
+      if (aLinked !== bLinked) {
+        return aLinked ? 1 : -1; // Unlinked (false) comes first
+      }
+
+      // Second priority: Sort by the selected field
       let aValue = a[sortField];
       let bValue = b[sortField];
 
@@ -232,7 +241,14 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredAndSortedTransactions.map((transaction) => (
-              <tr key={transaction.id} className="hover:bg-gray-50">
+              <tr 
+                key={transaction.id} 
+                className={`hover:bg-gray-50 ${
+                  !transaction.linkedProductId 
+                    ? 'bg-orange-50 border-l-4 border-orange-400' 
+                    : ''
+                }`}
+              >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
                     <div className="font-medium">{transaction.date}</div>
@@ -274,22 +290,29 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   {transaction.transactionId}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {onUpdateProductLink ? (
-                    <ProductDropdown
-                      products={products}
-                      selectedProductId={transaction.linkedProductId || null}
-                      onProductSelect={async (productId: string | null) => {
-                        if (transaction.id) {
-                          await onUpdateProductLink(transaction.id, productId);
-                        }
-                      }}
-                      disabled={loading}
-                      size="small"
-                      loading={productsLoading}
-                    />
-                  ) : (
-                    <span className="text-gray-400 text-xs">No mapping available</span>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {!transaction.linkedProductId && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        Unlinked
+                      </span>
+                    )}
+                    {onUpdateProductLink ? (
+                      <ProductDropdown
+                        products={products}
+                        selectedProductId={transaction.linkedProductId || null}
+                        onProductSelect={async (productId: string | null) => {
+                          if (transaction.id) {
+                            await onUpdateProductLink(transaction.id, productId);
+                          }
+                        }}
+                        disabled={loading}
+                        size="small"
+                        loading={productsLoading}
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-xs">No mapping available</span>
+                    )}
+                  </div>
                 </td>
                 {onDeleteTransaction && (
                   <td className="px-6 py-4 whitespace-nowrap text-center">

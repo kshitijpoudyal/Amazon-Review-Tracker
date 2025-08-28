@@ -4,6 +4,7 @@ import StatCard from './StatCard';
 import LoadingSpinner from './LoadingSpinner';
 import { useUserData } from '../hooks/useUserData';
 import { useProductFilters } from '../hooks/useProductFilters';
+import { useProductPayPalLinks } from '../hooks/useProductPayPalLinks';
 import { StatusFilter, DeltaFilter, Product } from '../types/Product';
 
 const UserPage: React.FC = () => {
@@ -243,7 +244,7 @@ const UserPage: React.FC = () => {
 
         {/* Read-only Product Table */}
         <div className="p-8">
-          <ReadOnlyProductTable products={filteredProducts} />
+          <ReadOnlyProductTable products={filteredProducts} userId={userProfile?.uid} />
         </div>
       </div>
     </div>
@@ -251,7 +252,11 @@ const UserPage: React.FC = () => {
 };
 
 // Read-only product table component
-const ReadOnlyProductTable: React.FC<{ products: Product[] }> = ({ products }) => {
+const ReadOnlyProductTable: React.FC<{ products: Product[]; userId?: string }> = ({ products, userId }) => {
+  // Get product IDs for checking PayPal links
+  const productIds = products.map(p => p.id).filter(Boolean) as string[];
+  const { isProductLinked } = useProductPayPalLinks(userId, productIds);
+
   if (products.length === 0) {
     return (
       <div className="text-center py-16 text-gray-500">
@@ -285,7 +290,14 @@ const ReadOnlyProductTable: React.FC<{ products: Product[] }> = ({ products }) =
                 {product.orderDate || '-'}
               </td>
               <td className="px-4 py-4 text-sm">
-                <StatusBadge product={product} />
+                <div className="flex flex-col space-y-1">
+                  <StatusBadge product={product} />
+                  {product.id && isProductLinked(product.id) && (
+                    <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-green-100 text-green-800">
+                      Linked
+                    </span>
+                  )}
+                </div>
               </td>
               <td className="px-4 py-4 text-sm text-gray-900">
                 {product.paid !== null ? `$${product.paid.toFixed(2)}` : '-'}

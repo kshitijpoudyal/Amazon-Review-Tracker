@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   collection, 
   getDocs, 
+  getDoc,
   doc, 
   addDoc, 
   deleteDoc,
@@ -159,7 +160,13 @@ export const usePayPalTransactions = (userId?: string) => {
     if (!userId) return false;
 
     try {
+      // Get the current transaction to check its previous linked product
       const transactionRef = doc(db, 'users', userId, 'paypal_transactions', transactionId);
+      const transactionSnap = await getDoc(transactionRef);
+      const currentTransaction = transactionSnap.data();
+      const previousLinkedProductId = currentTransaction?.linkedProductId;
+
+      // Update the transaction link
       await updateDoc(transactionRef, {
         linkedProductId: linkedProductId || null,
         updatedAt: serverTimestamp()
@@ -167,14 +174,65 @@ export const usePayPalTransactions = (userId?: string) => {
       
       console.log('✅ PayPal transaction product link updated:', transactionId, 'linked to:', linkedProductId);
       
-      // Refresh data after update
+      // Refresh transaction data
       await fetchTransactions();
+      
+      // Update product received amounts for affected products
+      if (previousLinkedProductId) {
+        await updateProductReceivedAmount(previousLinkedProductId);
+      }
+      if (linkedProductId && linkedProductId !== previousLinkedProductId) {
+        await updateProductReceivedAmount(linkedProductId);
+      }
       
       return true;
     } catch (err) {
       console.error('Error updating PayPal transaction product link:', err);
       setError(err instanceof Error ? err.message : 'Failed to update product link');
       return false;
+    }
+  };
+
+  const updateProductReceivedAmount = async (productId: string): Promise<void> => {
+    if (!userId) return;
+
+    try {
+      // Fetch fresh transaction data to ensure accuracy
+      const transactionsRef = collection(db, 'users', userId, 'paypal_transactions');
+      const transactionsSnapshot = await getDocs(transactionsRef);
+      const transactions = transactionsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as PayPalTransaction[];
+
+      // Calculate total received amount from all linked transactions
+      const linkedTransactions = transactions.filter(
+        transaction => transaction.linkedProductId === productId && transaction.status === 'Completed'
+      );
+      
+      const totalReceived = linkedTransactions.reduce(
+        (sum, transaction) => sum + transaction.total, 0
+      );
+
+      // Update the product's received amount
+      const productRef = doc(db, 'users', userId, 'products', productId);
+      const productSnap = await getDoc(productRef);
+      
+      if (productSnap.exists()) {
+        const productData = productSnap.data();
+        const paid = productData.paid || 0;
+        const delta = totalReceived - paid;
+
+        await updateDoc(productRef, {
+          received: totalReceived,
+          delta: delta,
+          updatedAt: serverTimestamp()
+        });
+
+        console.log('✅ Product received amount updated:', productId, 'received:', totalReceived, 'delta:', delta);
+      }
+    } catch (err) {
+      console.error('Error updating product received amount:', err);
     }
   };
 
