@@ -7,6 +7,7 @@ import { PayPalTransactionTable } from './PayPalTransactionTable';
 import { AddPayPalTransactionForm } from './AddPayPalTransactionForm';
 import StatCard from './StatCard';
 import AppHeader from './AppHeader';
+import LoginScreen from './LoginScreen';
 
 export const PayPalDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -71,26 +72,18 @@ export const PayPalDashboard: React.FC = () => {
     .reduce((total, transaction) => total + transaction.total, 0) || 0;
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h2>
-          <p className="text-gray-600">Please log in to access your PayPal dashboard.</p>
-        </div>
-      </div>
-    );
+    return <LoginScreen onLoginSuccess={() => {}} />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100">
-      {/* Header with Navigation */}
-      <AppHeader user={user} onLogout={logout} />
-      
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen gradient-bg-1 p-5">
+      <div className="max-w-8xl mx-auto glass-effect rounded-2xl shadow-card overflow-hidden">
+        {/* Header */}
+        <AppHeader user={user} onLogout={logout} />
+        
         {/* Error Display */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="p-6 bg-red-50 border-b border-red-200">
             <div className="flex items-center space-x-2">
               <span className="text-lg">❌</span>
               <div>
@@ -103,7 +96,7 @@ export const PayPalDashboard: React.FC = () => {
 
         {/* Summary Cards */}
         {data && (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-5 p-8 bg-gray-50 border-b border-gray-200">
             <StatCard
               value={`$${data.summary.totalIncome.toFixed(2)}`}
               label="Total Income"
@@ -138,7 +131,7 @@ export const PayPalDashboard: React.FC = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="mb-8">
+        <div className="p-8 border-b border-gray-200">
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddForm(true)}
@@ -152,7 +145,7 @@ export const PayPalDashboard: React.FC = () => {
         </div>
 
         {/* CSV Import */}
-        <div className="mb-8">
+        <div className="p-8 border-b border-gray-200">
           <PayPalCSVImporter
             onImportComplete={handleImport}
             isLoading={loading}
@@ -160,14 +153,16 @@ export const PayPalDashboard: React.FC = () => {
         </div>
 
         {/* Transactions Table */}
-        <PayPalTransactionTable
-          transactions={data?.transactions || []}
-          products={productData?.products || []}
-          loading={loading}
-          productsLoading={productsLoading}
-          onDeleteTransaction={handleDeleteTransaction}
-          onUpdateProductLink={handleUpdateProductLink}
-        />
+        <div className="p-8">
+          <PayPalTransactionTable
+            transactions={data?.transactions || []}
+            products={productData?.products || []}
+            loading={loading}
+            productsLoading={productsLoading}
+            onDeleteTransaction={handleDeleteTransaction}
+            onUpdateProductLink={handleUpdateProductLink}
+          />
+        </div>
 
         {/* Add Transaction Form Modal */}
         {showAddForm && (
