@@ -201,7 +201,7 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
   ];
 
   return (
-    <DashboardLayout useFullPageLayout>
+    <DashboardLayout>
       {/* Error Display */}
       {error && (
         <DashboardError error={error} />
