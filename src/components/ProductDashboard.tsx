@@ -123,7 +123,7 @@ function ProductDashboard() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       ),
-      variant: 'primary',
+      variant: 'primary' as const,
       disabled: loading
     }
   ] : [];
