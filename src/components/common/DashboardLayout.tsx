@@ -6,19 +6,8 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ 
-  children, 
-  useFullPageLayout = false 
+  children
 }) => {
-  if (useFullPageLayout) {
-    return (
-      <div className="min-h-screen gradient-bg-1 p-5">
-        <div className="max-w-8xl mx-auto glass-effect rounded-2xl shadow-card overflow-hidden">
-          {children}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       {children}
