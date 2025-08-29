@@ -4,7 +4,7 @@ interface ActionButton {
   label: string;
   onClick: () => void;
   variant?: 'primary' | 'secondary' | 'danger';
-  icon?: string;
+  icon?: string | React.ReactElement;
   disabled?: boolean;
 }
 
