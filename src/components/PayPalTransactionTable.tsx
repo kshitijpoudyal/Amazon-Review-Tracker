@@ -20,7 +20,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   onDeleteTransaction,
   onUpdateProductLink
 }) => {
-  const [expandedTransactionId, setExpandedTransactionId] = useState<string | null>(null);
   
   // Calculate which product IDs are already linked to transactions
   const linkedProductIds = useMemo(() => {
