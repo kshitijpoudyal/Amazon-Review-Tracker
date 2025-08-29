@@ -32,8 +32,8 @@ export const DashboardActions: React.FC<DashboardActionsProps> = ({
   };
 
   return (
-    <div className="p-8 border-b border-gray-200">
-      <div className="flex justify-end space-x-4">
+    <div className="p-4">
+      <div>
         {actions.map((action, index) => (
           <button
             key={index}

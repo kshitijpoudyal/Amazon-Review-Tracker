@@ -18,15 +18,13 @@ function App() {
   const isPayPalRoute = location.pathname === '/paypal';
 
   return (
-    <div className="min-h-screen gradient-bg-1 p-5">
-      <div className="max-w-8xl mx-auto glass-effect rounded-2xl shadow-card overflow-hidden">
+      <div className="max-w-8xl mx-auto glass-effect shadow-card overflow-hidden">
         {/* Shared Header */}
         <AppHeader user={user} onLogout={logout} />
         
         {/* Conditional Dashboard Rendering */}
         {isPayPalRoute ? <PayPalDashboard /> : <ProductDashboard />}
       </div>
-    </div>
   );
 }
 
