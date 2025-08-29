@@ -8,6 +8,7 @@ interface ProductDropdownProps {
   disabled?: boolean;
   size?: 'small' | 'normal';
   loading?: boolean;
+  linkedProductIds?: string[]; // Array of product IDs that are already linked to transactions
 }
 
 export const ProductDropdown: React.FC<ProductDropdownProps> = ({
@@ -16,10 +17,12 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   onProductSelect,
   disabled = false,
   size = 'normal',
-  loading = false
+  loading = false,
+  linkedProductIds = []
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tempSelectedProductId, setTempSelectedProductId] = useState<string | null>(selectedProductId);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Debug: Log products array and component state
@@ -29,14 +32,15 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     selectedProductId,
     disabled,
     loading,
-    isModalOpen
+    isModalOpen,
+    linkedProductIds
   });
 
   // Find selected product
   const selectedProduct = products.find(p => p.id === selectedProductId);
 
-  // Filter products based on search term
-  const filteredProducts = products.filter(product => {
+  // Filter products based on search term and group by linked status
+  const allFilteredProducts = products.filter(product => {
     if (!searchTerm.trim()) {
       return true;
     }
@@ -48,6 +52,25 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     
     return nameMatch || paidMatch || receivedMatch;
   });
+
+  // Separate into linked and unlinked groups
+  const unlinkedProducts = allFilteredProducts
+    .filter(product => !linkedProductIds.includes(product.id || ''))
+    .sort((a, b) => {
+      // Sort by order date, most recent first
+      const dateA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
+      const dateB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
+      return dateB - dateA;
+    });
+
+  const linkedProducts = allFilteredProducts
+    .filter(product => linkedProductIds.includes(product.id || ''))
+    .sort((a, b) => {
+      // Sort by order date, most recent first
+      const dateA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
+      const dateB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
+      return dateB - dateA;
+    });
 
   // Focus search input when modal opens
   useEffect(() => {
@@ -68,15 +91,58 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isModalOpen]);
 
-  const handleProductSelect = (productId: string | null) => {
-    onProductSelect(productId);
+  const handleProductClick = (productId: string | null) => {
+    setTempSelectedProductId(productId);
+  };
+
+  const handleSave = () => {
+    onProductSelect(tempSelectedProductId);
     handleCloseModal();
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSearchTerm('');
+    setTempSelectedProductId(selectedProductId); // Reset to original selection
   };
+
+  // Helper function to render a product item
+  const renderProductItem = (product: Product, isLinked: boolean = false) => (
+    <li 
+      key={product.id}
+      onClick={() => handleProductClick(product.id || null)}
+      className={`flex gap-x-4 px-4 py-3 cursor-pointer hover:bg-gray-50 ${
+        tempSelectedProductId === product.id ? 'bg-blue-50' : ''
+      }`}
+    >
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-semibold ${isLinked ? 'text-green-700' : 'text-gray-900'}`}>
+          {product.item.length > 50 ? `${product.item.substring(0, 50)}...` : product.item}
+          {isLinked && <span className="ml-2 text-xs text-green-600">(Already Linked)</span>}
+        </p>
+        <p className={`mt-1 truncate text-xs ${isLinked ? 'text-green-600' : 'text-gray-500'}`}>
+          {product.orderDate && (
+            <>
+              <span className="font-medium">
+                {new Date(product.orderDate).toLocaleDateString()}
+              </span>
+              {(product.paid || product.received) && ' • '}
+            </>
+          )}
+          {product.paid && `Paid: $${product.paid}`}
+          {product.paid && product.received && ' • '}
+          {product.received && `Received: $${product.received}`}
+        </p>
+      </div>
+      <div className="flex items-center">
+        {tempSelectedProductId === product.id && (
+          <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        )}
+      </div>
+    </li>
+  );
 
   const getButtonClassName = () => {
     const baseClass = "border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-between";
@@ -115,6 +181,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
             console.log('🔍 ProductDropdown - Button clicked, disabled:', disabled);
             if (!disabled) {
               console.log('🔍 ProductDropdown - Opening modal');
+              setTempSelectedProductId(selectedProductId); // Initialize temp selection
               setIsModalOpen(true);
             }
           }}
@@ -146,9 +213,9 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
             ></div>
 
             {/* Modal panel */}
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full max-h-[80vh] flex flex-col">
               {/* Header */}
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex-shrink-0">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900">
                     Select Product to Link
@@ -174,51 +241,33 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-                {/* Products List */}
-                <div className="overflow-x-auto border border-gray-200 rounded">
-                  {/* No Product Option */}
-                  <button
-                    type="button"
-                    onClick={() => handleProductSelect(null)}
-                    className={`w-full px-4 py-3 text-left border-b border-gray-200 hover:bg-gray-50 ${
-                      !selectedProductId ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                    }`}
-                  >
-                    <span className="font-medium">No Product Linked</span>
-                    <div className="text-sm text-gray-500">Remove product link</div>
-                  </button>
+              </div>
 
-
-                  <ul role="list" className="divide-y divide-gray-100 dark:divide-white/5"> 
-                  {filteredProducts.length > 0 ? (
-                    filteredProducts.map((product) => (
-                      <li key={product.item} className="flex gap-x-4">
-                        <button
-                        key={product.id}
-                        type="button"
-                        onClick={() => handleProductSelect(product.id || null)}
-                        className={`w-full px-2 py-2 text-left border-b border-gray-200 hover:bg-gray-50 ${
-                          selectedProductId === product.id ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                        }`}
-                      >
-
-                        <div className="min-w-0">
-                                <p className="text-sm/6 font-semibold text-gray-900 dark:text-black">
-                                  {product.item.length > 50 ? `${product.item.substring(0, 50)}...` : product.item}
-                                </p>
-                                <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-800">{product.paid}</p>
-                            </div>
-
-                        <div className="flex justify-between items-start">
-                          {selectedProductId === product.id && (
-                            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                      </button>
-                      </li>
-                    ))
+              {/* Products List - Scrollable */}
+              <div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
+                <div className="border border-gray-200 rounded">
+                  <ul role="list" className="divide-y divide-gray-100"> 
+                  {(unlinkedProducts.length > 0 || linkedProducts.length > 0) ? (
+                    <>
+                      {/* Unlinked Products */}
+                      {unlinkedProducts.map((product) => renderProductItem(product, false))}
+                      
+                      {/* Divider between unlinked and linked products */}
+                      {unlinkedProducts.length > 0 && linkedProducts.length > 0 && (
+                        <li className="px-4 py-2 bg-gray-50 border-t-2 border-gray-300">
+                          <div className="flex items-center">
+                            <div className="flex-1 border-t border-gray-300"></div>
+                            <span className="mx-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              Already Linked Products
+                            </span>
+                            <div className="flex-1 border-t border-gray-300"></div>
+                          </div>
+                        </li>
+                      )}
+                      
+                      {/* Linked Products */}
+                      {linkedProducts.map((product) => renderProductItem(product, true))}
+                    </>
                   ) : searchTerm ? (
                     <div className="px-4 py-8 text-center text-gray-500">
                       <div className="text-4xl mb-2">🔍</div>
@@ -242,14 +291,42 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+                {/* No Product Linked Option */}
                 <button
                   type="button"
-                  onClick={handleCloseModal}
-                  className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => handleProductClick(null)}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
+                    tempSelectedProductId === null 
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                      : 'text-gray-600 hover:bg-gray-100 border border-gray-300'
+                  }`}
                 >
-                  Cancel
+                  {tempSelectedProductId === null && (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span>No Product Linked</span>
                 </button>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -20,6 +20,15 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   onDeleteTransaction,
   onUpdateProductLink
 }) => {
+  const [expandedTransactionId, setExpandedTransactionId] = useState<string | null>(null);
+  
+  // Calculate which product IDs are already linked to transactions
+  const linkedProductIds = useMemo(() => {
+    return transactions
+      .map(t => t.linkedProductId)
+      .filter((id): id is string => id !== null && id !== undefined);
+  }, [transactions]);
+
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
 
   // Close dropdown when clicking outside
@@ -145,6 +154,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   disabled={loading}
                   size="small"
                   loading={productsLoading}
+                  linkedProductIds={linkedProductIds}
                 />
               ) : (
                 <span className="text-gray-400 text-xs">No mapping available</span>
@@ -292,6 +302,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                           disabled={loading}
                           size="small"
                           loading={productsLoading}
+                          linkedProductIds={linkedProductIds}
                         />
                       ) : (
                         <span className="text-gray-400 text-xs">No mapping available</span>
