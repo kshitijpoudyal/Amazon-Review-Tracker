@@ -1,18 +1,25 @@
-import { Routes, Route } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import App from '../App';
-import UserPage from '../components/UserPage';
 import LoginPage from '../components/LoginPage';
-import { PayPalDashboard } from '../components/PayPalDashboard';
+import NotFoundPage from '../components/NotFoundPage';
 
 const AppRouter = () => {
-  return (
-    <Routes>
-      <Route path="/" element={<App />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/paypal" element={<PayPalDashboard />} />
-      <Route path="/:username" element={<UserPage />} />
-    </Routes>
-  );
+  const location = useLocation();
+  
+  // Switch case routing logic
+  const renderRoute = () => {
+    switch (location.pathname) {
+      case '/login':
+        return <LoginPage />;
+      case '/':
+      case '/paypal':
+        return <App />; // App will handle 404s internally
+      default:
+         return <NotFoundPage />;
+    }
+  };
+
+  return renderRoute();
 };
 
 export default AppRouter;

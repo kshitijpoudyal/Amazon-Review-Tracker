@@ -8,18 +8,15 @@ interface ProductTableProps {
   products: Product[];
   onUpdateProduct?: (index: number, updatedProduct: Product) => void;
   onDeleteProduct?: (productId: string) => void;
-  readOnly?: boolean;
   userId?: string; // Add userId to check for linked PayPal transactions
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({ 
   products, 
   onUpdateProduct, 
-  onDeleteProduct, 
-  readOnly = false,
+  onDeleteProduct,
   userId
 }) => {
-  console.log('ProductTable received products:', products);
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -29,11 +26,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const { isProductLinked } = useProductPayPalLinks(userId, productIds);
 
   const handleEditProduct = (product: Product) => {
-    console.log('handleEditProduct called with:', product);
     setEditingProduct(product);
     setIsModalOpen(true);
     setShowDropdown(null);
-    console.log('Modal state set: isModalOpen=true, editingProduct=', product);
   };
 
   const handleSaveProduct = (updatedProduct: Product) => {
@@ -260,11 +255,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Delta
               </th>
-              {!readOnly && (
                 <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                   Actions
                 </th>
-              )}
             </tr>
           </thead>
           <tbody>
@@ -307,22 +300,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
                     );
                   })()}
                 </td>
-                {/* Hidden columns */}
-                {/* <td className="px-3 py-4 text-sm">
-                  {getStatusBadge(product.orderPlaced)}
-                </td>
-                <td className="px-3 py-4 text-sm">
-                  {getStatusBadge(product.orderDelivered)}
-                </td>
-                <td className="px-3 py-4 text-sm">
-                  {getStatusBadge(product.reviewAdded)}
-                </td>
-                <td className="px-3 py-4 text-sm">
-                  {getStatusBadge(product.reviewLive)}
-                </td>
-                <td className="px-3 py-4 text-sm">
-                  {getStatusBadge(product.reviewSSSent)}
-                </td> */}
                 <td className="px-3 py-4 text-sm font-mono font-semibold">
                   {formatCurrency(product.paid)}
                 </td>
@@ -332,7 +309,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 <td className={`px-3 py-4 text-sm font-mono font-semibold ${getDeltaClass(product.delta)}`}>
                   {formatCurrency(product.delta)}
                 </td>
-                {!readOnly && (
                   <td className="px-3 py-4 text-sm relative dropdown-container">
                     <button
                       onClick={() => setShowDropdown(showDropdown === index ? null : index)}
@@ -367,7 +343,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
                       </div>
                     )}
                   </td>
-                )}
               </tr>
             ))}
           </tbody>
@@ -376,7 +351,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
       </div>
 
       {/* Edit Product Modal */}
-      {console.log('Rendering modal section - isModalOpen:', isModalOpen, 'editingProduct:', editingProduct)}
       {isModalOpen && editingProduct && (
         <EditProductModal
           isOpen={isModalOpen}

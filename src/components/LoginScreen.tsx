@@ -19,7 +19,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   // Call onLoginSuccess when user is authenticated
   useEffect(() => {
     if (user && !authLoading) {
-      console.log('✅ User authenticated, calling onLoginSuccess...');
       setLoading(false);
       onLoginSuccess();
     }
@@ -30,24 +29,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setError('');
 
-    console.log('🔄 Starting authentication process...');
-
     try {
       if (isSignUp) {
-        console.log('🔄 Creating new account...');
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
-        console.log('🔄 Signing in...');
         await signInWithEmailAndPassword(auth, email, password);
       }
-      
-      console.log('✅ Authentication successful');
-      console.log('✅ User authenticated, auth state will be handled by useAuth hook');
-      
       // Don't call onLoginSuccess immediately - let useAuth handle the state change
       // onLoginSuccess will be called automatically when user state is set
     } catch (error: any) {
-      console.error('❌ Authentication error:', error);
       setError(error.message);
       setLoading(false); // Only set loading to false on error
     }
@@ -56,25 +46,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const handleGoogleAuth = async () => {
     setLoading(true);
     setError('');
-
-    console.log('🔄 Starting Google authentication...');
     
     try {
       const provider = new GoogleAuthProvider();
-      console.log('🔄 Signing in with Google popup...');
       await signInWithPopup(auth, provider);
-      
-      console.log('✅ Google authentication successful');
-      console.log('✅ User authenticated, auth state will be handled by useAuth hook');
-      
+
       // Don't call onLoginSuccess immediately - let useAuth handle the state change
       // onLoginSuccess will be called automatically when user state is set
     } catch (error: any) {
-      console.error('❌ Google authentication error:', error);
       setError(error.message);
       setLoading(false); // Only set loading to false on error
     }
-  };  return (
+  };  
+  
+  return (
     <div className="min-h-screen gradient-bg-1 flex items-center justify-center p-5">
       <div className="max-w-md w-full glass-effect rounded-2xl shadow-card overflow-hidden">
         {/* Header */}

@@ -30,7 +30,6 @@ interface GenericFilterControlsProps {
   onClearFilters?: () => void;
   showClearButton?: boolean;
   loading?: boolean;
-  readOnly?: boolean;
   className?: string;
 }
 
@@ -40,7 +39,6 @@ const GenericFilterControls: React.FC<GenericFilterControlsProps> = ({
   onClearFilters,
   showClearButton = true,
   loading = false,
-  readOnly = false,
   className = ''
 }) => {
   const hasActiveFilters = filters.some(filter => filter.value && filter.value !== '');
@@ -102,7 +100,7 @@ const GenericFilterControls: React.FC<GenericFilterControlsProps> = ({
       {actions.length > 0 && (
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
           <div className="flex flex-wrap items-center gap-3">
-            {!readOnly && actions.map((action, index) => (
+            {actions.map((action, index) => (
               <button
                 key={index}
                 onClick={action.onClick}

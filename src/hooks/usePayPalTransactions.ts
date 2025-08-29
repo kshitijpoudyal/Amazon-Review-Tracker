@@ -27,7 +27,6 @@ export const usePayPalTransactions = (userId?: string) => {
       return;
     }
 
-    console.log('🔄 Fetching PayPal transactions from Firebase for user:', userId);
     setLoading(true);
     setError(null);
 
@@ -56,8 +55,6 @@ export const usePayPalTransactions = (userId?: string) => {
         return b.time.localeCompare(a.time);
       });
 
-      console.log(`💰 Found ${transactions.length} PayPal transactions in Firebase`);
-
       // Calculate summary from transactions
       const summary = {
         totalIncome: transactions
@@ -75,10 +72,6 @@ export const usePayPalTransactions = (userId?: string) => {
         summary
       };
 
-      console.log('✅ Successfully loaded PayPal transactions from Firebase:', {
-        transactionCount: transactions.length,
-        summary
-      });
       setData(transactionData);
     } catch (error) {
       console.error('❌ Error fetching PayPal transactions:', error);
@@ -94,7 +87,6 @@ export const usePayPalTransactions = (userId?: string) => {
     try {
       // Skip "User Initiated Withdrawal" transactions
       if (transaction.type === 'User Initiated Withdrawal') {
-        console.log('⚠️ Skipping User Initiated Withdrawal transaction:', transaction.transactionId);
         return false;
       }
 
@@ -106,7 +98,6 @@ export const usePayPalTransactions = (userId?: string) => {
       const existingSnap = await getDocs(existingQuery);
 
       if (!existingSnap.empty) {
-        console.log('⚠️ Transaction already exists:', transaction.transactionId);
         return false; // Transaction already exists
       }
 
@@ -118,7 +109,6 @@ export const usePayPalTransactions = (userId?: string) => {
 
       await addDoc(collection(db, 'users', userId, 'paypal_transactions'), transactionData);
       
-      console.log('✅ PayPal transaction added to Firebase:', transaction.transactionId);
       return true;
     } catch (err) {
       console.error('Error adding PayPal transaction to Firebase:', err);
@@ -169,8 +159,6 @@ export const usePayPalTransactions = (userId?: string) => {
         linkedProductId: linkedProductId || null,
         updatedAt: serverTimestamp()
       });
-      
-      console.log('✅ PayPal transaction product link updated:', transactionId, 'linked to:', linkedProductId);
       
       // Refresh transaction data
       await fetchTransactions();
@@ -226,8 +214,6 @@ export const usePayPalTransactions = (userId?: string) => {
           delta: delta,
           updatedAt: serverTimestamp()
         });
-
-        console.log('✅ Product received amount updated:', productId, 'received:', totalReceived, 'delta:', delta);
       }
     } catch (err) {
       console.error('Error updating product received amount:', err);
@@ -240,7 +226,6 @@ export const usePayPalTransactions = (userId?: string) => {
     try {
       const transactionRef = doc(db, 'users', userId, 'paypal_transactions', transactionId);
       await deleteDoc(transactionRef);
-      console.log('✅ PayPal transaction deleted from Firebase:', transactionId);
       return true;
     } catch (err) {
       console.error('Error deleting PayPal transaction from Firebase:', err);

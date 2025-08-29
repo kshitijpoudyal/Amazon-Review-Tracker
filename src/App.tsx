@@ -3,21 +3,20 @@ import { useAuth } from './hooks/useAuth';
 import AppHeader from './components/AppHeader';
 import ProductDashboard from './components/ProductDashboard';
 import { PayPalDashboard } from './components/PayPalDashboard';
-import NotFoundPage from './components/NotFoundPage';
 import { useEffect } from 'react';
 
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   // Redirect to login page if not authenticated
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       navigate('/login');
     }
-  }, [user, navigate]);
-
+  }, [user, loading, navigate]);
+  
   // Don't render anything if not authenticated (will redirect)
   if (!user) {
     return null;
@@ -27,21 +26,12 @@ function App() {
   const renderScreen = () => {
     switch (location.pathname) {
       case '/paypal':
-        return <PayPalDashboard />;
-      case '/':
-        return <ProductDashboard />;
+        return <PayPalDashboard user={user} />;
+      case '/dashboard':
       default:
-        return <NotFoundPage />;
+         return <ProductDashboard user={user} />;
     }
   };
-
-  // Check if current route is a 404
-  const is404Route = !['/', '/paypal'].includes(location.pathname);
-
-  // For 404 pages, render without the main layout
-  if (is404Route) {
-    return renderScreen();
-  }
 
   return (
       <div className="max-w-8xl mx-auto glass-effect shadow-card overflow-hidden">

@@ -1,13 +1,11 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import React from 'react';
+import { User } from 'firebase/auth';
 import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { usePayPalTransactions } from '../hooks/usePayPalTransactions';
 import { useProductCrudFirebase } from '../hooks/useProductCrudFirebase';
 import { PayPalTransactionTable } from './PayPalTransactionTable';
 import { AddPayPalTransactionForm } from './AddPayPalTransactionForm';
-import AppHeader from './AppHeader';
 import { 
   DashboardLayout, 
   DashboardStats, 
@@ -18,17 +16,13 @@ import {
   FilterControlConfig
 } from './common';
 
-export const PayPalDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
+interface PayPalDashboardProps {
+  user?: User;
+}
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
+export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser }) => {
+  const user = propUser;
+  const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
   
   // Filter state management
   const { 
@@ -118,7 +112,7 @@ export const PayPalDashboard: React.FC = () => {
     
     // Show detailed import results including withdrawal skips
     if (result.withdrawalSkipped > 0) {
-      console.log(`📊 Import Results: ${result.added} added, ${result.skipped} duplicates skipped, ${result.withdrawalSkipped} withdrawals skipped`);
+      // Import completed with some withdrawals skipped
     }
     
     return result;
@@ -158,11 +152,6 @@ export const PayPalDashboard: React.FC = () => {
   const unlinkedTransactionsAmount = filteredTransactions
     .filter(transaction => !transaction.linkedProductId)
     .reduce((total, transaction) => total + transaction.total, 0);
-
-  // Don't render anything if not authenticated (will redirect)
-  if (!user) {
-    return null;
-  }
 
   // Prepare stats data
   const statsData = data ? [
@@ -213,9 +202,6 @@ export const PayPalDashboard: React.FC = () => {
 
   return (
     <DashboardLayout useFullPageLayout>
-      {/* Header */}
-      <AppHeader user={user} onLogout={logout} />
-      
       {/* Error Display */}
       {error && (
         <DashboardError error={error} />

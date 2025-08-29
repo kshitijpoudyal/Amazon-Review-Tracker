@@ -24,7 +24,6 @@ export const useFirebaseData = (userId?: string) => {
       return;
     }
 
-    console.log('🔄 Fetching data from Firebase for user:', userId);
     setLoading(true);
     setError(null);
 
@@ -33,13 +32,11 @@ export const useFirebaseData = (userId?: string) => {
 
       const products: Product[] = productsSnap.docs.map(doc => {
         const data = doc.data();
-        console.log(`📝 Product loaded: ${data.item} (ID: ${doc.id})`);
         return {
           id: doc.id,
           ...data
         } as Product;
       });
-      console.log(`� Found ${products.length} products in Firebase`);
 
       // Calculate summary from products
       const summary = {
@@ -53,19 +50,12 @@ export const useFirebaseData = (userId?: string) => {
         summary
       };
 
-      console.log('✅ Successfully loaded data from Firebase:', {
-        productCount: products.length,
-        productNames: products.map(p => p.item),
-        summary
-      });
       setData(productData);
-      console.log('🔄 State updated with new data');
     } catch (error) {
       console.error('❌ Error fetching data:', error);
       setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setLoading(false);
-      console.log('✅ Fetch operation completed');
     }
   }, [userId]);
 
@@ -73,11 +63,8 @@ export const useFirebaseData = (userId?: string) => {
     if (!userId) return false;
 
     try {
-      console.log('🔄 Updating existing product:', product.item, 'ID:', product.id);
-      
       // Use the product's existing Firebase ID, not the array index
       if (!product.id) {
-        console.error('❌ Cannot update product: missing Firebase ID');
         setError('Cannot update product: missing Firebase ID');
         return false;
       }
@@ -90,7 +77,6 @@ export const useFirebaseData = (userId?: string) => {
       };
 
       await setDoc(productRef, productData, { merge: true });
-      console.log('✅ Product updated in Firebase:', product.id);
       return true;
     } catch (err) {
       console.error('Error saving product to Firebase:', err);

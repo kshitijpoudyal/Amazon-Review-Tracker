@@ -22,8 +22,6 @@ export const useProductCrudFirebase = (userId?: string) => {
   const updateProduct = useCallback(async (index: number, updatedProduct: Product) => {
     setIsSaving(true);
     try {
-      console.log('🔄 Updating product at index:', index, 'Product:', updatedProduct.item, 'ID:', updatedProduct.id);
-      
       // Save directly to Firebase
       const success = await saveToFirebase(updatedProduct);
       
