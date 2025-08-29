@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
@@ -7,7 +8,6 @@ import { useProductCrudFirebase } from '../hooks/useProductCrudFirebase';
 import { PayPalTransactionTable } from './PayPalTransactionTable';
 import { AddPayPalTransactionForm } from './AddPayPalTransactionForm';
 import AppHeader from './AppHeader';
-import LoginScreen from './LoginScreen';
 import { 
   DashboardLayout, 
   DashboardStats, 
@@ -19,8 +19,16 @@ import {
 } from './common';
 
 export const PayPalDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
   
   // Filter state management
   const { 
@@ -151,8 +159,9 @@ export const PayPalDashboard: React.FC = () => {
     .filter(transaction => !transaction.linkedProductId)
     .reduce((total, transaction) => total + transaction.total, 0);
 
+  // Don't render anything if not authenticated (will redirect)
   if (!user) {
-    return <LoginScreen onLoginSuccess={() => {}} />;
+    return null;
   }
 
   // Prepare stats data
