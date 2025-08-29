@@ -80,8 +80,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
   if (!isOpen) return null;
 
-  console.log('EditProductModal rendering with isOpen:', isOpen, 'product:', product);
-
   return createPortal(
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative flex flex-col">

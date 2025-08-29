@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { User } from 'firebase/auth';
 import ProductTable from './ProductTable';
 import AddProductForm from './AddProductForm';
 import { useProductFilters } from '../hooks/useProductFilters';
 import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
-import { useAuth } from '../hooks/useAuth';
 import { useDataSource } from '../hooks/useDataSource';
 import { useProductStats } from '../hooks/useProductStats';
 import { useSortedProducts } from '../hooks/useSortedProducts';
@@ -21,13 +20,12 @@ import {
   FilterControlConfig
 } from './common';
 
-function ProductDashboard() {
-  // Check if we're in public user page mode
-  const { username } = useParams<{ username: string }>();
-  const isPublicMode = !!username;
+interface ProductDashboardProps {
+  user?: User | null;
+}
 
-  // Authentication (only for private mode)
-  const { user } = useAuth();
+function ProductDashboard({ user: propUser }: ProductDashboardProps) {
+  const user = propUser;
 
   // Dashboard state management
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
@@ -58,8 +56,7 @@ function ProductDashboard() {
     updateProduct,
     addProduct,
     deleteProduct,
-    userProfile,
-  } = useDataSource(isPublicMode, user?.uid, username);
+  } = useDataSource(user?.uid);
   
   // Product filtering and sorting
   const { applyFilters } = useProductFilters(data?.products || []);
@@ -114,7 +111,7 @@ function ProductDashboard() {
   ];
 
   // Configure actions for DashboardActions component
-  const actions = !isPublicMode ? [
+  const actions = [
     {
       label: "Add Product",
       onClick: handleShowAddForm,
@@ -126,7 +123,7 @@ function ProductDashboard() {
       variant: 'primary' as const,
       disabled: loading
     }
-  ] : [];
+  ];
 
   if (loading) {
     return <DashboardLoading message="Loading products..." />;
@@ -135,15 +132,8 @@ function ProductDashboard() {
   if (error) {
     return (
       <DashboardError 
-        error={isPublicMode 
-          ? `Error loading user data: ${error}` 
-          : `Error loading data: ${error}`
-        }
-        additionalInfo={isPublicMode && error === 'User not found' ? (
-          <p className="text-sm mt-2 text-gray-600">
-            User "{username}" not found
-          </p>
-        ) : undefined}
+        error={`Error loading data: ${error}`}
+        additionalInfo={undefined}
       />
     );
   }
@@ -195,22 +185,20 @@ function ProductDashboard() {
         filters={filterConfigs}
         onClearFilters={clearAllFilters}
         loading={loading}
-        readOnly={isPublicMode}
       />
 
       {/* Product Table */}
       <DashboardSection border={false}>
         <ProductTable 
           products={filteredProducts} 
-          onUpdateProduct={isPublicMode ? undefined : updateProduct}
-          onDeleteProduct={isPublicMode ? undefined : deleteProduct}
-          readOnly={isPublicMode}
-          userId={isPublicMode ? undefined : user?.uid}
+          onUpdateProduct={updateProduct}
+          onDeleteProduct={deleteProduct}
+          userId={user?.uid}
         />
       </DashboardSection>
 
-      {/* Add Product Modal - only in private mode */}
-      {!isPublicMode && showAddForm && (
+      {/* Add Product Modal */}
+      {showAddForm && (
         <AddProductForm
           onAdd={handleAddProduct}
           onCancel={handleHideAddForm}

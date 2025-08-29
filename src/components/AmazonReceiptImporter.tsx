@@ -23,7 +23,6 @@ export const AmazonReceiptImporter: React.FC<AmazonReceiptImporterProps> = ({
 
   const handleReceiptDataExtracted = async (extractedData: any) => {
     if (!extractedData.orderData || !extractedData.orderData.items) {
-      console.log('No Amazon order items found in the image');
       return;
     }
 
@@ -37,9 +36,6 @@ export const AmazonReceiptImporter: React.FC<AmazonReceiptImporterProps> = ({
         failed: 0,
         items: [] as string[]
       };
-
-      console.log('Importing products from Amazon receipt:', orderData);
-
       // Process each item from the receipt
       for (const item of orderData.items) {
         try {
@@ -63,10 +59,8 @@ export const AmazonReceiptImporter: React.FC<AmazonReceiptImporterProps> = ({
           if (success) {
             results.success++;
             results.items.push(item.name);
-            console.log(`✅ Successfully added: ${item.name}`);
           } else {
             results.failed++;
-            console.log(`❌ Failed to add: ${item.name}`);
           }
         } catch (error) {
           console.error(`Error adding product ${item.name}:`, error);
@@ -76,10 +70,7 @@ export const AmazonReceiptImporter: React.FC<AmazonReceiptImporterProps> = ({
 
       setImportResults(results);
       onProductsAdded?.(results.success);
-
-      console.log('Import completed:', results);
     } catch (error) {
-      console.error('Error importing receipt data:', error);
       setImportResults({
         success: 0,
         failed: 1,

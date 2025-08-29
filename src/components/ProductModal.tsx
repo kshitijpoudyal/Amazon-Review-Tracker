@@ -23,14 +23,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Debug: Log products array and component state
-  console.log('🔍 ProductModal - Props received:', {
-    productsLength: products.length,
-    products,
-    selectedProductId,
-    disabled,
-    loading,
-    isModalOpen
-  });
 
   // Find selected product
   const selectedProduct = products.find(p => p.id === selectedProductId);
@@ -112,9 +104,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <button
           type="button"
           onClick={() => {
-            console.log('🔍 ProductModal - Button clicked, disabled:', disabled);
             if (!disabled) {
-              console.log('🔍 ProductModal - Opening modal');
               setIsModalOpen(true);
             }
           }}

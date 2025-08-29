@@ -17,24 +17,12 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   onProductSelect,
   disabled = false,
   size = 'normal',
-  loading = false,
   linkedProductIds = []
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSelectedProductId, setTempSelectedProductId] = useState<string | null>(selectedProductId);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Debug: Log products array and component state
-  console.log('🔍 ProductDropdown - Props received:', {
-    productsLength: products.length,
-    products,
-    selectedProductId,
-    disabled,
-    loading,
-    isModalOpen,
-    linkedProductIds
-  });
 
   // Find selected product
   const selectedProduct = products.find(p => p.id === selectedProductId);
@@ -178,9 +166,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
         <button
           type="button"
           onClick={() => {
-            console.log('🔍 ProductDropdown - Button clicked, disabled:', disabled);
             if (!disabled) {
-              console.log('🔍 ProductDropdown - Opening modal');
               setTempSelectedProductId(selectedProductId); // Initialize temp selection
               setIsModalOpen(true);
             }

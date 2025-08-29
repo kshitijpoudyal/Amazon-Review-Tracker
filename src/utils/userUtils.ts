@@ -9,8 +9,6 @@ export const initializeUserData = async (user: User): Promise<void> => {
 
     // Only create user document if it doesn't exist
     if (!userDoc.exists()) {
-      console.log('🔄 Creating new user profile for:', user.email);
-      
       const userData = {
         uid: user.uid,
         email: user.email,
@@ -21,14 +19,11 @@ export const initializeUserData = async (user: User): Promise<void> => {
       };
 
       await setDoc(userDocRef, userData);
-      console.log('✅ User profile created successfully');
     } else {
       // Update last login time for existing users
-      console.log('🔄 Updating last login for existing user:', user.email);
       await setDoc(userDocRef, {
         lastLoginAt: serverTimestamp()
       }, { merge: true });
-      console.log('✅ Last login updated');
     }
   } catch (error) {
     console.error('❌ Error initializing user data:', error);

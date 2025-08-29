@@ -29,11 +29,9 @@ export const useUserData = (username?: string) => {
     if (!username) {
       setLoading(false);
       setData(null);
-      setUserProfile(null);
       return;
     }
 
-    console.log('🔄 Fetching public data for username:', username);
     setLoading(true);
     setError(null);
 
@@ -91,8 +89,6 @@ export const useUserData = (username?: string) => {
         } as Product;
       });
 
-      console.log(`✅ Found ${products.length} products for user`);
-
       // Calculate summary from products
       const summary = {
         totalPaid: products.reduce((sum, product) => sum + (product.paid || 0), 0),
@@ -106,7 +102,7 @@ export const useUserData = (username?: string) => {
       };
 
       setData(productData);
-      console.log('✅ Successfully loaded public user data');
+      setUserProfile(userProfile);
     } catch (error) {
       console.error('❌ Error fetching user data:', error);
       setError(error instanceof Error ? error.message : 'Unknown error');

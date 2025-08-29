@@ -40,14 +40,7 @@ const NotFoundPage: React.FC = () => {
             to="/" 
             className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-base transition-colors inline-block"
           >
-            🏠 Go to Products Dashboard
-          </Link>
-          
-          <Link 
-            to="/paypal" 
-            className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-base transition-colors inline-block"
-          >
-            💳 Go to PayPal Dashboard
+            🏠 Go to Homepage
           </Link>
           
           <button 
