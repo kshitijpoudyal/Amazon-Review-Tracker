@@ -128,12 +128,6 @@ function ProductDashboard() {
     }
   ] : [];
 
-  // Return null if user is not authenticated and not in public mode
-  // App.tsx will handle showing LoginScreen
-  if (!user && !isPublicMode) {
-    return null;
-  }
-
   if (loading) {
     return <DashboardLoading message="Loading products..." />;
   }
@@ -189,15 +183,6 @@ function ProductDashboard() {
 
   return (
     <DashboardContainer>
-      {/* Public mode header */}
-      {isPublicMode && (
-        <div className="gradient-bg text-white p-8 text-center rounded-2xl">
-          <h1 className="text-4xl font-bold mb-3 text-shadow-lg">
-            {userProfile?.displayName || userProfile?.email || username}'s Review Dashboard
-          </h1>
-          <p className="text-blue-100">Public View - Read Only</p>
-        </div>
-      )}
 
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={loading} />
