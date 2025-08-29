@@ -15,10 +15,10 @@ import {
   DashboardStats, 
   DashboardError, 
   DashboardLoading, 
+  DashboardActions,
   DashboardSection,
   GenericFilterControls,
-  FilterControlConfig,
-  ActionButton
+  FilterControlConfig
 } from './common';
 
 function ProductDashboard() {
@@ -113,10 +113,10 @@ function ProductDashboard() {
     }
   ];
 
-  // Configure action buttons
-  const actionButtons: ActionButton[] = !isPublicMode ? [
+  // Configure actions for DashboardActions component
+  const actions = !isPublicMode ? [
     {
-      label: 'Add Product',
+      label: "Add Product",
       onClick: handleShowAddForm,
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,10 +202,12 @@ function ProductDashboard() {
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={loading} />
 
+      {/* Action Buttons */}
+      <DashboardActions actions={actions} loading={loading} />
+
       {/* Filter Controls */}
       <GenericFilterControls
         filters={filterConfigs}
-        actions={actionButtons}
         onClearFilters={clearAllFilters}
         loading={loading}
         readOnly={isPublicMode}
