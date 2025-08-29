@@ -132,30 +132,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 </div>
               </div>
 
-              {/* Status Grid - Hidden, keeping only financial info visible */}
-              {/* <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Order Placed:</span>
-                  {getStatusBadge(product.orderPlaced)}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Delivered:</span>
-                  {getStatusBadge(product.orderDelivered)}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Review Added:</span>
-                  {getStatusBadge(product.reviewAdded)}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Review Live:</span>
-                  {getStatusBadge(product.reviewLive)}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">SS Sent:</span>
-                  {getStatusBadge(product.reviewSSSent)}
-                </div>
-              </div> */}
-
               {/* Financial Info */}
               <div className="border-t pt-3 mb-3">
                 <div className="grid grid-cols-3 gap-3 text-sm">
@@ -230,22 +206,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Status
               </th>
-              {/* Hidden columns */}
-              {/* <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                Order Placed
-              </th>
-              <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                Order Delivered
-              </th>
-              <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                Review Added
-              </th>
-              <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                Review Live
-              </th>
-              <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                Screenshot Sent
-              </th> */}
               <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                 Paid
               </th>
@@ -279,6 +239,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
                   ) : (
                     <strong>{product.item}</strong>
                   )}
+                   {product.id && isProductLinked(product.id) && (
+                          <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-green-100 text-green-800">
+                            Linked
+                          </span>
+                        )}
                 </td>
                 <td className="px-3 py-4 text-sm text-gray-600">
                   {formatDate(product.orderDate)}
@@ -291,11 +256,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         <span className={`inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider ${status.color}`}>
                           {status.label}
                         </span>
-                        {product.id && isProductLinked(product.id) && (
-                          <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-green-100 text-green-800">
-                            Linked
-                          </span>
-                        )}
                       </div>
                     );
                   })()}
