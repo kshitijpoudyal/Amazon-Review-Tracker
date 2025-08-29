@@ -2,24 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { Product } from '../types/Product';
 import EditProductModal from './EditProductModal';
 import { getProductStatus } from '../utils/productStatus';
+import { useProductPayPalLinks } from '../hooks/useProductPayPalLinks';
 
 interface ProductTableProps {
   products: Product[];
   onUpdateProduct?: (index: number, updatedProduct: Product) => void;
   onDeleteProduct?: (productId: string) => void;
   readOnly?: boolean;
+  userId?: string; // Add userId to check for linked PayPal transactions
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({ 
   products, 
   onUpdateProduct, 
   onDeleteProduct, 
-  readOnly = false 
+  readOnly = false,
+  userId
 }) => {
   console.log('ProductTable received products:', products);
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  // Get product IDs for checking PayPal links
+  const productIds = products.map(p => p.id).filter(Boolean) as string[];
+  const { isProductLinked } = useProductPayPalLinks(userId, productIds);
 
   const handleEditProduct = (product: Product) => {
     console.log('handleEditProduct called with:', product);
@@ -118,9 +125,16 @@ const ProductTable: React.FC<ProductTableProps> = ({
                   )}
                   <p className="text-sm text-gray-600">Order Date: {formatDate(product.orderDate)}</p>
                 </div>
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color} ml-2`}>
-                  {status.label}
-                </span>
+                <div className="flex flex-col items-end space-y-1">
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
+                    {status.label}
+                  </span>
+                  {product.id && isProductLinked(product.id) && (
+                    <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-green-100 text-green-800">
+                      Linked
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Status Grid - Hidden, keeping only financial info visible */}
@@ -280,9 +294,16 @@ const ProductTable: React.FC<ProductTableProps> = ({
                   {(() => {
                     const status = getProductStatus(product);
                     return (
-                      <span className={`inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider ${status.color}`}>
-                        {status.label}
-                      </span>
+                      <div className="flex flex-col space-y-1">
+                        <span className={`inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider ${status.color}`}>
+                          {status.label}
+                        </span>
+                        {product.id && isProductLinked(product.id) && (
+                          <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-green-100 text-green-800">
+                            Linked
+                          </span>
+                        )}
+                      </div>
                     );
                   })()}
                 </td>
