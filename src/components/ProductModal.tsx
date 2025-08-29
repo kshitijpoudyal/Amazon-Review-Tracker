@@ -15,8 +15,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   selectedProductId,
   onProductSelect,
   disabled = false,
-  size = 'normal',
-  loading = false
+  size = 'normal'
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
