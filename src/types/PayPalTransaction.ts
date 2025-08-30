@@ -13,7 +13,9 @@ export interface PayPalTransaction {
   receiptId?: string;
   transactionId: string; // Unique PayPal transaction ID
   itemTitle?: string;
-  linkedProductId?: string; // NEW: Link to Product ID for mapping
+  linkedProductId?: string; // Legacy: Single product link (for backward compatibility)
+  linkedProductIds?: string[]; // NEW: Multiple product links
+  productDistribution?: { [productId: string]: number }; // NEW: How much each product received
   createdAt?: any; // Firebase timestamp
   updatedAt?: any; // Firebase timestamp
 }

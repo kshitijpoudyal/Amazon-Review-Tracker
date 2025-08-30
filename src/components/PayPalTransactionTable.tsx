@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Product } from '../types/Product';
 import { ProductDropdown } from './ProductDropdown';
+import MultipleProductLinkModal from './MultipleProductLinkModal';
 
 interface PayPalTransactionTableProps {
   transactions: PayPalTransaction[];
@@ -10,6 +11,7 @@ interface PayPalTransactionTableProps {
   productsLoading?: boolean;
   onDeleteTransaction?: (transactionId: string) => Promise<boolean>;
   onUpdateProductLink?: (transactionId: string, productId: string | null) => Promise<boolean>;
+  onUpdateProductLinks?: (transactionId: string, productDistribution: { [productId: string]: number }) => Promise<boolean>;
 }
 
 export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
@@ -18,17 +20,77 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   loading = false,
   productsLoading = false,
   onDeleteTransaction,
-  onUpdateProductLink
+  onUpdateProductLink,
+  onUpdateProductLinks
 }) => {
   
   // Calculate which product IDs are already linked to transactions
   const linkedProductIds = useMemo(() => {
-    return transactions
+    const singleLinks = transactions
       .map(t => t.linkedProductId)
       .filter((id): id is string => id !== null && id !== undefined);
+    
+    const multipleLinks = transactions
+      .flatMap(t => t.linkedProductIds || []);
+    
+    return [...new Set([...singleLinks, ...multipleLinks])];
   }, [transactions]);
 
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
+  const [showMultiLinkModal, setShowMultiLinkModal] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<PayPalTransaction | null>(null);
+
+  // Helper function to get linked product names for display
+  const getLinkedProductNames = (transaction: PayPalTransaction): string => {
+    const linkedProducts: string[] = [];
+    
+    // Legacy single link
+    if (transaction.linkedProductId) {
+      const product = products.find(p => p.id === transaction.linkedProductId);
+      if (product) {
+        linkedProducts.push(product.item);
+      }
+    }
+    
+    // Multiple links
+    if (transaction.linkedProductIds && transaction.linkedProductIds.length > 0) {
+      transaction.linkedProductIds.forEach(productId => {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+          const amount = transaction.productDistribution?.[productId] || 0;
+          linkedProducts.push(`${product.item} ($${amount.toFixed(2)})`);
+        }
+      });
+    }
+    
+    return linkedProducts.length > 0 ? linkedProducts.join(', ') : 'None';
+  };
+
+  // Helper function to get linked products as array for detailed display
+  const getLinkedProductsArray = (transaction: PayPalTransaction): { productName: string; amount: number }[] => {
+    const linkedProducts: { productName: string; amount: number }[] = [];
+    
+    // Legacy single link
+    if (transaction.linkedProductId && (!transaction.linkedProductIds || transaction.linkedProductIds.length === 0)) {
+      const product = products.find(p => p.id === transaction.linkedProductId);
+      if (product) {
+        linkedProducts.push({ productName: product.item, amount: transaction.total });
+      }
+    }
+    
+    // Multiple links
+    if (transaction.linkedProductIds && transaction.linkedProductIds.length > 0) {
+      transaction.linkedProductIds.forEach(productId => {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+          const amount = transaction.productDistribution?.[productId] || 0;
+          linkedProducts.push({ productName: product.item, amount });
+        }
+      });
+    }
+    
+    return linkedProducts;
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -141,21 +203,48 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
             {/* Product Link */}
             <div className="border-t pt-3 mb-3">
               <p className="text-sm text-gray-600 mb-2">Product Link:</p>
-              {onUpdateProductLink ? (
-                <ProductDropdown
-                  products={products}
-                  selectedProductId={transaction.linkedProductId || null}
-                  onProductSelect={async (productId: string | null) => {
-                    if (transaction.id) {
-                      await onUpdateProductLink(transaction.id, productId);
-                    }
-                  }}
-                  disabled={loading}
-                  size="small"
-                  loading={productsLoading}
-                  linkedProductIds={linkedProductIds}
-                />
-              ) : (
+              
+              {/* Display linked products */}
+              <div className="mb-2">
+                <p className="text-xs text-gray-700">
+                  {getLinkedProductNames(transaction)}
+                </p>
+              </div>
+              
+              {onUpdateProductLink && (
+                <div className="space-y-2">
+                  {/* Single Product Dropdown */}
+                  <ProductDropdown
+                    products={products}
+                    selectedProductId={transaction.linkedProductId || null}
+                    onProductSelect={async (productId: string | null) => {
+                      if (transaction.id) {
+                        await onUpdateProductLink(transaction.id, productId);
+                      }
+                    }}
+                    disabled={loading}
+                    size="small"
+                    loading={productsLoading}
+                    linkedProductIds={linkedProductIds}
+                  />
+                  
+                  {/* Multiple Products Button */}
+                  {onUpdateProductLinks && (
+                    <button
+                      onClick={() => {
+                        setSelectedTransaction(transaction);
+                        setShowMultiLinkModal(true);
+                      }}
+                      disabled={loading || productsLoading}
+                      className="w-full px-3 py-2 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      Link Multiple Products
+                    </button>
+                  )}
+                </div>
+              )}
+              
+              {!onUpdateProductLink && (
                 <span className="text-gray-400 text-xs">No mapping available</span>
               )}
             </div>
@@ -284,12 +373,31 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   </td>
                   <td className="px-3 py-4 text-sm">
                     <div className="flex flex-col space-y-1">
-                      {!transaction.linkedProductId && (
+                      {/* Unlinked Status */}
+                      {!transaction.linkedProductId && (!transaction.linkedProductIds || transaction.linkedProductIds.length === 0) && (
                         <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
                           Unlinked
                         </span>
                       )}
-                      {onUpdateProductLink ? (
+                      
+                      {/* Multiple Products Display */}
+                      {transaction.linkedProductIds && transaction.linkedProductIds.length > 0 && (
+                        <div className="text-xs">
+                          <div className="font-medium text-blue-800 mb-1">
+                            Multiple Products ({transaction.linkedProductIds.length})
+                          </div>
+                          <div className="space-y-1">
+                            {getLinkedProductsArray(transaction).map(({ productName, amount }, idx) => (
+                              <div key={idx} className="text-gray-600">
+                                {productName}: {formatCurrency(amount)}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Single Product Dropdown */}
+                      {onUpdateProductLink && (!transaction.linkedProductIds || transaction.linkedProductIds.length === 0) && (
                         <ProductDropdown
                           products={products}
                           selectedProductId={transaction.linkedProductId || null}
@@ -303,7 +411,26 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                           loading={productsLoading}
                           linkedProductIds={linkedProductIds}
                         />
-                      ) : (
+                      )}
+                      
+                      {/* Multiple Product Link Button */}
+                      {onUpdateProductLinks && (
+                        <button
+                          onClick={() => {
+                            setSelectedTransaction(transaction);
+                            setShowMultiLinkModal(true);
+                          }}
+                          className="mt-1 px-2 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          disabled={loading}
+                        >
+                          {transaction.linkedProductIds && transaction.linkedProductIds.length > 0 
+                            ? 'Edit Multiple Links' 
+                            : 'Link Multiple Products'
+                          }
+                        </button>
+                      )}
+                      
+                      {!onUpdateProductLink && !onUpdateProductLinks && (
                         <span className="text-gray-400 text-xs">No mapping available</span>
                       )}
                     </div>
@@ -344,6 +471,26 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Multiple Product Link Modal */}
+      {selectedTransaction && (
+        <MultipleProductLinkModal
+          isOpen={showMultiLinkModal}
+          onCancel={() => {
+            setShowMultiLinkModal(false);
+            setSelectedTransaction(null);
+          }}
+          transaction={selectedTransaction}
+          products={products || []}
+          onSave={async (transactionId: string, productDistribution: { [productId: string]: number }) => {
+            if (onUpdateProductLinks) {
+              await onUpdateProductLinks(transactionId, productDistribution);
+              setShowMultiLinkModal(false);
+              setSelectedTransaction(null);
+            }
+          }}
+        />
+      )}
     </>
   );
 };

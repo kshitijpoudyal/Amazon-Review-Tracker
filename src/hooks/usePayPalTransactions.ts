@@ -144,6 +144,58 @@ export const usePayPalTransactions = (userId?: string) => {
     return { added, skipped, withdrawalSkipped };
   };
 
+  const updateTransactionProductLinks = async (transactionId: string, productDistribution: { [productId: string]: number }): Promise<boolean> => {
+    if (!userId) return false;
+
+    try {
+      // Get the current transaction to check previous links
+      const transactionRef = doc(db, 'users', userId, 'paypal_transactions', transactionId);
+      const transactionSnap = await getDoc(transactionRef);
+      const currentTransaction = transactionSnap.data();
+      
+      // Get previously linked product IDs (both old and new format)
+      const previousLinkedProductIds = new Set<string>();
+      if (currentTransaction?.linkedProductId) {
+        previousLinkedProductIds.add(currentTransaction.linkedProductId);
+      }
+      if (currentTransaction?.linkedProductIds) {
+        currentTransaction.linkedProductIds.forEach((id: string) => previousLinkedProductIds.add(id));
+      }
+
+      // Update the transaction with new links
+      const linkedProductIds = Object.keys(productDistribution);
+      await updateDoc(transactionRef, {
+        linkedProductIds: linkedProductIds,
+        productDistribution: productDistribution,
+        // Clear legacy single link
+        linkedProductId: null,
+        updatedAt: serverTimestamp()
+      });
+      
+      // Refresh transaction data
+      await fetchTransactions();
+      
+      // Update product received amounts for all affected products
+      // First, update previously linked products that are no longer linked
+      for (const productId of previousLinkedProductIds) {
+        if (!linkedProductIds.includes(productId)) {
+          await updateProductReceivedAmount(productId);
+        }
+      }
+      
+      // Then update newly linked products
+      for (const productId of linkedProductIds) {
+        await updateProductReceivedAmount(productId);
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error updating PayPal transaction product links:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update product links');
+      return false;
+    }
+  };
+
   const updateTransactionProductLink = async (transactionId: string, linkedProductId: string | null): Promise<boolean> => {
     if (!userId) return false;
 
@@ -157,6 +209,9 @@ export const usePayPalTransactions = (userId?: string) => {
       // Update the transaction link
       await updateDoc(transactionRef, {
         linkedProductId: linkedProductId || null,
+        // Clear multiple links when using single link
+        linkedProductIds: null,
+        productDistribution: null,
         updatedAt: serverTimestamp()
       });
       
@@ -192,13 +247,19 @@ export const usePayPalTransactions = (userId?: string) => {
       })) as PayPalTransaction[];
 
       // Calculate total received amount from all linked transactions
-      const linkedTransactions = transactions.filter(
-        transaction => transaction.linkedProductId === productId
-      );
+      // Check both single links (legacy) and multiple links (new)
+      let totalReceived = 0;
       
-      const totalReceived = linkedTransactions.reduce(
-        (sum, transaction) => sum + transaction.total, 0
-      );
+      for (const transaction of transactions) {
+        // Check legacy single link
+        if (transaction.linkedProductId === productId) {
+          totalReceived += transaction.total;
+        }
+        // Check multiple links with distribution
+        else if (transaction.linkedProductIds?.includes(productId) && transaction.productDistribution) {
+          totalReceived += transaction.productDistribution[productId] || 0;
+        }
+      }
 
       // Update the product's received amount
       const productRef = doc(db, 'users', userId, 'products', productId);
@@ -246,6 +307,7 @@ export const usePayPalTransactions = (userId?: string) => {
     addTransaction: addTransactionToFirebase,
     importTransactions: importTransactionsFromCSV,
     deleteTransaction: deleteTransactionFromFirebase,
-    updateProductLink: updateTransactionProductLink
+    updateProductLink: updateTransactionProductLink,
+    updateProductLinks: updateTransactionProductLinks
   };
 };

@@ -49,11 +49,16 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
     addTransaction,
     deleteTransaction,
     updateProductLink,
+    updateProductLinks,
     refetch
   } = usePayPalTransactions(user?.uid);
 
   // Fetch products for mapping
-  const { data: productData, loading: productsLoading } = useProductCrudFirebase(user?.uid);
+  const { 
+    data: productData, 
+    loading: productsLoading,
+    refreshFromFirebase: refetchProducts 
+  } = useProductCrudFirebase(user?.uid);
 
   // Filter transactions based on current filter values
   const filteredTransactions = data?.transactions.filter(transaction => {
@@ -131,6 +136,16 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
     const success = await updateProductLink(transactionId, productId);
     if (success) {
       await refetch();
+      await refetchProducts(); // Also refresh product data to show updated received amounts
+    }
+    return success;
+  };
+
+  const handleUpdateProductLinks = async (transactionId: string, productDistribution: { [productId: string]: number }) => {
+    const success = await updateProductLinks(transactionId, productDistribution);
+    if (success) {
+      await refetch();
+      await refetchProducts(); // Also refresh product data to show updated received amounts
     }
     return success;
   };
@@ -230,6 +245,7 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
           productsLoading={productsLoading}
           onDeleteTransaction={handleDeleteTransaction}
           onUpdateProductLink={handleUpdateProductLink}
+          onUpdateProductLinks={handleUpdateProductLinks}
         />
       </DashboardSection>
 
