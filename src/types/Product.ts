@@ -12,6 +12,8 @@ export interface Product {
   received: number | null;
   delta: number | null;
   isVoid?: boolean;
+  statusLastChanged?: string; // ISO string timestamp of last status change
+  lastNotificationSent?: string; // ISO string timestamp of last notification sent
 }
 
 export interface ProductData {

@@ -1,13 +1,15 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { User } from 'firebase/auth';
 import ProductTable from './ProductTable';
 import AddProductForm from './AddProductForm';
+import StagnantProductsAlert from './StagnantProductsAlert';
 import { useProductFilters } from '../hooks/useProductFilters';
 import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { useDataSource } from '../hooks/useDataSource';
 import { useProductStats } from '../hooks/useProductStats';
 import { useSortedProducts } from '../hooks/useSortedProducts';
+import { useStagnantProducts } from '../hooks/useStagnantProducts';
 import { StatusFilter, DeltaFilter, Product } from '../types/Product';
 import { 
   DashboardContainer, 
@@ -26,6 +28,7 @@ interface ProductDashboardProps {
 
 function ProductDashboard({ user: propUser }: ProductDashboardProps) {
   const user = propUser;
+  const [dismissedStagnantAlert, setDismissedStagnantAlert] = useState(false);
 
   // Dashboard state management
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
@@ -64,6 +67,9 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
 
   // Stats calculation
   const stats = useProductStats(filteredProducts);
+
+  // Stagnant products check
+  const stagnantProductsInfo = useStagnantProducts(data?.products || [], 14);
 
   // Callback handlers
   const handleAddProduct = useCallback((product: Product) => {
@@ -174,6 +180,15 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
   return (
     <DashboardContainer>
 
+      {/* Stagnant Products Alert */}
+      {stagnantProductsInfo.needsAttention && !dismissedStagnantAlert && (
+        <StagnantProductsAlert
+          stagnantProducts={stagnantProductsInfo.stagnantProducts}
+          onDismiss={() => setDismissedStagnantAlert(true)}
+          className="mb-6"
+        />
+      )}
+
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={loading} />
 
@@ -189,12 +204,14 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
 
       {/* Product Table */}
       <DashboardSection border={false}>
-        <ProductTable 
-          products={filteredProducts} 
-          onUpdateProduct={updateProduct}
-          onDeleteProduct={deleteProduct}
-          userId={user?.uid}
-        />
+        <div id="products-section">
+          <ProductTable 
+            products={filteredProducts} 
+            onUpdateProduct={updateProduct}
+            onDeleteProduct={deleteProduct}
+            userId={user?.uid}
+          />
+        </div>
       </DashboardSection>
 
       {/* Add Product Modal */}

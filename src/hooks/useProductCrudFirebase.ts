@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Product } from '../types/Product';
 import { useFirebaseData } from './useFirebaseData';
+import { updateProductWithStatusTracking } from '../utils/statusTracker';
 
 export const useProductCrudFirebase = (userId?: string) => {
   const { 
@@ -22,13 +23,19 @@ export const useProductCrudFirebase = (userId?: string) => {
   const updateProduct = useCallback(async (index: number, updatedProduct: Product) => {
     setIsSaving(true);
     try {
+      // Get the current product for status comparison
+      const currentProduct = data?.products[index] || null;
+      
+      // Add status tracking to the updated product
+      const productWithStatusTracking = updateProductWithStatusTracking(currentProduct, updatedProduct);
+      
       // Save directly to Firebase
-      const success = await saveToFirebase(updatedProduct);
+      const success = await saveToFirebase(productWithStatusTracking);
       
       if (success && data) {
         // Recalculate and update summary
         const updatedProducts = [...data.products];
-        updatedProducts[index] = updatedProduct;
+        updatedProducts[index] = productWithStatusTracking;
         const summary = calculateSummary(updatedProducts);
         await updateSummaryFirebase(summary);
         
@@ -52,8 +59,11 @@ export const useProductCrudFirebase = (userId?: string) => {
     try {
       console.log('🔄 Adding product:', newProduct.item);
       
+      // Add status tracking to new product
+      const productWithStatusTracking = updateProductWithStatusTracking(null, newProduct);
+      
       // Add directly to Firebase using the correct function
-      const success = await addToFirebase(newProduct);
+      const success = await addToFirebase(productWithStatusTracking);
       console.log('✅ Product added to Firebase:', success);
       
       if (success) {
