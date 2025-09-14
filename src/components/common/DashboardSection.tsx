@@ -16,7 +16,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   border = true
 }) => {
   const sectionClasses = [
-    padding ? 'p-8' : '',
+    padding ? 'p-1' : '',
     border ? 'border-b border-gray-200' : '',
     className
   ].filter(Boolean).join(' ');
@@ -24,7 +24,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   return (
     <div className={sectionClasses}>
       {title && (
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">{title}</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-0">{title}</h2>
       )}
       {children}
     </div>
