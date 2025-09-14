@@ -78,6 +78,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     onSave(voidProduct);
   };
 
+  const handleUnVoid = () => {
+    const unVoidProduct = { ...editedProduct, isVoid: false };
+    onSave(unVoidProduct);
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -85,7 +90,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative flex flex-col">
         {/* Modal Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Edit Product</h2>
+          <div className="flex items-center space-x-3">
+            <h2 className="text-xl font-semibold text-gray-900">Edit Product</h2>
+            {editedProduct.isVoid && (
+              <span className="px-2 py-1 text-xs font-medium text-orange-800 bg-orange-100 rounded-full">
+                VOID
+              </span>
+            )}
+          </div>
           <button
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -135,7 +147,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
           {/* Order Number - Hidden field for search purposes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Order Number (Internal)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Order Number</label>
             <input
               type="text"
               value={editedProduct.orderNumber || ''}
@@ -237,12 +249,21 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               ${editedProduct.delta?.toFixed(2) || '0.00'}
             </div>
           </div>
-          <button
-            onClick={handleMarkAsVoid}
-            className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
-          >
-            Mark as Void
-          </button>
+          {editedProduct.isVoid ? (
+            <button
+              onClick={handleUnVoid}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              Un-Void Product
+            </button>
+          ) : (
+            <button
+              onClick={handleMarkAsVoid}
+              className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+            >
+              Mark as Void
+            </button>
+          )}
         </div>
 
         
