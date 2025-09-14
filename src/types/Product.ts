@@ -3,6 +3,7 @@ export interface Product {
   item: string;
   url?: string; // Product URL
   orderDate: string | null;
+  orderNumber?: string; // Order number (not displayed in UI but searchable)
   orderPlaced: boolean;
   orderDelivered: boolean;
   reviewAdded: boolean;

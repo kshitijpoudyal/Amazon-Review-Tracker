@@ -37,8 +37,9 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     const nameMatch = product.item?.toLowerCase().includes(searchLower);
     const paidMatch = product.paid?.toString().includes(searchTerm);
     const receivedMatch = product.received?.toString().includes(searchTerm);
+    const orderNumberMatch = product.orderNumber?.toLowerCase().includes(searchLower);
     
-    return nameMatch || paidMatch || receivedMatch;
+    return nameMatch || paidMatch || receivedMatch || orderNumberMatch;
   });
 
   // Separate into linked and unlinked groups

@@ -12,6 +12,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAdd, onCancel }) => {
     item: "",
     url: "",
     orderDate: null,
+    orderNumber: "",
     orderPlaced: true,
     orderDelivered: false,
     reviewAdded: false,
@@ -45,6 +46,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAdd, onCancel }) => {
         orderDate: orderData.orderDate 
           ? formatDateForInput(orderData.orderDate)
           : prev.orderDate,
+        // Fill order number from extracted data
+        orderNumber: orderData.orderNumber || prev.orderNumber,
         // Fill amount paid from order total
         paid: orderData.orderTotal || prev.paid,
         // Keep received amount as is (not available in receipt)
@@ -217,6 +220,21 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAdd, onCancel }) => {
                     placeholder="Enter amount paid"
                   />
                 </div>
+              </div>
+
+              {/* Order Number - Hidden field for search purposes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Order Number (Internal)
+                </label>
+                <input
+                  type="text"
+                  value={newProduct.orderNumber || ""}
+                  onChange={(e) => handleInputChange("orderNumber", e.target.value || null)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                  placeholder="Enter order number for search purposes"
+                />
+                <p className="text-xs text-gray-500 mt-1">This field is used for searching products by order number and won't be displayed in the main UI.</p>
               </div>
             </div>
           </div>
