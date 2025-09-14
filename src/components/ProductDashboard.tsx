@@ -9,11 +9,11 @@ import { useDataSource } from '../hooks/useDataSource';
 import { useProductStats } from '../hooks/useProductStats';
 import { useSortedProducts } from '../hooks/useSortedProducts';
 import { StatusFilter, DeltaFilter, Product } from '../types/Product';
-import { 
-  DashboardContainer, 
-  DashboardStats, 
-  DashboardError, 
-  DashboardLoading, 
+import {
+  DashboardContainer,
+  DashboardStats,
+  DashboardError,
+  DashboardLoading,
   DashboardActions,
   DashboardSection,
   GenericFilterControls,
@@ -31,10 +31,10 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
 
   // Filter state management
-  const { 
-    updateFilter, 
+  const {
+    updateFilter,
     clearFilters: clearAllFilters,
-    getFilterValue 
+    getFilterValue
   } = useGenericFilters({
     initialFilters: {
       searchTerm: '',
@@ -57,7 +57,7 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
     addProduct,
     deleteProduct,
   } = useDataSource(user?.uid);
-  
+
   // Product filtering and sorting
   const { applyFilters } = useProductFilters(data?.products || []);
   const filteredProducts = useSortedProducts(applyFilters, searchTerm, statusFilter, deltaFilter);
@@ -131,7 +131,7 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
 
   if (error) {
     return (
-      <DashboardError 
+      <DashboardError
         error={`Error loading data: ${error}`}
         additionalInfo={undefined}
       />
@@ -177,20 +177,27 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={loading} />
 
-      {/* Action Buttons */}
-      <DashboardActions actions={actions} loading={loading} />
+      <div className="flex flex-col md:flex-row w-full items-start md:items-center justify-between gap-4 mb-4 border-b border-gray-200">
+        {/* Filter Controls */}
+        <div className="w-full md:w-[88%]">
+          <GenericFilterControls
+            filters={filterConfigs}
+            onClearFilters={clearAllFilters}
+            loading={loading}
+          />
+        </div>
 
-      {/* Filter Controls */}
-      <GenericFilterControls
-        filters={filterConfigs}
-        onClearFilters={clearAllFilters}
-        loading={loading}
-      />
+        {/* Action Buttons */}
+        <div className="w-full md:w-[12%] flex md:justify-end">
+          <DashboardActions actions={actions} loading={loading} />
+        </div>
+      </div>
+
 
       {/* Product Table */}
       <DashboardSection border={false}>
-        <ProductTable 
-          products={filteredProducts} 
+        <ProductTable
+          products={filteredProducts}
           onUpdateProduct={updateProduct}
           onDeleteProduct={deleteProduct}
           userId={user?.uid}

@@ -95,7 +95,7 @@ const GenericFilterControls: React.FC<GenericFilterControlsProps> = ({
   };
 
   return (
-    <div className={`bg-white border-b border-gray-200 px-6 py-4 ${className}`}>
+    <div className={`bg-white px-6 py-4 ${className}`}>
       {/* Top Row - Actions */}
       {actions.length > 0 && (
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
