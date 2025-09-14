@@ -231,7 +231,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
               {products.map((product, index) => (
                 <tr
                   key={index}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                  className={`border-b border-gray-200 hover:bg-gray-100 transition-colors ${
+                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                  }`}
                 >
                   <td className="px-3 py-4 text-sm">
                     {product.url ? (
@@ -279,7 +281,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                     {formatCurrency(product.delta)}
                   </td>
                   {!readOnly && (
-                    <td className="px-3 py-4 text-sm relative dropdown-container">
+                    <td className="px-3 py-4 text-sm dropdown-container">
                       <button
                         onClick={() => setShowDropdown(showDropdown === index ? null : index)}
                         className="flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400"

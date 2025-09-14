@@ -20,7 +20,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   onDeleteTransaction,
   onUpdateProductLink
 }) => {
-  
+
   // Calculate which product IDs are already linked to transactions
   const linkedProductIds = useMemo(() => {
     return transactions
@@ -49,7 +49,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     return [...transactions].sort((a, b) => {
       const aLinked = !!a.linkedProductId;
       const bLinked = !!b.linkedProductId;
-      
+
       if (aLinked !== bLinked) {
         return aLinked ? 1 : -1; // Unlinked (false) comes first
       }
@@ -69,10 +69,10 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       });
     } catch (error) {
       return dateString;
@@ -174,10 +174,10 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   className="px-3 py-2 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                   </svg>
                 </button>
-                
+
                 {/* Dropdown Menu */}
                 {showDropdown === index && (
                   <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
@@ -241,9 +241,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               {filteredAndSortedTransactions.map((transaction, index) => (
                 <tr
                   key={transaction.id}
-                  className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
-                    !transaction.linkedProductId ? 'bg-orange-50' : ''
-                  }`}
+                  className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${!transaction.linkedProductId ? 'bg-orange-50' : ''
+                    }`}
                 >
                   <td className="px-3 py-4 text-sm">
                     <div>
@@ -309,17 +308,22 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                     </div>
                   </td>
                   {onDeleteTransaction && (
-                    <td className="px-3 py-4 text-sm relative dropdown-container">
+                    <td className="px-3 py-4 text-sm dropdown-container">
                       <button
                         onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                        className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center"
+                        className="flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400"
                         title="More actions"
                       >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
                         </svg>
                       </button>
-                      
+
                       {/* Dropdown Menu */}
                       {showDropdown === index && (
                         <div className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
