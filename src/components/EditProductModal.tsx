@@ -133,6 +133,19 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             />
           </div>
 
+          {/* Order Number - Hidden field for search purposes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Order Number (Internal)</label>
+            <input
+              type="text"
+              value={editedProduct.orderNumber || ''}
+              onChange={(e) => handleInputChange('orderNumber', e.target.value || null)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter order number for search purposes"
+            />
+            <p className="text-xs text-gray-500 mt-1">This field is used for searching products by order number and won't be displayed in the main UI.</p>
+          </div>
+
           {/* Status Checkboxes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Order Status</label>

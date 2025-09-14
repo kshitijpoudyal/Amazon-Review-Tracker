@@ -148,10 +148,21 @@ export const useImageDataExtractor = () => {
       });
     }
 
-    // Extract order number if available
-    const orderNumberMatch = cleanText.match(/Order #?\s*([0-9-]+)/i);
-    if (orderNumberMatch) {
-      orderData.orderNumber = orderNumberMatch[1];
+    // Extract order number if available - Enhanced patterns for better detection
+    const orderNumberPatterns = [
+      /Order #?\s*([0-9-]+)/i,
+      /Order Number:?\s*([0-9-]+)/i,
+      /#([0-9-]{10,})/i,  // Direct order number format
+      /(\d{3}-\d{7}-\d{7})/i,  // Amazon format XXX-XXXXXXX-XXXXXXX
+      /Order:\s*([0-9-]+)/i
+    ];
+
+    for (const pattern of orderNumberPatterns) {
+      const orderNumberMatch = cleanText.match(pattern);
+      if (orderNumberMatch && orderNumberMatch[1]) {
+        orderData.orderNumber = orderNumberMatch[1];
+        break;
+      }
     }
 
     return orderData;

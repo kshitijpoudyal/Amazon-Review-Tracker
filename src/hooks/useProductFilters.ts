@@ -11,8 +11,10 @@ export const useProductFilters = (products: Product[]) => {
       // Skip empty products
       if (!product.item) return false;
 
-      // Search filter
-      const matchesSearch = product.item.toLowerCase().includes(searchTerm.toLowerCase());
+      // Search filter - search in product name and order number
+      const matchesSearch = searchTerm === '' || 
+        product.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.orderNumber && product.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()));
 
       // Status filter
       let matchesStatus = true;
