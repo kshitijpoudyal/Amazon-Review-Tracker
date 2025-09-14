@@ -299,7 +299,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
                       {/* Dropdown Menu */}
                       {showDropdown === index && (
-                        <div className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
+                        <div className="right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
                           <button
                             onClick={() => handleEditProduct(product)}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
