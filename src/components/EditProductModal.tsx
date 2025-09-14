@@ -155,7 +155,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter order number for search purposes"
             />
-            <p className="text-xs text-gray-500 mt-1">This field is used for searching products by order number and won't be displayed in the main UI.</p>
           </div>
 
           {/* Status Checkboxes */}
@@ -167,7 +166,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   type="checkbox"
                   checked={editedProduct.orderPlaced}
                   onChange={(e) => handleInputChange('orderPlaced', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700">Order Placed</span>
               </label>
@@ -176,7 +175,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   type="checkbox"
                   checked={editedProduct.orderDelivered}
                   onChange={(e) => handleInputChange('orderDelivered', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700">Order Delivered</span>
               </label>
@@ -185,7 +184,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   type="checkbox"
                   checked={editedProduct.reviewAdded}
                   onChange={(e) => handleInputChange('reviewAdded', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700">Review Added</span>
               </label>
@@ -194,7 +193,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   type="checkbox"
                   checked={editedProduct.reviewLive}
                   onChange={(e) => handleInputChange('reviewLive', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700">Review Live</span>
               </label>
@@ -203,7 +202,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   type="checkbox"
                   checked={editedProduct.reviewSSSent}
                   onChange={(e) => handleInputChange('reviewSSSent', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700">Screenshot Sent</span>
               </label>
