@@ -118,10 +118,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
                       rel="noopener noreferrer"
                       className="font-semibold text-lg text-blue-600 hover:text-blue-800 underline mb-1 block"
                     >
-                      {product.item}
+                      {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
                     </a>
                   ) : (
-                    <h3 className="font-semibold text-lg text-gray-900 mb-1">{product.item}</h3>
+                    <h3 className="font-semibold text-lg text-gray-900 mb-1">{product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}</h3>
                   )}
                   <p className="text-sm text-gray-600">Order Date: {formatDate(product.orderDate)}</p>
                 </div>
@@ -241,10 +241,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         rel="noopener noreferrer"
                         className="font-semibold text-blue-600 hover:text-blue-800 underline"
                       >
-                        {product.item}
+                        {product.item.length > 40 ? `${product.item.substring(0, 40)}...` : product.item}
                       </a>
                     ) : (
-                      <strong>{product.item}</strong>
+                      <strong>{product.item.length > 40 ? `${product.item.substring(0, 40)}...` : product.item}</strong>
                     )}
                     {product.id && isProductLinked(product.id) && (
                       <span className="inline-block rounded-full text-center text-xs font-semibold tracking-wider text-green-800">
