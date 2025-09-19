@@ -249,10 +249,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         rel="noopener noreferrer"
                         className="font-semibold text-blue-600 hover:text-blue-800 underline"
                       >
-                        {product.item.length > 40 ? `${product.item.substring(0, 40)}...` : product.item}
+                        {product.item.length > 90 ? `${product.item.substring(0, 90)}...` : product.item}
                       </a>
                     ) : (
-                      <strong>{product.item.length > 40 ? `${product.item.substring(0, 40)}...` : product.item}</strong>
+                      <strong>{product.item.length > 90 ? `${product.item.substring(0, 90)}...` : product.item}</strong>
                     )}
                     {product.id && isProductLinked(product.id) && (
                       <span className="inline-block rounded-full text-center text-xs font-semibold tracking-wider text-green-800">

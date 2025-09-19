@@ -96,23 +96,24 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
             {/* Header */}
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
-                <h3 className="font-semibold text-lg text-gray-900 mb-1">{transaction.name}</h3>
+                <h3 className="font-semibold text-lg text-gray-900 mb-1">{transaction.transactionId}</h3>
                 <p className="text-sm text-gray-600">
-                  {formatDate(transaction.date)} • {transaction.time}
+                  {transaction.name} | {formatDate(transaction.date)} • {transaction.time}
                 </p>
                 {transaction.itemTitle && (
                   <p className="text-sm text-gray-500 truncate">{transaction.itemTitle}</p>
                 )}
               </div>
               <div className="flex flex-col items-end space-y-1">
-                <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-100 text-blue-800">
-                  {transaction.type}
-                </span>
-                {!transaction.linkedProductId && (
-                  <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-orange-100 text-orange-800">
-                    Unlinked
-                  </span>
-                )}
+                {transaction.linkedProductId ? (
+                      <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-blue-100 text-blue-800">
+                        Linked
+                      </span>
+                    ) : (
+                      <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
+                        Unlinked
+                      </span>
+                    )}
               </div>
             </div>
 
@@ -151,19 +152,12 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                     }
                   }}
                   disabled={loading}
-                  size="small"
                   loading={productsLoading}
                   linkedProductIds={linkedProductIds}
                 />
               ) : (
                 <span className="text-gray-400 text-xs">No mapping available</span>
               )}
-            </div>
-
-            {/* Transaction ID */}
-            <div className="border-t pt-3 mb-3">
-              <p className="text-sm text-gray-600 mb-1">Transaction ID:</p>
-              <p className="text-xs font-mono text-gray-700">{transaction.transactionId}</p>
             </div>
 
             {/* Actions */}
@@ -210,10 +204,13 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   Date/Time ({filteredAndSortedTransactions.length})
                 </th>
                 <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
+                  Transaction ID
+                </th>
+                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                   Name
                 </th>
                 <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Type
+                  Status
                 </th>
                 <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                   Amount
@@ -223,9 +220,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 </th>
                 <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                   Net Received
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Transaction ID
                 </th>
                 <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                   Product Link
@@ -241,7 +235,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               {filteredAndSortedTransactions.map((transaction, index) => (
                 <tr
                   key={transaction.id}
-                  className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${!transaction.linkedProductId ? 'bg-orange-50' : ''
+                  className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${!transaction.linkedProductId ? 'bg-orange-50' : 'bg-green-50'
                     }`}
                 >
                   <td className="px-3 py-4 text-sm">
@@ -249,6 +243,9 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                       <div className="font-medium">{formatDate(transaction.date)}</div>
                       <div className="text-gray-500">{transaction.time}</div>
                     </div>
+                  </td>
+                  <td className="px-3 py-4 text-sm text-gray-500 font-mono">
+                    {transaction.transactionId}
                   </td>
                   <td className="px-3 py-4 text-sm text-gray-900">
                     <div>
@@ -261,9 +258,15 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                     </div>
                   </td>
                   <td className="px-3 py-4 text-sm">
-                    <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-blue-100 text-blue-800">
-                      {transaction.type}
-                    </span>
+                    {transaction.linkedProductId ? (
+                      <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-blue-100 text-blue-800">
+                        Linked
+                      </span>
+                    ) : (
+                      <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
+                        Unlinked
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-4 text-sm font-mono font-semibold">
                     <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
@@ -278,16 +281,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                       {formatCurrency(transaction.total)}
                     </span>
                   </td>
-                  <td className="px-3 py-4 text-sm text-gray-500 font-mono">
-                    {transaction.transactionId}
-                  </td>
                   <td className="px-3 py-4 text-sm">
                     <div className="flex flex-col space-y-1">
-                      {!transaction.linkedProductId && (
-                        <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
-                          Unlinked
-                        </span>
-                      )}
                       {onUpdateProductLink ? (
                         <ProductDropdown
                           products={products}
@@ -298,7 +293,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                             }
                           }}
                           disabled={loading}
-                          size="small"
                           loading={productsLoading}
                           linkedProductIds={linkedProductIds}
                         />

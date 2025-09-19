@@ -6,7 +6,6 @@ interface ProductDropdownProps {
   selectedProductId: string | null;
   onProductSelect: (productId: string | null) => void;
   disabled?: boolean;
-  size?: 'small' | 'normal';
   loading?: boolean;
   linkedProductIds?: string[]; // Array of product IDs that are already linked to transactions
 }
@@ -16,7 +15,6 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   selectedProductId,
   onProductSelect,
   disabled = false,
-  size = 'normal',
   linkedProductIds = []
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -135,27 +133,12 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
 
   const getButtonClassName = () => {
     const baseClass = "border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-between";
-    
-    if (size === 'small') {
-      return `text-xs px-2 py-1 ${baseClass}`;
-    }
-    
-    return `w-full px-3 py-2 ${baseClass}`;
+    return `w-full min-w-48 max-w-96 px-3 py-2 ${baseClass}`;
   };
 
   const getDisplayText = () => {
     if (selectedProduct) {
-      let text = selectedProduct.item;
-      const amounts = [];
-      
-      if (selectedProduct.paid) amounts.push(`Paid: $${selectedProduct.paid}`);
-      if (selectedProduct.received) amounts.push(`Rec: $${selectedProduct.received}`);
-      
-      if (amounts.length > 0) {
-        text += ` (${amounts.join(', ')})`;
-      }
-      
-      return size === 'small' && text.length > 25 ? `${text.substring(0, 25)}...` : text;
+      return selectedProduct.item.length > 25 ? `${selectedProduct.item.substring(0, 25)}...` : selectedProduct.item;
     }
     return 'No Product Linked';
   };
@@ -163,7 +146,6 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   return (
     <>
       {/* Trigger Button */}
-      <div className="relative">
         <button
           type="button"
           onClick={() => {
@@ -187,7 +169,6 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-      </div>
 
       {/* Modal */}
       {isModalOpen && (
