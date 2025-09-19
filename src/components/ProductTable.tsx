@@ -252,7 +252,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         {product.item.length > 90 ? `${product.item.substring(0, 90)}...` : product.item}
                       </a>
                     ) : (
-                      <strong>{product.item.length > 90 ? `${product.item.substring(0, 90)}...` : product.item}</strong>
+                      <strong>{product.item.length > 70 ? `${product.item.substring(0, 70)}...` : product.item}</strong>
                     )}
                     {product.id && isProductLinked(product.id) && (
                       <span className="inline-block rounded-full text-center text-xs font-semibold tracking-wider text-green-800">

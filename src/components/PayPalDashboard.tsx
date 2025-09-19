@@ -10,11 +10,10 @@ import {
   DashboardLayout, 
   DashboardStats, 
   DashboardError, 
-  DashboardActions, 
   DashboardSection,
-  GenericFilterControls,
   FilterControlConfig
 } from './common';
+import Toolbar from './common/Toolbar';
 
 interface PayPalDashboardProps {
   user?: User;
@@ -210,11 +209,9 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
       {/* Summary Cards */}
       <DashboardStats stats={statsData} loading={loading} />
 
-      {/* Action Buttons */}
-      <DashboardActions actions={actions} loading={loading} />
-
       {/* Filter Controls */}
-      <GenericFilterControls
+      <Toolbar
+        actions={actions}
         filters={filterConfigs}
         onClearFilters={clearAllFilters}
         loading={loading}
@@ -222,7 +219,7 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
       />
 
       {/* Transactions Table */}
-      <DashboardSection title="Transactions" border={false}>
+      <DashboardSection>
         <PayPalTransactionTable
           transactions={filteredTransactions}
           products={productData?.products || []}

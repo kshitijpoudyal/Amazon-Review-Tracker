@@ -13,11 +13,10 @@ import {
   DashboardContainer,
   DashboardStats,
   DashboardError,
-  DashboardActions,
   DashboardSection,
-  GenericFilterControls,
   FilterControlConfig
 } from './common';
+import Toolbar from './common/Toolbar';
 
 interface ProductDashboardProps {
   user?: User | null;
@@ -167,25 +166,17 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={loading} />
 
-      <div className="flex flex-col md:flex-row w-full items-start md:items-center justify-between gap-4 mb-4 border-b border-gray-200">
-        {/* Filter Controls */}
-        <div className="w-full md:w-[88%]">
-          <GenericFilterControls
-            filters={filterConfigs}
-            onClearFilters={clearAllFilters}
-            loading={loading}
-          />
-        </div>
-
-        {/* Action Buttons */}
-        <div className="w-full md:w-[12%] flex md:justify-end">
-          <DashboardActions actions={actions} loading={loading} />
-        </div>
-      </div>
+      {/* Filter Controls */}
+      <Toolbar
+        actions={actions}
+        filters={filterConfigs}
+        onClearFilters={clearAllFilters}
+        loading={loading}
+      />
 
 
       {/* Product Table */}
-      <DashboardSection border={false}>
+      <DashboardSection>
         <ProductTable
           products={filteredProducts}
           onUpdateProduct={updateProduct}
