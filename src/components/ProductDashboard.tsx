@@ -13,7 +13,6 @@ import {
   DashboardContainer,
   DashboardStats,
   DashboardError,
-  DashboardLoading,
   DashboardActions,
   DashboardSection,
   GenericFilterControls,
@@ -119,10 +118,6 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
       disabled: loading
     }
   ];
-
-  // if (loading) {
-  //   return <DashboardLoading message="Loading products..." />;
-  // }
 
   if (error) {
     return (
