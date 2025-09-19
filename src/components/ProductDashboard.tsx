@@ -17,6 +17,7 @@ import {
   FilterControlConfig
 } from './common';
 import Toolbar from './common/Toolbar';
+import { TableViewLoading } from './common/TableViewLoading';
 
 interface ProductDashboardProps {
   user?: User | null;
@@ -177,12 +178,16 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
 
       {/* Product Table */}
       <DashboardSection>
-        <ProductTable
-          products={filteredProducts}
-          onUpdateProduct={updateProduct}
-          onDeleteProduct={deleteProduct}
-          userId={user?.uid}
-        />
+        {loading ? (
+          <TableViewLoading />
+        ) : (
+          <ProductTable
+            products={filteredProducts}
+            onUpdateProduct={updateProduct}
+            onDeleteProduct={deleteProduct}
+            userId={user?.uid}
+          />
+        )}
       </DashboardSection>
 
       {/* Add Product Modal */}

@@ -3,6 +3,7 @@ import { Product } from '../types/Product';
 import EditProductModal from './EditProductModal';
 import { getProductStatus } from '../utils/productStatus';
 import { useProductPayPalLinks } from '../hooks/useProductPayPalLinks';
+import { MobileItemCard } from './common/MobileItemCard';
 
 interface ProductTableProps {
   products: Product[];
@@ -10,6 +11,7 @@ interface ProductTableProps {
   onDeleteProduct?: (productId: string) => void;
   readOnly?: boolean;
   userId?: string; // Add userId to check for linked PayPal transactions
+  loading?: boolean;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
@@ -17,7 +19,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
   onUpdateProduct,
   onDeleteProduct,
   readOnly = false,
-  userId
+  userId,
 }) => {
   console.log('ProductTable received products:', products);
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
@@ -106,98 +108,106 @@ const ProductTable: React.FC<ProductTableProps> = ({
       <div className="block md:hidden space-y-4">
         {products.map((product, index) => {
           const status = getProductStatus(product);
-          return (
-            <div key={index} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-              {/* Header */}
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  {product.url ? (
-                    <a
-                      href={product.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-lg text-blue-600 hover:text-blue-800 underline mb-1 block"
-                    >
-                      {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
-                    </a>
-                  ) : (
-                    <h3 className="font-semibold text-lg text-gray-900 mb-1">{product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}</h3>
-                  )}
-                  <p className="text-sm text-gray-600">Order Date: {formatDate(product.orderDate)}</p>
-                </div>
-                <div className="flex flex-col items-end space-y-1">
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
-                    {status.label}
+          
+          const headerContent = (
+            <>
+              {product.url ? (
+                <a
+                  href={product.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-lg text-blue-600 hover:text-blue-800 underline mb-1 block"
+                >
+                  {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
+                </a>
+              ) : (
+                <h3 className="font-semibold text-lg text-gray-900 mb-1">
+                  {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
+                </h3>
+              )}
+              <p className="text-sm text-gray-600">Order Date: {formatDate(product.orderDate)}</p>
+              <div className="flex flex-col items-end space-y-1 mt-2">
+                <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
+                  {status.label}
+                </span>
+                {product.id && isProductLinked(product.id) && (
+                  <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-green-100 text-green-800">
+                    Linked
                   </span>
-                  {product.id && isProductLinked(product.id) && (
-                    <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-green-100 text-green-800">
-                      Linked
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Financial Info */}
-              <div className="border-t pt-3 mb-3">
-                <div className="grid grid-cols-3 gap-3 text-sm">
-                  <div className="text-center">
-                    <p className="text-gray-600 mb-1">Paid</p>
-                    <p className="font-mono font-semibold">{formatCurrency(product.paid)}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-600 mb-1">Received</p>
-                    <p className="font-mono font-semibold">{formatCurrency(product.received)}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-600 mb-1">Delta</p>
-                    <p className={`font-mono font-semibold ${getDeltaClass(product.delta)}`}>
-                      {formatCurrency(product.delta)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end relative dropdown-container">
-                <button
-                        onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                        className="flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400"
-                        title="More actions"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-                        </svg>
-                      </button>
-
-                {/* Dropdown Menu */}
-                {showDropdown === index && (
-                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                    <button
-                      onClick={() => handleEditProduct(product)}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-                          onDeleteProduct?.(product.id);
-                        }
-                        setShowDropdown(null);
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
-                  </div>
                 )}
               </div>
+            </>
+          );
+
+          const financialContent = (
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <div className="text-center">
+                <p className="text-gray-600 mb-1">Paid</p>
+                <p className="font-mono font-semibold">{formatCurrency(product.paid)}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-600 mb-1">Received</p>
+                <p className="font-mono font-semibold">{formatCurrency(product.received)}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-600 mb-1">Delta</p>
+                <p className={`font-mono font-semibold ${getDeltaClass(product.delta)}`}>
+                  {formatCurrency(product.delta)}
+                </p>
+              </div>
             </div>
+          );
+
+          const actionsContent = (
+            <>
+              <button
+                onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+                className="flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400"
+                title="More actions"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              {showDropdown === index && (
+                <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                  <button
+                    onClick={() => handleEditProduct(product)}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (product.id && window.confirm('Are you sure you want to delete this product?')) {
+                        onDeleteProduct?.(product.id);
+                      }
+                      setShowDropdown(null);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </>
+          );
+
+          return (
+            <MobileItemCard
+              key={index}
+              headerContent={headerContent}
+              financialContent={financialContent}
+              actionsContent={actionsContent}
+              className={product.id && isProductLinked(product.id) ? 'bg-green-50' : ''}
+            />
           );
         })}
       </div>
