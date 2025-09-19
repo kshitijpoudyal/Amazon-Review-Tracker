@@ -14,6 +14,7 @@ import {
   FilterControlConfig
 } from './common';
 import Toolbar from './common/Toolbar';
+import { TableViewLoading } from './common/TableViewLoading';
 
 interface PayPalDashboardProps {
   user?: User;
@@ -220,7 +221,10 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
 
       {/* Transactions Table */}
       <DashboardSection>
-        <PayPalTransactionTable
+        {loading ? (
+          <TableViewLoading />
+        ) : (
+          <PayPalTransactionTable
           transactions={filteredTransactions}
           products={productData?.products || []}
           loading={loading}
@@ -228,6 +232,7 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
           onDeleteTransaction={handleDeleteTransaction}
           onUpdateProductLink={handleUpdateProductLink}
         />
+        )}
       </DashboardSection>
 
       {/* Add Transaction Form Modal */}

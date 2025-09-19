@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Product } from '../types/Product';
 import { ProductDropdown } from './ProductDropdown';
+import { MobileItemCard } from './common/MobileItemCard';
 
 interface PayPalTransactionTableProps {
   transactions: PayPalTransaction[];
@@ -91,35 +92,33 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     <>
       {/* Mobile Card Layout */}
       <div className="block md:hidden space-y-4">
-        {filteredAndSortedTransactions.map((transaction, index) => (
-          <div key={transaction.id} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-            {/* Header */}
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg text-gray-900 mb-1">{transaction.transactionId}</h3>
-                <p className="text-sm text-gray-600">
-                  {transaction.name} | {formatDate(transaction.date)} • {transaction.time}
-                </p>
-                {transaction.itemTitle && (
-                  <p className="text-sm text-gray-500 truncate">{transaction.itemTitle}</p>
+        {filteredAndSortedTransactions.map((transaction, index) => {
+          const headerContent = (
+            <>
+              <h3 className="font-semibold text-lg text-gray-900 mb-1">{transaction.transactionId}</h3>
+              <p className="text-sm text-gray-600">
+                {transaction.name} | {formatDate(transaction.date)} • {transaction.time}
+              </p>
+              {transaction.itemTitle && (
+                <p className="text-sm text-gray-500 truncate">{transaction.itemTitle}</p>
+              )}
+              <div className="flex flex-col items-end space-y-1 mt-2">
+                {transaction.linkedProductId ? (
+                  <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-blue-100 text-blue-800">
+                    Linked
+                  </span>
+                ) : (
+                  <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
+                    Unlinked
+                  </span>
                 )}
               </div>
-              <div className="flex flex-col items-end space-y-1">
-                {transaction.linkedProductId ? (
-                      <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-blue-100 text-blue-800">
-                        Linked
-                      </span>
-                    ) : (
-                      <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
-                        Unlinked
-                      </span>
-                    )}
-              </div>
-            </div>
+            </>
+          );
 
-            {/* Financial Info */}
-            <div className="border-t pt-3 mb-3">
-              <div className="grid grid-cols-3 gap-3 text-sm">
+          const financialContent = (
+            <>
+              <div className="grid grid-cols-3 gap-3 text-sm mb-3">
                 <div className="text-center">
                   <p className="text-gray-600 mb-1">Amount</p>
                   <p className={`font-mono font-semibold ${transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -137,61 +136,76 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Product Link */}
-            <div className="border-t pt-3 mb-3">
-              <p className="text-sm text-gray-600 mb-2">Product Link:</p>
-              {onUpdateProductLink ? (
-                <ProductDropdown
-                  products={products}
-                  selectedProductId={transaction.linkedProductId || null}
-                  onProductSelect={async (productId: string | null) => {
-                    if (transaction.id) {
-                      await onUpdateProductLink(transaction.id, productId);
-                    }
-                  }}
-                  disabled={loading}
-                  loading={productsLoading}
-                  linkedProductIds={linkedProductIds}
-                />
-              ) : (
-                <span className="text-gray-400 text-xs">No mapping available</span>
-              )}
-            </div>
-
-            {/* Actions */}
-            {onDeleteTransaction && (
-              <div className="flex justify-end relative dropdown-container">
-                <button
-                  onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                  className="px-3 py-2 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center"
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                  </svg>
-                </button>
-
-                {/* Dropdown Menu */}
-                {showDropdown === index && (
-                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                    <button
-                      onClick={async () => {
-                        if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
-                          await onDeleteTransaction(transaction.id);
-                        }
-                        setShowDropdown(null);
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
-                  </div>
+              
+              {/* Product Link */}
+              <div className="border-t pt-3">
+                <p className="text-sm text-gray-600 mb-2">Product Link:</p>
+                {onUpdateProductLink ? (
+                  <ProductDropdown
+                    products={products}
+                    selectedProductId={transaction.linkedProductId || null}
+                    onProductSelect={async (productId: string | null) => {
+                      if (transaction.id) {
+                        await onUpdateProductLink(transaction.id, productId);
+                      }
+                    }}
+                    disabled={loading}
+                    loading={productsLoading}
+                    linkedProductIds={linkedProductIds}
+                  />
+                ) : (
+                  <span className="text-gray-400 text-xs">No mapping available</span>
                 )}
               </div>
-            )}
-          </div>
-        ))}
+            </>
+          );
+
+          const actionsContent = onDeleteTransaction ? (
+            <>
+              <button
+                onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+                className="flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400"
+                title="More actions"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              {showDropdown === index && (
+                <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                  <button
+                    onClick={async () => {
+                      if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
+                        await onDeleteTransaction(transaction.id);
+                      }
+                      setShowDropdown(null);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </>
+          ) : null;
+
+          return (
+            <MobileItemCard
+              key={transaction.id}
+              headerContent={headerContent}
+              financialContent={financialContent}
+              actionsContent={actionsContent}
+              className={transaction.linkedProductId ? 'bg-green-50' : 'bg-orange-50'}
+            />
+          );
+        })}
       </div>
 
       {/* Desktop Table Layout */}

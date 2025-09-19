@@ -1,7 +1,6 @@
 export { DashboardContainer } from './DashboardContainer';
 export { DashboardStats } from './DashboardStats';
 export { DashboardError } from './DashboardError';
-export { DashboardLoading } from './DashboardLoading';
 export { DashboardSection } from './DashboardSection';
 export { DashboardLayout } from './DashboardLayout';
 export { default as GenericFilterControls } from './Toolbar';
