@@ -15,6 +15,7 @@ import {
 } from './common';
 import Toolbar from './common/Toolbar';
 import { TableViewLoading } from './common/TableViewLoading';
+import { getStatsColor } from '../utils/colors';
 
 interface PayPalDashboardProps {
   user?: User;
@@ -158,32 +159,32 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
     {
       value: `$${data.summary.totalIncome.toFixed(2)}`,
       label: "Total Income",
-      className: "text-green-600"
+      className: getStatsColor('income')
     },
     {
       value: `$${data.summary.totalFees.toFixed(2)}`,
       label: "Total Fees",
-      className: "text-red-600"
+      className: getStatsColor('fees')
     },
     {
       value: `$${data.summary.netReceivedTotal.toFixed(2)}`,
       label: "Net Received Total",
-      className: "text-blue-600"
+      className: getStatsColor('netReceived')
     },
     {
       value: filteredTransactions.length,
       label: "Visible Transactions",
-      className: "text-purple-600"
+      className: getStatsColor('transactionCount')
     },
     {
       value: unlinkedTransactionsCount,
       label: "Unlinked Count",
-      className: "text-orange-600"
+      className: getStatsColor('unlinkedCount')
     },
     {
       value: `$${unlinkedTransactionsAmount.toFixed(2)}`,
       label: "Unlinked Amount",
-      className: "text-orange-600"
+      className: getStatsColor('unlinkedAmount')
     }
   ] : [];
 

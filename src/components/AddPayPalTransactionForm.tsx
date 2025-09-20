@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { PayPalCSVImporter } from './PayPalCSVImporter';
+import { colors } from '../utils/colors';
 
 interface AddPayPalTransactionFormProps {
   onAddTransaction: (transaction: PayPalTransaction) => Promise<boolean>;
@@ -152,14 +153,14 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
   ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className={`fixed inset-0 ${colors.modal.overlay} flex items-center justify-center z-50 p-4`}>
+      <div className={`${colors.background.primary} rounded-lg ${colors.modal.shadow} max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Add PayPal Transaction</h2>
+            <h2 className={`text-2xl font-bold ${colors.text.primary}`}>Add PayPal Transaction</h2>
             <button
               onClick={onCancel}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
+              className={`${colors.button.close} text-2xl`}
               disabled={isLoading}
             >
               ×
@@ -167,14 +168,14 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
           </div>
 
           {/* Tab Navigation */}
-          <div className="border-b border-gray-200 mb-6">
+          <div className={`border-b ${colors.border.default} mb-6`}>
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('manual')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'manual'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? colors.tabs.active
+                    : colors.tabs.inactive
                 }`}
               >
                 Manual Entry
@@ -183,8 +184,8 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                 onClick={() => setActiveTab('import')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'import'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? colors.tabs.active
+                    : colors.tabs.inactive
                 }`}
               >
                 Import CSV
@@ -199,7 +200,7 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Date & Time */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Date *
                 </label>
                 <input
@@ -207,14 +208,14 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
                   required
                   disabled={isLoading}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Time *
                 </label>
                 <input
@@ -222,7 +223,7 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   name="time"
                   value={formData.time}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
                   required
                   disabled={isLoading}
                 />
@@ -230,7 +231,7 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
 
               {/* Timezone */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Timezone
                 </label>
                 <input
@@ -239,14 +240,14 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.timeZone}
                   onChange={handleInputChange}
                   placeholder="PST, EST, etc."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
                   disabled={isLoading}
                 />
               </div>
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Name *
                 </label>
                 <input
@@ -255,25 +256,25 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="Payer/Recipient name"
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.name ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-3 py-2 rounded-md ${
+                    errors.name ? colors.form.input.error : colors.form.input.base
                   }`}
                   required
                   disabled={isLoading}
                 />
-                {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
+                {errors.name && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.name}</p>}
               </div>
 
               {/* Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Type
                 </label>
                 <select
                   name="type"
                   value={formData.type}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
                   disabled={isLoading}
                 >
                   {transactionTypes.map(type => (
@@ -284,7 +285,7 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
 
               {/* Currency */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Currency
                 </label>
                 <input
@@ -293,14 +294,14 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.currency}
                   onChange={handleInputChange}
                   placeholder="USD"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
                   disabled={isLoading}
                 />
               </div>
 
               {/* Amount */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Amount *
                 </label>
                 <input
@@ -310,18 +311,18 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.amount}
                   onChange={handleInputChange}
                   placeholder="0.00"
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.amount ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-3 py-2 rounded-md ${
+                    errors.amount ? colors.form.input.error : colors.form.input.base
                   }`}
                   required
                   disabled={isLoading}
                 />
-                {errors.amount && <p className="text-red-600 text-sm mt-1">{errors.amount}</p>}
+                {errors.amount && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.amount}</p>}
               </div>
 
               {/* Fees */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Fees
                 </label>
                 <input
@@ -331,17 +332,17 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.fees}
                   onChange={handleInputChange}
                   placeholder="0.00"
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.fees ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-3 py-2 rounded-md ${
+                    errors.fees ? colors.form.input.error : colors.form.input.base
                   }`}
                   disabled={isLoading}
                 />
-                {errors.fees && <p className="text-red-600 text-sm mt-1">{errors.fees}</p>}
+                {errors.fees && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.fees}</p>}
               </div>
 
               {/* Total (auto-calculated) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Total (Auto-calculated)
                 </label>
                 <input
@@ -351,14 +352,14 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.total}
                   onChange={handleInputChange}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.disabled} ${colors.form.input.base}`}
                   disabled={isLoading}
                 />
               </div>
 
               {/* Transaction ID */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Transaction ID *
                 </label>
                 <input
@@ -367,18 +368,18 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.transactionId}
                   onChange={handleInputChange}
                   placeholder="Unique PayPal transaction ID"
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.transactionId ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-3 py-2 rounded-md ${
+                    errors.transactionId ? colors.form.input.error : colors.form.input.base
                   }`}
                   required
                   disabled={isLoading}
                 />
-                {errors.transactionId && <p className="text-red-600 text-sm mt-1">{errors.transactionId}</p>}
+                {errors.transactionId && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.transactionId}</p>}
               </div>
 
               {/* Optional Fields */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Exchange Rate
                 </label>
                 <input
@@ -387,13 +388,13 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.exchangeRate}
                   onChange={handleInputChange}
                   placeholder="Optional"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
                   disabled={isLoading}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Receipt ID
                 </label>
                 <input
@@ -402,14 +403,14 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.receiptId}
                   onChange={handleInputChange}
                   placeholder="Optional"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
                   disabled={isLoading}
                 />
               </div>
 
               {/* Item Title */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm ${colors.form.label} mb-1`}>
                   Item Title
                 </label>
                 <input
@@ -418,25 +419,25 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
                   value={formData.itemTitle}
                   onChange={handleInputChange}
                   placeholder="Description of the transaction"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
                   disabled={isLoading}
                 />
               </div>
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex justify-end space-x-4 pt-6 border-t">
+            <div className={`flex justify-end space-x-4 pt-6 border-t ${colors.border.default}`}>
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                className={`px-6 py-2 rounded-md transition-colors ${colors.button.secondary}`}
                 disabled={isLoading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-6 py-2 rounded-md transition-colors ${colors.button.primary}`}
                 disabled={isLoading}
               >
                 {isLoading ? (

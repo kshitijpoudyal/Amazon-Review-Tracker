@@ -18,6 +18,7 @@ import {
 } from './common';
 import Toolbar from './common/Toolbar';
 import { TableViewLoading } from './common/TableViewLoading';
+import { getStatsColor } from '../utils/colors';
 
 interface ProductDashboardProps {
   user?: User | null;
@@ -137,27 +138,27 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
     {
       value: stats.completedOrders || '-',
       label: "Completed Orders",
-      className: "text-green-600"
+      className: getStatsColor('completed')
     },
     {
       value: `$${stats.totalPaid.toFixed(2)}`,
       label: "Total Paid",
-      className: "text-yellow-600"
+      className: getStatsColor('paid')
     },
     {
       value: `$${stats.totalReceived.toFixed(2)}`,
       label: "Total Received",
-      className: "text-green-600"
+      className: getStatsColor('received')
     },
     {
       value: `$${stats.remainingRefund.toFixed(2)}`,
       label: "Remaining Refund",
-      className: "text-orange-600"
+      className: getStatsColor('remaining')
     },
     {
       value: `$${stats.netDelta.toFixed(2)}`,
       label: "Net Profit/Loss",
-      className: stats.netDelta >= 0 ? 'text-green-600' : 'text-red-600'
+      className: getStatsColor('netDelta', stats.netDelta)
     }
   ] : [];
 

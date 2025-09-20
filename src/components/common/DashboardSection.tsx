@@ -1,4 +1,5 @@
 import React from 'react';
+import { colors } from '../../utils/colors';
 
 interface DashboardSectionProps {
   children: React.ReactNode;
@@ -12,7 +13,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   return (
     <div>
       {title && (
-        <h2 className="text-xl font-semibold text-gray-900 mb-0">{title}</h2>
+        <h2 className={`text-xl font-semibold ${colors.text.primary} mb-0`}>{title}</h2>
       )}
       {children}
     </div>

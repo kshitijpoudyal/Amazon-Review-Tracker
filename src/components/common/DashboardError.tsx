@@ -1,4 +1,5 @@
 import React from 'react';
+import { colors } from '../../utils/colors';
 
 interface DashboardErrorProps {
   error: string;
@@ -14,12 +15,12 @@ export const DashboardError: React.FC<DashboardErrorProps> = ({
   additionalInfo 
 }) => {
   return (
-    <div className="p-6 bg-red-50 border-b border-red-200">
+    <div className={`p-6 ${colors.status.error.bg} border-b ${colors.status.error.border}`}>
       <div className="flex items-center space-x-2">
         <span className="text-lg">{icon}</span>
         <div>
-          <h3 className="font-semibold text-red-800">{title}</h3>
-          <p className="text-red-700">{error}</p>
+          <h3 className={`font-semibold ${colors.status.error.text}`}>{title}</h3>
+          <p className={colors.status.error.textSecondary}>{error}</p>
           {additionalInfo && (
             <div className="mt-2">{additionalInfo}</div>
           )}
