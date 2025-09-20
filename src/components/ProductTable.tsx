@@ -4,6 +4,7 @@ import EditProductModal from './EditProductModal';
 import { getProductStatus } from '../utils/productStatus';
 import { useProductPayPalLinks } from '../hooks/useProductPayPalLinks';
 import { MobileItemCard } from './common/MobileItemCard';
+import { colors, getBadgeClasses } from '../utils/colors';
 
 interface ProductTableProps {
   products: Product[];
@@ -67,10 +68,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
   }, []);
 
   const getDeltaClass = (delta: number | null) => {
-    if (delta === null) return 'text-gray-500';
-    if (delta > 0) return 'text-green-600';
-    if (delta < 0) return 'text-red-600';
-    return 'text-gray-500';
+    if (delta === null) return colors.text.muted;
+    if (delta > 0) return colors.financial.positive;
+    if (delta < 0) return colors.financial.negative;
+    return colors.text.muted;
   };
 
   const formatCurrency = (amount: number | null) => {
@@ -96,7 +97,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
   if (products.length === 0) {
     return (
-      <div className="text-center py-16 text-gray-500">
+      <div className={`text-center py-16 ${colors.text.muted}`}>
         <p className="text-lg">No products found matching your criteria.</p>
       </div>
     );
@@ -116,22 +117,22 @@ const ProductTable: React.FC<ProductTableProps> = ({
                   href={product.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold text-lg text-blue-600 hover:text-blue-800 underline mb-1 block"
+                  className={`font-semibold text-lg ${colors.text.link} hover:${colors.text.linkHover} underline mb-1 block`}
                 >
                   {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
                 </a>
               ) : (
-                <h3 className="font-semibold text-lg text-gray-900 mb-1">
+                <h3 className={`font-semibold text-lg ${colors.text.primary} mb-1`}>
                   {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
                 </h3>
               )}
-              <p className="text-sm text-gray-600">Order Date: {formatDate(product.orderDate)}</p>
+              <p className={`text-sm ${colors.text.secondary}`}>Order Date: {formatDate(product.orderDate)}</p>
               <div className="flex flex-col items-end space-y-1 mt-2">
                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
                   {status.label}
                 </span>
                 {product.id && isProductLinked(product.id) && (
-                  <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-green-100 text-green-800">
+                  <span className={getBadgeClasses('linked')}>
                     Linked
                   </span>
                 )}
@@ -142,15 +143,15 @@ const ProductTable: React.FC<ProductTableProps> = ({
           const financialContent = (
             <div className="grid grid-cols-3 gap-3 text-sm">
               <div className="text-center">
-                <p className="text-gray-600 mb-1">Paid</p>
+                <p className={`${colors.text.secondary} mb-1`}>Paid</p>
                 <p className="font-mono font-semibold">{formatCurrency(product.paid)}</p>
               </div>
               <div className="text-center">
-                <p className="text-gray-600 mb-1">Received</p>
+                <p className={`${colors.text.secondary} mb-1`}>Received</p>
                 <p className="font-mono font-semibold">{formatCurrency(product.received)}</p>
               </div>
               <div className="text-center">
-                <p className="text-gray-600 mb-1">Delta</p>
+                <p className={`${colors.text.secondary} mb-1`}>Delta</p>
                 <p className={`font-mono font-semibold ${getDeltaClass(product.delta)}`}>
                   {formatCurrency(product.delta)}
                 </p>
@@ -162,7 +163,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             <>
               <button
                 onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                className="flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className={`flex items-center justify-center w-8 h-8 ${colors.button.primary} rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400`}
                 title="More actions"
               >
                 <svg
@@ -191,7 +192,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                       }
                       setShowDropdown(null);
                     }}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger}`}
                   >
                     Delete
                   </button>

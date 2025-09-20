@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { colors } from '../../utils/colors';
 
 interface MobileItemCardProps {
   headerContent: React.ReactNode;
@@ -15,7 +16,7 @@ export const MobileItemCard: React.FC<MobileItemCardProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`rounded-lg shadow-md p-4 m-4 border border-gray-200 ${className}`}>
+    <div className={`rounded-lg shadow-md p-4 m-4 border ${colors.border.default} ${className}`}>
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
@@ -24,7 +25,7 @@ export const MobileItemCard: React.FC<MobileItemCardProps> = ({
       </div>
 
       {/* Financial Info */}
-      <div className="border-t pt-3 mb-3">
+      <div className={`border-t ${colors.border.default} pt-3 mb-3`}>
         {financialContent}
       </div>
 

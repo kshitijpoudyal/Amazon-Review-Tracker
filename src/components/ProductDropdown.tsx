@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Product } from '../types/Product';
+import { colors } from '../utils/colors';
 
 interface ProductDropdownProps {
   products: Product[];
@@ -98,16 +99,15 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     <li 
       key={product.id}
       onClick={() => handleProductClick(product.id || null)}
-      className={`flex gap-x-4 px-4 py-3 cursor-pointer hover:bg-gray-50 ${
-        tempSelectedProductId === product.id ? 'bg-blue-50' : ''
+      className={`flex gap-x-4 px-4 py-3 cursor-pointer ${colors.modal.item.hover} ${
+        tempSelectedProductId === product.id ? colors.modal.item.selected : ''
       }`}
     >
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold ${isLinked ? 'text-green-700' : 'text-gray-900'}`}>
+        <p className={`text-sm font-semibold ${isLinked ? colors.text.green : colors.text.primary}`}>
           {product.item.length > 50 ? `${product.item.substring(0, 50)}...` : product.item}
-          {isLinked && <span className="ml-2 text-xs text-green-600">(Already Linked)</span>}
         </p>
-        <p className={`mt-1 truncate text-xs ${isLinked ? 'text-green-600' : 'text-gray-500'}`}>
+        <p className={`mt-1 truncate text-xs ${isLinked ? colors.text.green : colors.text.primary}`}>
           {product.orderDate && (
             <>
               <span className="font-medium">
@@ -121,18 +121,11 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
           {product.received && `Received: $${product.received}`}
         </p>
       </div>
-      <div className="flex items-center">
-        {tempSelectedProductId === product.id && (
-          <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        )}
-      </div>
     </li>
   );
 
   const getButtonClassName = () => {
-    const baseClass = "border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-between";
+    const baseClass = `${colors.form.input.base} ${colors.background.primary} ${colors.form.input.disabled} disabled:cursor-not-allowed flex items-center justify-between`;
     return `w-full min-w-48 max-w-96 px-3 py-2 ${baseClass}`;
   };
 
@@ -157,7 +150,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
           disabled={disabled}
           className={getButtonClassName()}
         >
-          <span className={selectedProduct ? 'text-gray-900' : 'text-gray-500'}>
+          <span className={selectedProduct ? colors.text.primary : colors.text.muted}>
             {getDisplayText()}
           </span>
           <svg
@@ -176,21 +169,21 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
             <div 
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              className={`fixed inset-0 ${colors.modal.overlay} transition-opacity`}
               onClick={handleCloseModal}
             ></div>
 
             {/* Modal panel */}
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full max-h-[80vh] flex flex-col">
+            <div className={`inline-block align-bottom ${colors.background.primary} rounded-lg text-left overflow-hidden ${colors.modal.shadow} transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full max-h-[80vh] flex flex-col`}>
               {/* Header */}
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex-shrink-0">
+              <div className={`${colors.background.primary} px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex-shrink-0`}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <h3 className={`text-lg font-medium ${colors.text.primary}`}>
                     Select Product to Link
                   </h3>
                   <button
                     onClick={handleCloseModal}
-                    className="text-gray-400 hover:text-gray-600"
+                    className={`${colors.button.secondary}`}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -206,14 +199,14 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
                     placeholder="Search by product name, paid amount, or received amount..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md ${colors.form.input.placeholder}`}
                   />
                 </div>
               </div>
 
               {/* Products List - Scrollable */}
               <div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
-                <div className="border border-gray-200 rounded">
+                <div className={`${colors.border.default} rounded`}>
                   <ul role="list" className="divide-y divide-gray-100"> 
                   {(unlinkedProducts.length > 0 || linkedProducts.length > 0) ? (
                     <>
@@ -222,13 +215,13 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
                       
                       {/* Divider between unlinked and linked products */}
                       {unlinkedProducts.length > 0 && linkedProducts.length > 0 && (
-                        <li className="px-4 py-2 bg-gray-50 border-t-2 border-gray-300">
+                        <li className={`px-4 py-2 ${colors.background.muted} border-t-2 ${colors.border.default}`}>
                           <div className="flex items-center">
-                            <div className="flex-1 border-t border-gray-300"></div>
-                            <span className="mx-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            <div className={`flex-1 border-t ${colors.border.default}`}></div>
+                            <span className={`mx-3 text-xs font-medium ${colors.text.muted} uppercase tracking-wide`}>
                               Already Linked Products
                             </span>
-                            <div className="flex-1 border-t border-gray-300"></div>
+                            <div className={`flex-1 border-t ${colors.border.default}`}></div>
                           </div>
                         </li>
                       )}
@@ -237,60 +230,48 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
                       {linkedProducts.map((product) => renderProductItem(product, true))}
                     </>
                   ) : searchTerm ? (
-                    <div className="px-4 py-8 text-center text-gray-500">
+                    <div className={`px-4 py-8 text-center ${colors.text.muted}`}>
                       <div className="text-4xl mb-2">🔍</div>
                       <div>No products found matching "{searchTerm}"</div>
                       <div className="text-sm">Try a different search term</div>
                     </div>
-                  ) : products.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-gray-500">
+                  ) : (
+                    <div className={`px-4 py-8 text-center ${colors.text.muted}`}>
                       <div className="text-4xl mb-2">📦</div>
                       <div>No products available</div>
                       <div className="text-sm">Add some products first to link them to PayPal transactions</div>
                     </div>
-                  ) : (
-                    <div className="px-4 py-8 text-center text-gray-500">
-                      <div className="text-4xl mb-2">📦</div>
-                      <div>Start typing to search {products.length} products</div>
-                    </div>
-                  )}
+                )}
                   </ul>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+              <div className={`${colors.background.secondary} px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3`}>
                 {/* No Product Linked Option */}
-                <button
-                  type="button"
-                  onClick={() => handleProductClick(null)}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
-                    tempSelectedProductId === null 
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                      : 'text-gray-600 hover:bg-gray-100 border border-gray-300'
-                  }`}
-                >
-                  {tempSelectedProductId === null && (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  <span>No Product Linked</span>
+                {(tempSelectedProductId != null) && (
+                  <button
+                    type="button"
+                    onClick={() => handleProductClick(null)}
+                    className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.danger}`}
+                  >
+                  <span>Remove Product Link</span>
                 </button>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.secondary}`}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleSave}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.primary}`}
                   >
                     Save
                   </button>

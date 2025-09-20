@@ -1,4 +1,5 @@
 import React from 'react';
+import { colors } from '../utils/colors';
 
 interface StatCardProps {
   value: string | number;
@@ -8,11 +9,11 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ value, label, className = '' }) => {
   return (
-    <div className="bg-white p-5 rounded-xl shadow-md border border-gray-200 text-center">
-      <div className={`text-2xl font-bold text-gray-900 mb-1 ${className}`}>
+    <div className={`${colors.card.background} p-5 rounded-xl ${colors.card.shadow} ${colors.card.border} text-center`}>
+      <div className={`text-2xl font-bold ${colors.card.value} mb-1 ${className}`}>
         {value}
       </div>
-      <div className="text-gray-600 text-sm uppercase tracking-wide font-medium">
+      <div className={`${colors.card.label} text-sm uppercase tracking-wide font-medium`}>
         {label}
       </div>
     </div>

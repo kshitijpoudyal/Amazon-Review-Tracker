@@ -3,6 +3,13 @@ import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Product } from '../types/Product';
 import { ProductDropdown } from './ProductDropdown';
 import { MobileItemCard } from './common/MobileItemCard';
+import { 
+  colors, 
+  getFinancialColor, 
+  getBadgeClasses, 
+  getActionButtonClasses,
+  getRowBackgroundColor 
+} from '../utils/colors';
 
 interface PayPalTransactionTableProps {
   transactions: PayPalTransaction[];
@@ -82,7 +89,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-16 text-gray-500">
+      <div className={`text-center py-16 ${colors.text.muted}`}>
         <p className="text-lg">No PayPal transactions found.</p>
       </div>
     );
@@ -95,20 +102,20 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         {filteredAndSortedTransactions.map((transaction, index) => {
           const headerContent = (
             <>
-              <h3 className="font-semibold text-lg text-gray-900 mb-1">{transaction.transactionId}</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className={`font-semibold text-lg ${colors.text.primary} mb-1`}>{transaction.transactionId}</h3>
+              <p className={`text-sm ${colors.text.secondary}`}>
                 {transaction.name} | {formatDate(transaction.date)} • {transaction.time}
               </p>
               {transaction.itemTitle && (
-                <p className="text-sm text-gray-500 truncate">{transaction.itemTitle}</p>
+                <p className={`text-sm ${colors.text.muted} truncate`}>{transaction.itemTitle}</p>
               )}
               <div className="flex flex-col items-end space-y-1 mt-2">
                 {transaction.linkedProductId ? (
-                  <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-blue-100 text-blue-800">
+                  <span className={getBadgeClasses('linked')}>
                     Linked
                   </span>
                 ) : (
-                  <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
+                  <span className={getBadgeClasses('unlinked')}>
                     Unlinked
                   </span>
                 )}
@@ -120,18 +127,18 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
             <>
               <div className="grid grid-cols-3 gap-3 text-sm mb-3">
                 <div className="text-center">
-                  <p className="text-gray-600 mb-1">Amount</p>
-                  <p className={`font-mono font-semibold ${transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`${colors.text.secondary} mb-1`}>Amount</p>
+                  <p className={`font-mono font-semibold ${getFinancialColor(transaction.amount)}`}>
                     {formatCurrency(transaction.amount)}
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-gray-600 mb-1">Fees</p>
-                  <p className="font-mono font-semibold text-red-600">{formatCurrency(transaction.fees)}</p>
+                  <p className={`${colors.text.secondary} mb-1`}>Fees</p>
+                  <p className={`font-mono font-semibold ${colors.financial.fees}`}>{formatCurrency(transaction.fees)}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-gray-600 mb-1">Net Received</p>
-                  <p className={`font-mono font-semibold ${transaction.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`${colors.text.secondary} mb-1`}>Net Received</p>
+                  <p className={`font-mono font-semibold ${getFinancialColor(transaction.total)}`}>
                     {formatCurrency(transaction.total)}
                   </p>
                 </div>
@@ -139,7 +146,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               
               {/* Product Link */}
               <div className="border-t pt-3">
-                <p className="text-sm text-gray-600 mb-2">Product Link:</p>
+                <p className={`text-sm ${colors.text.secondary} mb-2`}>Product Link:</p>
                 {onUpdateProductLink ? (
                   <ProductDropdown
                     products={products}
@@ -154,7 +161,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                     linkedProductIds={linkedProductIds}
                   />
                 ) : (
-                  <span className="text-gray-400 text-xs">No mapping available</span>
+                  <span className={`${colors.text.disabled} text-xs`}>No mapping available</span>
                 )}
               </div>
             </>
@@ -164,22 +171,16 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
             <>
               <button
                 onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                className="flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400"
-                title="More actions"
+                className={getActionButtonClasses()}
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                 </svg>
               </button>
 
               {/* Dropdown Menu */}
               {showDropdown === index && (
-                <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                <div className={`absolute right-0 top-10 ${colors.background.primary} ${colors.border.default} rounded-md shadow-lg z-10`}>
                   <button
                     onClick={async () => {
                       if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
@@ -187,7 +188,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                       }
                       setShowDropdown(null);
                     }}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger}`}
                   >
                     Delete
                   </button>
@@ -249,23 +250,22 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               {filteredAndSortedTransactions.map((transaction, index) => (
                 <tr
                   key={transaction.id}
-                  className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${!transaction.linkedProductId ? 'bg-orange-50' : 'bg-green-50'
-                    }`}
+                  className={`${colors.border.default} hover:bg-gray-50 transition-colors ${getRowBackgroundColor(!!transaction.linkedProductId)}`}
                 >
                   <td className="px-3 py-4 text-sm">
                     <div>
                       <div className="font-medium">{formatDate(transaction.date)}</div>
-                      <div className="text-gray-500">{transaction.time}</div>
+                      <div className={colors.text.muted}>{transaction.time}</div>
                     </div>
                   </td>
-                  <td className="px-3 py-4 text-sm text-gray-500 font-mono">
+                  <td className={`px-3 py-4 text-sm ${colors.text.muted} font-mono`}>
                     {transaction.transactionId}
                   </td>
-                  <td className="px-3 py-4 text-sm text-gray-900">
+                  <td className={`px-3 py-4 text-sm ${colors.text.primary}`}>
                     <div>
                       <div className="font-medium">{transaction.name}</div>
                       {transaction.itemTitle && (
-                        <div className="text-gray-500 text-xs truncate max-w-xs">
+                        <div className={`${colors.text.muted} text-xs truncate max-w-xs`}>
                           {transaction.itemTitle}
                         </div>
                       )}
@@ -273,25 +273,25 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   </td>
                   <td className="px-3 py-4 text-sm">
                     {transaction.linkedProductId ? (
-                      <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-blue-100 text-blue-800">
+                      <span className={getBadgeClasses('linked')}>
                         Linked
                       </span>
                     ) : (
-                      <span className="inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider bg-orange-100 text-orange-800">
+                      <span className={getBadgeClasses('unlinked')}>
                         Unlinked
                       </span>
                     )}
                   </td>
                   <td className="px-3 py-4 text-sm font-mono font-semibold">
-                    <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    <span className={getFinancialColor(transaction.amount)}>
                       {formatCurrency(transaction.amount)}
                     </span>
                   </td>
-                  <td className="px-3 py-4 text-sm font-mono font-semibold text-red-600">
+                  <td className={`px-3 py-4 text-sm font-mono font-semibold ${colors.financial.negative}`}>
                     {formatCurrency(transaction.fees)}
                   </td>
                   <td className="px-3 py-4 text-sm font-mono font-semibold">
-                    <span className={transaction.total >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    <span className={getFinancialColor(transaction.total)}>
                       {formatCurrency(transaction.total)}
                     </span>
                   </td>

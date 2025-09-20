@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Product } from '../types/Product';
+import { colors } from '../utils/colors';
 
 interface EditProductModalProps {
   product: Product;
@@ -86,21 +87,21 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative flex flex-col">
+    <div className={`fixed inset-0 ${colors.modal.overlay} flex items-center justify-center p-4`}>
+      <div className={`${colors.background.primary} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative flex flex-col`}>
         {/* Modal Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+        <div className={`flex justify-between items-center p-4 border-b ${colors.border.default}`}>
           <div className="flex items-center space-x-3">
-            <h2 className="text-xl font-semibold text-gray-900">Edit Product</h2>
+            <h2 className={`text-xl font-semibold ${colors.text.primary}`}>Edit Product</h2>
             {editedProduct.isVoid && (
-              <span className="px-2 py-1 text-xs font-medium text-orange-800 bg-orange-100 rounded-full">
+              <span className={`px-2 py-1 text-xs font-medium ${colors.editModal.void.badge} rounded-full`}>
                 VOID
               </span>
             )}
           </div>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className={`${colors.button.close} transition-colors`}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -112,11 +113,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Product Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
+            <label className={`block text-sm ${colors.form.label} mb-2`}>Product Name</label>
             <textarea
               value={editedProduct.item}
               onChange={(e) => handleInputChange('item', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical min-h-[4rem]"
+              className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md resize-vertical min-h-[4rem]`}
               placeholder="Product name"
               rows={3}
             />
@@ -124,87 +125,87 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
           {/* Product URL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product URL</label>
+            <label className={`block text-sm ${colors.form.label} mb-2`}>Product URL</label>
             <input
               type="url"
               value={editedProduct.url || ''}
               onChange={(e) => handleInputChange('url', e.target.value || null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
               placeholder="https://amazon.com/..."
             />
           </div>
 
           {/* Order Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Order Date</label>
+            <label className={`block text-sm ${colors.form.label} mb-2`}>Order Date</label>
             <input
               type="date"
               value={editedProduct.orderDate || ''}
               onChange={(e) => handleInputChange('orderDate', e.target.value || null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
             />
           </div>
 
           {/* Order Number - Hidden field for search purposes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Order Number</label>
+            <label className={`block text-sm ${colors.form.label} mb-2`}>Order Number</label>
             <input
               type="text"
               value={editedProduct.orderNumber || ''}
               onChange={(e) => handleInputChange('orderNumber', e.target.value || null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
               placeholder="Enter order number for search purposes"
             />
           </div>
 
           {/* Status Checkboxes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Order Status</label>
+            <label className={`block text-sm ${colors.form.label} mb-3`}>Order Status</label>
             <div className="grid grid-cols-2 gap-4">
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   checked={editedProduct.orderPlaced}
                   onChange={(e) => handleInputChange('orderPlaced', e.target.checked)}
-                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
+                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
                 />
-                <span className="text-sm text-gray-700">Order Placed</span>
+                <span className={`text-sm ${colors.text.secondary}`}>Order Placed</span>
               </label>
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   checked={editedProduct.orderDelivered}
                   onChange={(e) => handleInputChange('orderDelivered', e.target.checked)}
-                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
+                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
                 />
-                <span className="text-sm text-gray-700">Order Delivered</span>
+                <span className={`text-sm ${colors.text.secondary}`}>Order Delivered</span>
               </label>
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   checked={editedProduct.reviewAdded}
                   onChange={(e) => handleInputChange('reviewAdded', e.target.checked)}
-                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
+                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
                 />
-                <span className="text-sm text-gray-700">Review Added</span>
+                <span className={`text-sm ${colors.text.secondary}`}>Review Added</span>
               </label>
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   checked={editedProduct.reviewLive}
                   onChange={(e) => handleInputChange('reviewLive', e.target.checked)}
-                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
+                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
                 />
-                <span className="text-sm text-gray-700">Review Live</span>
+                <span className={`text-sm ${colors.text.secondary}`}>Review Live</span>
               </label>
               <label className="flex items-center space-x-3 col-span-2">
                 <input
                   type="checkbox"
                   checked={editedProduct.reviewSSSent}
                   onChange={(e) => handleInputChange('reviewSSSent', e.target.checked)}
-                  className="w-8 h-8 text-blue-600 rounded focus:ring-blue-500"
+                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
                 />
-                <span className="text-sm text-gray-700">Screenshot Sent</span>
+                <span className={`text-sm ${colors.text.secondary}`}>Screenshot Sent</span>
               </label>
             </div>
           </div>
@@ -212,24 +213,24 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           {/* Financial Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Amount Paid ($)</label>
+              <label className={`block text-sm ${colors.form.label} mb-2`}>Amount Paid ($)</label>
               <input
                 type="number"
                 step="0.01"
                 value={editedProduct.paid || ''}
                 onChange={(e) => handleNumberChange('paid', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
                 placeholder="0.00"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Amount Received ($)</label>
+              <label className={`block text-sm ${colors.form.label} mb-2`}>Amount Received ($)</label>
               <input
                 type="number"
                 step="0.01"
                 value={editedProduct.received || ''}
                 onChange={(e) => handleNumberChange('received', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
                 placeholder="0.00"
               />
             </div>
@@ -237,13 +238,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
           {/* Delta Display */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Profit/Loss (Auto-calculated)</label>
+            <label className={`block text-sm ${colors.form.label} mb-2`}>Profit/Loss (Auto-calculated)</label>
             <div className={`text-lg font-semibold px-3 py-2 rounded-md border ${
               editedProduct.delta !== null && editedProduct.delta >= 0 
-                ? 'text-green-600 bg-green-50 border-green-200' 
+                ? colors.financial.positive
                 : editedProduct.delta !== null
-                ? 'text-red-600 bg-red-50 border-red-200'
-                : 'text-gray-500 bg-gray-50 border-gray-200'
+                ? colors.financial.negative
+                : colors.financial.neutral
             }`}>
               ${editedProduct.delta?.toFixed(2) || '0.00'}
             </div>
@@ -251,14 +252,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           {editedProduct.isVoid ? (
             <button
               onClick={handleUnVoid}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              className={`px-4 py-2 ${colors.editModal.void.unvoidButton} rounded-md transition-colors`}
             >
               Un-Void Product
             </button>
           ) : (
             <button
               onClick={handleMarkAsVoid}
-              className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+              className={`px-4 py-2 ${colors.editModal.void.button} rounded-md transition-colors`}
             >
               Mark as Void
             </button>
@@ -268,22 +269,19 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         
 
         {/* Modal Footer */}
-        <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-gray-50">
+        <div className={`flex-shrink-0 p-6 border-t ${colors.border.default} ${colors.background.secondary}`}>
           <div className="flex space-x-3 w-full">
             <button
               onClick={onCancel}
-              className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+              className={`flex-1 px-4 py-2 ${colors.button.secondary} rounded-md transition-colors`}
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors flex items-center justify-center space-x-2"
+              className={`flex-1 px-4 py-2 ${colors.button.primary} rounded-md transition-colors flex items-center justify-center space-x-2`}
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-              </svg>
-              <span>Save Changes</span>
+              <span>Update</span>
             </button>
           </div>
         </div>
