@@ -52,7 +52,6 @@ export const parsePayPalCSV = (csvContent: string): PayPalTransaction[] => {
       const time = fields[columnMap.time]?.trim() || '';
       const name = fields[columnMap.name]?.trim() || '';
       const type = fields[columnMap.type]?.trim() || '';
-      const amount = fields[columnMap.amount]?.trim() || '0';
       const fees = fields[columnMap.fees]?.trim() || '0';
       const total = fields[columnMap.total]?.trim() || '0';
       const transactionId = fields[columnMap.transactionId]?.trim() || '';
@@ -69,6 +68,20 @@ export const parsePayPalCSV = (csvContent: string): PayPalTransaction[] => {
         return;
       }
 
+      // Parse fees and total values
+      const feesValue = parseFloat(fees) || 0;
+      const totalValue = parseFloat(total) || 0;
+      
+      // Auto-calculate total and amount when fees change as the paypal csv export does not provide amount before fees
+      // If fees < 0: Amount = positive(fees) + net received (total)
+      // Else: Amount = net received (total)
+      let calculatedAmount: number;
+      if (feesValue < 0) {
+        calculatedAmount = Math.abs(feesValue) + totalValue;
+      } else {
+        calculatedAmount = totalValue;
+      }
+
       const transaction: PayPalTransaction = {
         date,
         time,
@@ -76,9 +89,9 @@ export const parsePayPalCSV = (csvContent: string): PayPalTransaction[] => {
         name,
         type,
         currency: 'USD', // Default currency since it's not in the simplified format
-        amount: parseFloat(amount) || 0,
-        fees: parseFloat(fees) || 0,
-        total: parseFloat(total) || 0,
+        amount: calculatedAmount,
+        fees: feesValue,
+        total: totalValue,
         transactionId
       };
 
