@@ -10,7 +10,11 @@
     "preview": "vite preview",
     "extract-image": "node scripts/image-data-extractor.js",
     "test-extractor": "node scripts/test-image-extractor.js",
-    "migrate-orderdate": "node scripts/firebase-migration-orderdate.js"
+    "migrate-orderdate": "node scripts/firebase-migration-orderdate.js",
+    "backup-paypal": "node scripts/backupPayPalTransactions.js",
+    "update-paypal-amounts": "node scripts/updatePayPalTransactionAmounts.js --update",
+    "preview-paypal-updates": "node scripts/updatePayPalTransactionAmounts.js --dry-run",
+    "restore-paypal": "node scripts/restorePayPalTransactions.js --restore"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
