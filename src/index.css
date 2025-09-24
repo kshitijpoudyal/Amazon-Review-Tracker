@@ -42,4 +42,46 @@
   .spinner {
     @apply inline-block w-10 h-10 border-4 border-gray-200 rounded-full border-t-primary-500 animate-spin;
   }
+
+  /* Modern thin scrollbars */
+  .modern-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f3f4f6;
+  }
+  
+  .modern-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .modern-scrollbar::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+  }
+  
+  .modern-scrollbar::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background-clip: content-box;
+  }
+  
+  .modern-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+    background-clip: content-box;
+  }
+  
+  .modern-scrollbar::-webkit-scrollbar-thumb:active {
+    background: #6b7280;
+    background-clip: content-box;
+  }
+
+  /* Hidden scrollbars - completely invisible */
+  .scrollbar-hidden {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, and Opera */
+  }
 }
