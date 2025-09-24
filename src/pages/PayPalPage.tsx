@@ -87,9 +87,6 @@ export const PayPalPage: React.FC = () => {
     return matchesSearch && matchesType && matchesLinkFilter;
   }) || [];
 
-  // Get unique transaction types for filter dropdown
-  const uniqueTypes = [...new Set(data?.transactions.map(t => t.type) || [])];
-
   // Configure filter controls
   const filterConfigs: FilterControlConfig[] = [
     {
@@ -98,16 +95,6 @@ export const PayPalPage: React.FC = () => {
       placeholder: 'Search transactions...',
       value: searchTerm,
       onChange: (value) => updateFilter('searchTerm', value)
-    },
-    {
-      type: 'select',
-      key: 'typeFilter',
-      value: typeFilter,
-      onChange: (value) => updateFilter('typeFilter', value),
-      options: [
-        { value: '', label: 'All Types' },
-        ...uniqueTypes.map(type => ({ value: type, label: type }))
-      ]
     },
     {
       type: 'select',
