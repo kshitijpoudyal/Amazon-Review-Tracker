@@ -179,6 +179,47 @@ export const usePayPalTransactions = (userId?: string) => {
     }
   };
 
+  const updateTransactionMultipleProductLinks = async (transactionId: string, linkedProductIds: string[]): Promise<boolean> => {
+    if (!userId) return false;
+
+    try {
+      // Get the current transaction to check its previous linked products
+      const transactionRef = doc(db, 'users', userId, 'paypal_transactions', transactionId);
+      const transactionSnap = await getDoc(transactionRef);
+      const currentTransaction = transactionSnap.data();
+      const previousLinkedProductIds = currentTransaction?.linkedProductIds || [];
+      const previousSingleLinkedProductId = currentTransaction?.linkedProductId;
+
+      // Update the transaction with new multiple links
+      await updateDoc(transactionRef, {
+        linkedProductIds: linkedProductIds.length > 0 ? linkedProductIds : null,
+        // For backward compatibility, also set single linkedProductId to first product if any
+        linkedProductId: linkedProductIds.length > 0 ? linkedProductIds[0] : null,
+        updatedAt: serverTimestamp()
+      });
+      
+      // Refresh transaction data
+      await fetchTransactions();
+      
+      // Update product received amounts for all affected products
+      const allAffectedProductIds = new Set([
+        ...previousLinkedProductIds,
+        ...linkedProductIds,
+        ...(previousSingleLinkedProductId ? [previousSingleLinkedProductId] : [])
+      ]);
+
+      for (const productId of allAffectedProductIds) {
+        await updateProductReceivedAmount(productId);
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error updating PayPal transaction multiple product links:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update product links');
+      return false;
+    }
+  };
+
   const updateProductReceivedAmount = async (productId: string): Promise<void> => {
     if (!userId) return;
 
@@ -193,12 +234,30 @@ export const usePayPalTransactions = (userId?: string) => {
 
       // Calculate total received amount from all linked transactions
       const linkedTransactions = transactions.filter(
-        transaction => transaction.linkedProductId === productId
+        transaction => 
+          transaction.linkedProductId === productId || 
+          (transaction.linkedProductIds && transaction.linkedProductIds.includes(productId))
       );
       
-      const totalReceived = linkedTransactions.reduce(
-        (sum, transaction) => sum + transaction.total, 0
-      );
+      const totalReceived = linkedTransactions.reduce((sum, transaction) => {
+        // Count how many products are linked to this transaction
+        let linkedProductCount = 0;
+        
+        // Count single linked product
+        if (transaction.linkedProductId) {
+          linkedProductCount += 1;
+        }
+        
+        // Count multiple linked products
+        if (transaction.linkedProductIds && transaction.linkedProductIds.length > 0) {
+          linkedProductCount += transaction.linkedProductIds.length;
+        }
+        
+        // Divide transaction amount equally among all linked products
+        const sharePerProduct = linkedProductCount > 0 ? transaction.total / linkedProductCount : 0;
+        
+        return sum + sharePerProduct;
+      }, 0);
 
       // Update the product's received amount
       const productRef = doc(db, 'users', userId, 'products', productId);
@@ -246,6 +305,7 @@ export const usePayPalTransactions = (userId?: string) => {
     addTransaction: addTransactionToFirebase,
     importTransactions: importTransactionsFromCSV,
     deleteTransaction: deleteTransactionFromFirebase,
-    updateProductLink: updateTransactionProductLink
+    updateProductLink: updateTransactionProductLink,
+    updateMultipleProductLinks: updateTransactionMultipleProductLinks
   };
 };

@@ -49,7 +49,7 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
     importTransactions,
     addTransaction,
     deleteTransaction,
-    updateProductLink,
+    updateMultipleProductLinks,
     refetch
   } = usePayPalTransactions(user?.uid);
 
@@ -66,9 +66,12 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
 
     const matchesType = !typeFilter || transaction.type === typeFilter;
     
+    const hasLinkedProducts = transaction.linkedProductId || 
+      (transaction.linkedProductIds && transaction.linkedProductIds.length > 0);
+    
     const matchesLinkFilter = !linkFilter || 
-      (linkFilter === 'linked' && transaction.linkedProductId) ||
-      (linkFilter === 'unlinked' && !transaction.linkedProductId);
+      (linkFilter === 'linked' && hasLinkedProducts) ||
+      (linkFilter === 'unlinked' && !hasLinkedProducts);
 
     return matchesSearch && matchesType && matchesLinkFilter;
   }) || [];
@@ -128,8 +131,8 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
     return success;
   };
 
-  const handleUpdateProductLink = async (transactionId: string, productId: string | null) => {
-    const success = await updateProductLink(transactionId, productId);
+  const handleUpdateMultipleProductLinks = async (transactionId: string, productIds: string[]) => {
+    const success = await updateMultipleProductLinks(transactionId, productIds);
     if (success) {
       await refetch();
     }
@@ -146,12 +149,14 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
 
   // Calculate unlinked transactions from filtered data
   const unlinkedTransactionsCount = filteredTransactions.filter(
-    transaction => !transaction.linkedProductId
+    transaction => !transaction.linkedProductId && 
+      (!transaction.linkedProductIds || transaction.linkedProductIds.length === 0)
   ).length;
 
   // Calculate total amount of unlinked transactions from filtered data
   const unlinkedTransactionsAmount = filteredTransactions
-    .filter(transaction => !transaction.linkedProductId)
+    .filter(transaction => !transaction.linkedProductId && 
+      (!transaction.linkedProductIds || transaction.linkedProductIds.length === 0))
     .reduce((total, transaction) => total + transaction.total, 0);
 
   // Prepare stats data
@@ -231,7 +236,7 @@ export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser
           loading={loading}
           productsLoading={productsLoading}
           onDeleteTransaction={handleDeleteTransaction}
-          onUpdateProductLink={handleUpdateProductLink}
+          onUpdateMultipleProductLinks={handleUpdateMultipleProductLinks}
         />
         )}
       </DashboardSection>

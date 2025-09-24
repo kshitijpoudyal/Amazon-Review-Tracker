@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Product } from '../types/Product';
-import { ProductDropdown } from './ProductDropdown';
+import { MultipleProductDropdown } from './MultipleProductDropdown';
 import { MobileItemCard } from './common/MobileItemCard';
 import { 
   colors, 
@@ -17,7 +17,7 @@ interface PayPalTransactionTableProps {
   loading?: boolean;
   productsLoading?: boolean;
   onDeleteTransaction?: (transactionId: string) => Promise<boolean>;
-  onUpdateProductLink?: (transactionId: string, productId: string | null) => Promise<boolean>;
+  onUpdateMultipleProductLinks?: (transactionId: string, productIds: string[]) => Promise<boolean>;
 }
 
 export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
@@ -26,17 +26,30 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   loading = false,
   productsLoading = false,
   onDeleteTransaction,
-  onUpdateProductLink
+  onUpdateMultipleProductLinks
 }) => {
 
-  // Calculate which product IDs are already linked to transactions
-  const linkedProductIds = useMemo(() => {
-    return transactions
-      .map(t => t.linkedProductId)
-      .filter((id): id is string => id !== null && id !== undefined);
-  }, [transactions]);
+  // Helper function to check if transaction is linked to any products
+  const isTransactionLinked = (transaction: PayPalTransaction): boolean => {
+    return !!(transaction.linkedProductId || (transaction.linkedProductIds && transaction.linkedProductIds.length > 0));
+  };
 
-  const [showDropdown, setShowDropdown] = useState<number | null>(null);
+  // Helper function to get all linked product IDs for a transaction
+  const getLinkedProductIds = (transaction: PayPalTransaction): string[] => {
+    const allLinkedIds = new Set<string>();
+    
+    // Add from single linkedProductId
+    if (transaction.linkedProductId) {
+      allLinkedIds.add(transaction.linkedProductId);
+    }
+    
+    // Add from multiple linkedProductIds
+    if (transaction.linkedProductIds) {
+      transaction.linkedProductIds.forEach((id: string) => allLinkedIds.add(id));
+    }
+    
+    return Array.from(allLinkedIds);
+  };  const [showDropdown, setShowDropdown] = useState<number | null>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -55,8 +68,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   const filteredAndSortedTransactions = useMemo(() => {
     // Sort transactions with unlinked ones first
     return [...transactions].sort((a, b) => {
-      const aLinked = !!a.linkedProductId;
-      const bLinked = !!b.linkedProductId;
+      const aLinked = isTransactionLinked(a);
+      const bLinked = isTransactionLinked(b);
 
       if (aLinked !== bLinked) {
         return aLinked ? 1 : -1; // Unlinked (false) comes first
@@ -110,7 +123,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 <p className={`text-sm ${colors.text.muted} truncate`}>{transaction.itemTitle}</p>
               )}
               <div className="flex flex-col items-end space-y-1 mt-2">
-                {transaction.linkedProductId ? (
+                {isTransactionLinked(transaction) ? (
                   <span className={getBadgeClasses('linked')}>
                     Linked
                   </span>
@@ -147,18 +160,18 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               {/* Product Link */}
               <div className="border-t pt-3">
                 <p className={`text-sm ${colors.text.secondary} mb-2`}>Product Link:</p>
-                {onUpdateProductLink ? (
-                  <ProductDropdown
+                {onUpdateMultipleProductLinks ? (
+                  <MultipleProductDropdown
                     products={products}
-                    selectedProductId={transaction.linkedProductId || null}
-                    onProductSelect={async (productId: string | null) => {
+                    selectedProductIds={getLinkedProductIds(transaction)}
+                    onProductSelectionChange={async (productIds: string[]) => {
                       if (transaction.id) {
-                        await onUpdateProductLink(transaction.id, productId);
+                        await onUpdateMultipleProductLinks(transaction.id, productIds);
                       }
                     }}
                     disabled={loading}
                     loading={productsLoading}
-                    linkedProductIds={linkedProductIds}
+                    linkedProductIds={getLinkedProductIds(transaction)}
                   />
                 ) : (
                   <span className={`${colors.text.disabled} text-xs`}>No mapping available</span>
@@ -203,7 +216,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               headerContent={headerContent}
               financialContent={financialContent}
               actionsContent={actionsContent}
-              className={transaction.linkedProductId ? 'bg-green-50' : 'bg-orange-50'}
+              className={isTransactionLinked(transaction) ? 'bg-green-50' : 'bg-orange-50'}
             />
           );
         })}
@@ -272,7 +285,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                     </div>
                   </td>
                   <td className="px-3 py-4 text-sm">
-                    {transaction.linkedProductId ? (
+                    {isTransactionLinked(transaction) ? (
                       <span className={getBadgeClasses('linked')}>
                         Linked
                       </span>
@@ -297,18 +310,18 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   </td>
                   <td className="px-3 py-4 text-sm">
                     <div className="flex flex-col space-y-1">
-                      {onUpdateProductLink ? (
-                        <ProductDropdown
+                      {onUpdateMultipleProductLinks ? (
+                        <MultipleProductDropdown
                           products={products}
-                          selectedProductId={transaction.linkedProductId || null}
-                          onProductSelect={async (productId: string | null) => {
+                          selectedProductIds={getLinkedProductIds(transaction)}
+                          onProductSelectionChange={async (productIds: string[]) => {
                             if (transaction.id) {
-                              await onUpdateProductLink(transaction.id, productId);
+                              await onUpdateMultipleProductLinks(transaction.id, productIds);
                             }
                           }}
                           disabled={loading}
                           loading={productsLoading}
-                          linkedProductIds={linkedProductIds}
+                          linkedProductIds={getLinkedProductIds(transaction)}
                         />
                       ) : (
                         <span className="text-gray-400 text-xs">No mapping available</span>
