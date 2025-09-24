@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useImageDataExtractor } from '../hooks/useImageDataExtractor';
+import { useImageDataExtractor } from '../../hooks/useImageDataExtractor';
 
 interface ImageUploaderProps {
   onDataExtracted?: (data: any) => void;

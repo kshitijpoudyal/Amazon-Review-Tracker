@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { PayPalTransaction } from '../types/PayPalTransaction';
+import { PayPalTransaction } from '../../types/PayPalTransaction';
 import { PayPalCSVImporter } from './PayPalCSVImporter';
-import { colors } from '../utils/colors';
+import { colors } from '../../utils/colors';
 
 interface AddPayPalTransactionFormProps {
   onAddTransaction: (transaction: PayPalTransaction) => Promise<boolean>;

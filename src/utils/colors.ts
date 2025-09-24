@@ -1,61 +1,88 @@
 // Global color system for consistent styling across the application
 
+// Product status types
+export type StatusType =
+    | 'void'
+    | 'complete'
+    | 'refundPending'
+    | 'sendScreenshot'
+    | 'reviewPending'
+    | 'addReview'
+    | 'orderPlaced'
+    | 'unknown'
+    | 'linked'
+    | 'unlinked'
+    | 'unknown';
+export interface StatusTypeDisplay {
+    label: string;
+    color: string;
+}
+
 export const colors = {
     // Status colors
     status: {
         linked: {
-            bg: 'bg-blue-100',
-            text: 'text-blue-800',
-            badge: 'bg-blue-100 text-blue-800'
+            bg: 'bg-green-500',
+            text: 'text-white'
         },
         unlinked: {
-            bg: 'bg-orange-100',
-            text: 'text-orange-800',
-            badge: 'bg-orange-100 text-orange-800'
-        },
-        success: {
-            bg: 'bg-green-100',
-            text: 'text-green-800',
-            badge: 'bg-green-100 text-green-800'
+            bg: 'bg-yellow-500',
+            text: 'text-white'
         },
         error: {
             bg: 'bg-red-50',
             text: 'text-red-800',
             textSecondary: 'text-red-700',
-            border: 'border-red-200',
-            badge: 'bg-red-100 text-red-800'
+            border: 'border-red-200'
+        },
+        void: {
+            bg: 'bg-gray-500',
+            text: 'text-white'
+        },
+        complete: {
+            bg: 'bg-green-500',
+            text: 'text-white'
+        },
+        refundPending: {
+            bg: 'bg-blue-500',
+            text: 'text-white'
+        },
+        sendScreenshot: {
+            bg: 'bg-indigo-500',
+            text: 'text-white'
+        },
+        reviewPending: {
+            bg: 'bg-yellow-500',
+            text: 'text-white',
+        },
+        addReview: {
+            bg: 'bg-orange-500',
+            text: 'text-white'
+        },
+        orderPlaced: {
+            bg: 'bg-purple-500',
+            text: 'text-white'
+        },
+        unknown: {
+            bg: 'bg-gray-500',
+            text: 'text-white'
         }
     },
 
     // Financial/Delta colors
     financial: {
-        positive: 'text-green-600',
-        negative: 'text-red-600',
+        positive: 'text-green-500',
+        positiveLight: 'text-green-400',
         neutral: 'text-gray-500',
-        fees: 'text-red-600',
+        neutral2: 'text-yellow-500',
+        negativeLight: 'text-red-400',
+        negative: 'text-red-500',
         badges: {
-            paid: 'text-red-600 bg-red-50',
-            received: 'text-green-600 bg-green-50',
-            deltaPositive: 'text-green-600 bg-green-50',
-            deltaNegative: 'text-red-600 bg-red-50'
+            paid: 'text-red-500 bg-red-50',
+            received: 'text-green-500 bg-green-50',
+            deltaPositive: 'text-green-500 bg-green-50',
+            deltaNegative: 'text-red-500 bg-red-50'
         }
-    },
-
-    // Stats/metrics colors
-    stats: {
-        completed: 'text-green-600',
-        paid: 'text-yellow-600',
-        received: 'text-green-600',
-        remaining: 'text-orange-600',
-        profit: 'text-green-600',
-        loss: 'text-red-600',
-        // PayPal specific stats
-        income: 'text-green-600',
-        fees: 'text-red-600',
-        netReceived: 'text-blue-600',
-        transactionCount: 'text-purple-600',
-        unlinkedCount: 'text-orange-600',
-        unlinkedAmount: 'text-orange-600'
     },
 
     // Text colors
@@ -66,6 +93,7 @@ export const colors = {
         disabled: 'text-gray-400',
         link: 'text-blue-600',
         linkHover: 'text-blue-800',
+        white: 'text-white',
         green: 'text-green-600',
         danger: 'text-red-600',
     },
@@ -153,18 +181,14 @@ export const colors = {
             input: 'w-full px-3 py-2 border-none focus:outline-none',
             placeholder: 'placeholder-gray-500'
         },
-        danger: 'text-red-600 hover:bg-red-50',
-        menuButton: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:border-blue-500',
-        menuItem: 'text-gray-700 data-[focus]:bg-blue-50 data-[focus]:text-blue-700 hover:bg-blue-50 hover:text-blue-700'
-    },
-
-    // Edit modal specific
-    editModal: {
         void: {
             badge: 'bg-orange-100 text-orange-800',
             button: 'bg-orange-500 text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500',
             unvoidButton: 'bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
-        }
+        },
+        danger: 'text-red-600 hover:bg-red-50',
+        menuButton: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:border-blue-500',
+        menuItem: 'text-gray-700 data-[focus]:bg-blue-50 data-[focus]:text-blue-700 hover:bg-blue-50 hover:text-blue-700'
     },
 
     // Filter controls specific
@@ -206,19 +230,14 @@ export const getDeltaColor = (delta: number | null): string => {
     return getFinancialColor(delta);
 };
 
-export const getStatusBadgeColors = (isLinked: boolean) => {
-    return isLinked ? colors.status.linked.badge : colors.status.unlinked.badge;
-};
-
 export const getRowBackgroundColor = (isLinked: boolean) => {
     return isLinked ? colors.background.linkedRow : colors.background.unlinkedRow;
 };
 
 // Badge component utility
-export const getBadgeClasses = (type: 'linked' | 'unlinked' | 'success') => {
+export const getBadgeClasses = (type: StatusType) => {
     const baseClasses = 'inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider';
-    const colorClasses = colors.status[type].badge;
-    return `${baseClasses} ${colorClasses}`;
+    return `${baseClasses} ${colors.status[type].bg} ${colors.status[type].text}`;
 };
 
 // Action button utility
@@ -230,27 +249,25 @@ export const getActionButtonClasses = () => {
 export const getStatsColor = (type: 'completed' | 'paid' | 'received' | 'remaining' | 'netDelta' | 'income' | 'fees' | 'netReceived' | 'transactionCount' | 'unlinkedCount' | 'unlinkedAmount', value?: number): string => {
     switch (type) {
         case 'completed':
-            return colors.stats.completed;
+            return colors.financial.positive;
         case 'paid':
-            return colors.stats.paid;
+            return colors.financial.neutral;
         case 'received':
-            return colors.stats.received;
+            return colors.financial.positive;
         case 'remaining':
-            return colors.stats.remaining;
+            return colors.financial.neutral2;
         case 'netDelta':
-            return value !== undefined && value >= 0 ? colors.stats.profit : colors.stats.loss;
+            return value !== undefined && value >= 0 ? colors.financial.positive : colors.financial.negative;
         case 'income':
-            return colors.stats.income;
+            return colors.financial.neutral;
         case 'fees':
-            return colors.stats.fees;
+            return colors.financial.negative;
         case 'netReceived':
-            return colors.stats.netReceived;
+            return colors.financial.positive;
         case 'transactionCount':
-            return colors.stats.transactionCount;
+            return colors.financial.neutral;
         case 'unlinkedCount':
-            return colors.stats.unlinkedCount;
-        case 'unlinkedAmount':
-            return colors.stats.unlinkedAmount;
+            return colors.financial.neutral2;
         default:
             return colors.text.primary;
     }

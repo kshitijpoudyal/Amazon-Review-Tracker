@@ -5,6 +5,20 @@
 @layer base {
   body {
     @apply font-sans;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Enhanced typography for headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  
+  /* Better monospace for code elements */
+  code, pre, .font-mono {
+    font-feature-settings: 'liga' 0, 'calt' 0;
   }
 }
 

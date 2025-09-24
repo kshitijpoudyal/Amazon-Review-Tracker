@@ -1,8 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
-import AppHeader from './components/AppHeader';
-import ProductDashboard from './components/ProductDashboard';
-import { PayPalDashboard } from './components/PayPalDashboard';
+import AppHeader from './components/Header/AppHeader';
+import ProductPage from './pages/ProductPage';
+import { PayPalPage } from './pages/PayPalPage';
 import { useEffect } from 'react';
 
 function App() {
@@ -26,10 +26,10 @@ function App() {
   const renderScreen = () => {
     switch (location.pathname) {
       case '/paypal':
-        return <PayPalDashboard user={user} />;
+        return <PayPalPage user={user} />;
       case '/dashboard':
       default:
-         return <ProductDashboard user={user} />;
+         return <ProductPage user={user} />;
     }
   };
 

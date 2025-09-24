@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import LoginScreen from './LoginScreen';
+import LoginScreen from '../components/Login/LoginScreen';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
