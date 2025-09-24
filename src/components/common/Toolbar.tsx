@@ -128,7 +128,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   }
 
   return (
-    <div className="px-4 py-4">
+    <div className="px-4 mt-0">
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
         {filters.map(renderFilter)}
 
@@ -136,7 +136,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {showClearButton && hasActiveFilters && onClearFilters && (
           <button
             onClick={onClearFilters}
-            className={`flex-shrink-0 px-3 py-2 rounded-md transition-colors ${colors.button.secondary}`}
+            className={`flex-shrink-0 px-3 py-3 rounded-md transition-colors ${colors.button.secondary}`}
           >
             Clear Filters
           </button>

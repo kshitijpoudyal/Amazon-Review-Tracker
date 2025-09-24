@@ -11,7 +11,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   title
 }) => {
   return (
-    <div>
+    <div className='px-4'>
       {title && (
         <h2 className={`text-xl font-semibold ${colors.text.primary} mb-0`}>{title}</h2>
       )}

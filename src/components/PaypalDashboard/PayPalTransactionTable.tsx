@@ -211,7 +211,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
       {/* Desktop Table Layout */}
       <div className="hidden md:block">
-        <div className="max-h-[100vh] overflow-y-auto border border-gray-200 rounded-md scrollbar-hidden">
+        <div className="max-h-[100vh] overflow-y-auto rounded-md scrollbar-hidden">
           <table className="w-full">
             <thead className={`${colors.background.gradient} sticky top-0 z-5 shadow-sm`}>
               <tr>

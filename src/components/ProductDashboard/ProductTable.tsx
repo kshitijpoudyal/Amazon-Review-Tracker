@@ -235,7 +235,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 </th>
                 {!readOnly && (
                   <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                    
                   </th>
                 )}
               </tr>
@@ -262,7 +261,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                       <strong>{product.item.length > 70 ? `${product.item.substring(0, 70)}...` : product.item}</strong>
                     )}
                     {product.id && isProductLinked(product.id) && (
-                      <span className={`inline-block rounded-full text-center text-xs font-semibold tracking-wider ${colors.status.linked.bg} ${colors.status.linked.text}`}>
+                      <span className={`inline-block rounded-full text-center text-xs font-semibold tracking-wider mx-2 ${colors.status.linked.bg} ${colors.status.linked.text}`}>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-4 inline-block m-1">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                         </svg>
