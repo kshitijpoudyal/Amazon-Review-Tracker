@@ -169,6 +169,7 @@ export const colors = {
     // Modal specific
     modal: {
         overlay: 'bg-gray-500 bg-opacity-75',
+        overlaySolid: 'bg-gray-600',
         shadow: 'shadow-lg',
         item: {
             base: 'px-3 py-2 cursor-pointer',

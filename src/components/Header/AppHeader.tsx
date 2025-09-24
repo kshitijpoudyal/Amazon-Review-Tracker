@@ -15,26 +15,18 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
         { name: 'PaypalTransactions', href: '/paypal' }
     ]
 
-     const displayName = user.displayName || user.email || 'User';
+    // Safety check - should never be null due to ProtectedRoute, but defensive programming
+    if (!user) {
+        return null;
+    }
+
+    const displayName = user.displayName || user.email || 'User';
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     return (
         <header className={`${colors.header.background} ${colors.header.backgroundDark}`}>
-            <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+            <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-2 lg:px-8">
                 <div className="flex items-center gap-x-12">
-                    <a href="#" className="-m-1.5 p-1.5">
-                        <span className="sr-only">Your Company</span>
-                        <img
-                            alt=""
-                            src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
-                            className="h-8 w-auto dark:hidden"
-                        />
-                        <img
-                            alt=""
-                            src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                            className="hidden h-8 w-auto dark:block"
-                        />
-                    </a>
                     <div className="hidden lg:flex lg:gap-x-12">
                         {navigation.map((item) => (
                             <a key={item.name} href={item.href} className={`text-sm/6 font-semibold ${colors.header.navigation.link}`}>
@@ -62,21 +54,9 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
             </nav>
             <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
                 <div className="fixed inset-0 z-50" />
-                <DialogPanel className={`fixed inset-y-0 right-0 z-50 w-full overflow-y-auto ${colors.modal.overlay} p-6 sm:max-w-sm sm:ring-1 ${colors.header.mobile.ring}`}>
+                <DialogPanel className={`fixed inset-y-0 right-0 z-50 w-full overflow-y-auto ${colors.header.background} p-4 sm:max-w-sm sm:ring-1 ${colors.header.mobile.ring}`}>
                     <div className="flex items-center justify-between">
-                        <a href="/" className="-m-1.5 p-1.5">
-                            <span className="sr-only">Amazon Review Tracker</span>
-                            <img
-                                alt=""
-                                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
-                                className="h-8 w-auto dark:hidden"
-                            />
-                            <img
-                                alt=""
-                                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                                className="hidden h-8 w-auto dark:block"
-                            />
-                        </a>
+                        <p className={`text-sm/6 font-semibold ${colors.header.navigation.link} py-2`}>Welcome {displayName}!</p>
                         <button
                             type="button"
                             onClick={() => setMobileMenuOpen(false)}
@@ -89,7 +69,6 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                     <div className="mt-6 flow-root">
                         <div className={`-my-6 divide-y ${colors.header.mobile.divider}`}>
                             <div className="space-y-2 py-6">
-                              <p className={`text-sm/6 font-semibold ${colors.header.navigation.link} py-2`}>Welcome {displayName}!</p>
                                 {navigation.map((item) => (
                                     <a
                                         key={item.name}
