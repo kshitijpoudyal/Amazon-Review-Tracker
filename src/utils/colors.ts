@@ -100,8 +100,10 @@ export const colors = {
 
     // Background colors
     background: {
+        gradient: 'bg-gradient-to-r from-blue-500 to-purple-700',
         primary: 'bg-white',
-        secondary: 'bg-gray-50',
+        secondary: 'bg-gray-100',
+        dark: 'bg-gray-800',
         muted: 'bg-gray-100',
         linkedRow: 'bg-green-50',
         unlinkedRow: 'bg-orange-50'

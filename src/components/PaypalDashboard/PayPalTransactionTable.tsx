@@ -211,9 +211,9 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
       {/* Desktop Table Layout */}
       <div className="hidden md:block">
-        <div className="overflow-x-auto max-h-[93vh] overflow-y-auto border border-gray-200 rounded-xl">
-          <table className="w-full bg-white shadow-md">
-            <thead className="gradient-bg sticky top-0 z-5 shadow-sm">
+        <div className="max-h-[100vh] overflow-y-auto border border-gray-200 rounded-md scrollbar-hidden">
+          <table className="w-full">
+            <thead className={`${colors.background.gradient} sticky top-0 z-5 shadow-sm`}>
               <tr>
                 <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
                   Date/Time ({filteredAndSortedTransactions.length})
@@ -241,7 +241,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 </th>
                 {onDeleteTransaction && (
                   <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                    Actions
                   </th>
                 )}
               </tr>
