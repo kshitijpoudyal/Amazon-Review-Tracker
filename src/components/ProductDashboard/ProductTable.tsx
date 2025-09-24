@@ -12,7 +12,6 @@ interface ProductTableProps {
   onDeleteProduct?: (productId: string) => void;
   readOnly?: boolean;
   userId?: string; // Add userId to check for linked PayPal transactions
-  loading?: boolean;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
@@ -22,7 +21,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
   readOnly = false,
   userId,
 }) => {
-  console.log('ProductTable received products:', products);
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -32,11 +30,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const { isProductLinked } = useProductPayPalLinks(userId, productIds);
 
   const handleEditProduct = (product: Product) => {
-    console.log('handleEditProduct called with:', product);
     setEditingProduct(product);
     setIsModalOpen(true);
     setShowDropdown(null);
-    console.log('Modal state set: isModalOpen=true, editingProduct=', product);
   };
 
   const handleSaveProduct = (updatedProduct: Product) => {
@@ -346,7 +342,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
       </div>
 
       {/* Edit Product Modal */}
-      {console.log('Rendering modal section - isModalOpen:', isModalOpen, 'editingProduct:', editingProduct)}
       {isModalOpen && editingProduct && (
         <EditProductModal
           isOpen={isModalOpen}

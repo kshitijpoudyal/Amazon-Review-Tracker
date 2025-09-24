@@ -1,13 +1,14 @@
-import { useCallback } from 'react';
-import { User } from 'firebase/auth';
+import React, { useCallback } from 'react';
 import ProductTable from '../components/ProductDashboard/ProductTable';
 import AddProductForm from '../components/ProductDashboard/AddProductForm';
+import { useAuth } from '../hooks/useAuth';
 import { useProductFilters } from '../hooks/useProductFilters';
 import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { useDataSource } from '../hooks/useDataSource';
 import { useProductStats } from '../hooks/useProductStats';
 import { useSortedProducts } from '../hooks/useSortedProducts';
+import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { StatusFilter, DeltaFilter, Product } from '../types/Product';
 import {
   DashboardContainer,
@@ -20,12 +21,18 @@ import Toolbar from '../components/common/Toolbar';
 import { TableViewLoading } from '../components/common/TableViewLoading';
 import { getStatsColor } from '../utils/colors';
 
-interface ProductDashboardProps {
-  user?: User | null;
-}
-
-function ProductPage({ user: propUser }: ProductDashboardProps) {
-  const user = propUser;
+/**
+ * ProductPage Component
+ * 
+ * Main dashboard for managing Amazon products and tracking their status.
+ * Features:
+ * - Product listing with filters and search
+ * - Statistical overview of products
+ * - Add/edit/delete product functionality
+ * - Status tracking and management
+ */
+const ProductPage: React.FC = () => {
+  const { user } = useAuth();
 
   // Dashboard state management
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
@@ -57,6 +64,9 @@ function ProductPage({ user: propUser }: ProductDashboardProps) {
     addProduct,
     deleteProduct,
   } = useDataSource(user?.uid);
+
+  // Enforce minimum loading time of 3 seconds
+  const displayLoading = useMinimumLoading(loading);
 
   // Product filtering and sorting
   const { applyFilters } = useProductFilters(data?.products || []);
@@ -116,7 +126,7 @@ function ProductPage({ user: propUser }: ProductDashboardProps) {
       label: "Add Product",
       onClick: handleShowAddForm,
       variant: 'primary' as const,
-      disabled: loading
+      disabled: displayLoading
     }
   ];
 
@@ -164,22 +174,20 @@ function ProductPage({ user: propUser }: ProductDashboardProps) {
 
   return (
     <DashboardContainer>
-
       {/* Stats Cards */}
-      <DashboardStats stats={statsData} loading={loading} />
+      <DashboardStats stats={statsData} loading={displayLoading} />
 
       {/* Filter Controls */}
       <Toolbar
         actions={actions}
         filters={filterConfigs}
         onClearFilters={clearAllFilters}
-        loading={loading}
+        loading={displayLoading}
       />
-
 
       {/* Product Table */}
       <DashboardSection>
-        {loading ? (
+        {displayLoading ? (
           <TableViewLoading />
         ) : (
           <ProductTable
@@ -200,6 +208,6 @@ function ProductPage({ user: propUser }: ProductDashboardProps) {
       )}
     </DashboardContainer>
   );
-}
+};
 
 export default ProductPage;

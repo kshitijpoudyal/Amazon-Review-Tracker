@@ -1,9 +1,10 @@
 import React from 'react';
-import { User } from 'firebase/auth';
+import { useAuth } from '../hooks/useAuth';
 import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { usePayPalTransactions } from '../hooks/usePayPalTransactions';
 import { useProductCrudFirebase } from '../hooks/useProductCrudFirebase';
+import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { PayPalTransactionTable } from '../components/PaypalDashboard/PayPalTransactionTable';
 import { AddPayPalTransactionForm } from '../components/PaypalDashboard/AddPayPalTransactionForm';
 import { 
@@ -17,12 +18,19 @@ import Toolbar from '../components/common/Toolbar';
 import { TableViewLoading } from '../components/common/TableViewLoading';
 import { getStatsColor } from '../utils/colors';
 
-interface PayPalDashboardProps {
-  user?: User;
-}
-
-export const PayPalPage: React.FC<PayPalDashboardProps> = ({ user: propUser }) => {
-  const user = propUser;
+/**
+ * PayPalPage Component
+ * 
+ * Dashboard for managing PayPal transactions and linking them to products.
+ * Features:
+ * - Transaction listing with filtering and search
+ * - Product linking with multiple products per transaction
+ * - Import transactions from CSV
+ * - Statistical overview of transactions
+ * - Equal amount distribution across linked products
+ */
+export const PayPalPage: React.FC = () => {
+  const { user } = useAuth();
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
   
   // Filter state management
@@ -55,6 +63,12 @@ export const PayPalPage: React.FC<PayPalDashboardProps> = ({ user: propUser }) =
 
   // Fetch products for mapping
   const { data: productData, loading: productsLoading } = useProductCrudFirebase(user?.uid);
+
+  // Enforce minimum loading time of 3 seconds for main transactions
+  const displayLoading = useMinimumLoading(loading);
+  
+  // Enforce minimum loading time for products loading as well
+  const displayProductsLoading = useMinimumLoading(productsLoading, 0);
 
   // Filter transactions based on current filter values
   const filteredTransactions = data?.transactions.filter(transaction => {
@@ -197,7 +211,7 @@ export const PayPalPage: React.FC<PayPalDashboardProps> = ({ user: propUser }) =
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       ),
-      disabled: loading
+      disabled: displayLoading
     }
   ];
 
@@ -209,27 +223,27 @@ export const PayPalPage: React.FC<PayPalDashboardProps> = ({ user: propUser }) =
       )}
 
       {/* Summary Cards */}
-      <DashboardStats stats={statsData} loading={loading} />
+      <DashboardStats stats={statsData} loading={displayLoading} />
 
       {/* Filter Controls */}
       <Toolbar
         actions={actions}
         filters={filterConfigs}
         onClearFilters={clearAllFilters}
-        loading={loading}
+        loading={displayLoading}
         showClearButton={true}
       />
 
       {/* Transactions Table */}
       <DashboardSection>
-        {loading ? (
+        {displayLoading ? (
           <TableViewLoading />
         ) : (
           <PayPalTransactionTable
           transactions={filteredTransactions}
           products={productData?.products || []}
-          loading={loading}
-          productsLoading={productsLoading}
+          loading={displayLoading}
+          productsLoading={displayProductsLoading}
           onDeleteTransaction={handleDeleteTransaction}
           onUpdateProductLink={handleUpdateProductLink}
         />
