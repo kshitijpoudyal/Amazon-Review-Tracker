@@ -19,8 +19,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
-        mono: ['SF Mono', 'Monaco', 'monospace'],
+        sans: ['Roboto', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        mono: ['Roboto Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'JetBrains Mono', 'Source Code Pro', 'Menlo', 'Consolas', 'monospace'],
       },
       animation: {
         shimmer: 'shimmer 2s infinite linear',

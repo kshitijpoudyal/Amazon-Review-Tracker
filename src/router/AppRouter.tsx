@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import App from '../App';
-import LoginPage from '../components/LoginPage';
+import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../components/NotFoundPage';
 
 const AppRouter = () => {
@@ -13,6 +13,7 @@ const AppRouter = () => {
         return <LoginPage />;
       case '/':
       case '/paypal':
+      case '/products':
         return <App />; // App will handle 404s internally
       default:
          return <NotFoundPage />;

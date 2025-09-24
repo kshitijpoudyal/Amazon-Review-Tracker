@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { User } from 'firebase/auth';
-import ProductTable from './ProductTable';
-import AddProductForm from './AddProductForm';
+import ProductTable from '../components/ProductDashboard/ProductTable';
+import AddProductForm from '../components/ProductDashboard/AddProductForm';
 import { useProductFilters } from '../hooks/useProductFilters';
 import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
@@ -15,16 +15,16 @@ import {
   DashboardError,
   DashboardSection,
   FilterControlConfig
-} from './common';
-import Toolbar from './common/Toolbar';
-import { TableViewLoading } from './common/TableViewLoading';
+} from '../components/common';
+import Toolbar from '../components/common/Toolbar';
+import { TableViewLoading } from '../components/common/TableViewLoading';
 import { getStatsColor } from '../utils/colors';
 
 interface ProductDashboardProps {
   user?: User | null;
 }
 
-function ProductDashboard({ user: propUser }: ProductDashboardProps) {
+function ProductPage({ user: propUser }: ProductDashboardProps) {
   const user = propUser;
 
   // Dashboard state management
@@ -202,4 +202,4 @@ function ProductDashboard({ user: propUser }: ProductDashboardProps) {
   );
 }
 
-export default ProductDashboard;
+export default ProductPage;

@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { PayPalTransaction } from '../types/PayPalTransaction';
-import { Product } from '../types/Product';
-import { ProductDropdown } from './ProductDropdown';
-import { MobileItemCard } from './common/MobileItemCard';
+import { PayPalTransaction } from '../../types/PayPalTransaction';
+import { Product } from '../../types/Product';
+import { ProductDropdown } from '../ProductDropdown';
+import { MobileItemCard } from '../common/MobileItemCard';
 import { 
   colors, 
   getFinancialColor, 
   getBadgeClasses, 
   getActionButtonClasses,
   getRowBackgroundColor 
-} from '../utils/colors';
+} from '../../utils/colors';
 
 interface PayPalTransactionTableProps {
   transactions: PayPalTransaction[];
@@ -134,7 +134,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 </div>
                 <div className="text-center">
                   <p className={`${colors.text.secondary} mb-1`}>Fees</p>
-                  <p className={`font-mono font-semibold ${colors.financial.fees}`}>{formatCurrency(transaction.fees)}</p>
+                  <p className={`font-mono font-semibold ${colors.financial.negative}`}>{formatCurrency(transaction.fees)}</p>
                 </div>
                 <div className="text-center">
                   <p className={`${colors.text.secondary} mb-1`}>Net Received</p>

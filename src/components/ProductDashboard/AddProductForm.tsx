@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Product } from "../types/Product";
+import { Product } from "../../types/Product";
 import { ImageUploader } from "./ImageUploader";
-import { colors } from "../utils/colors";
+import { colors } from "../../utils/colors";
 
 interface AddProductFormProps {
   onAdd: (product: Product) => void;

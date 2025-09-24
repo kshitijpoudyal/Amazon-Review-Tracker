@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Product } from '../types/Product';
-import { colors } from '../utils/colors';
+import { Product } from '../../types/Product';
+import { colors } from '../../utils/colors';
 
 interface EditProductModalProps {
   product: Product;
@@ -94,7 +94,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           <div className="flex items-center space-x-3">
             <h2 className={`text-xl font-semibold ${colors.text.primary}`}>Edit Product</h2>
             {editedProduct.isVoid && (
-              <span className={`px-2 py-1 text-xs font-medium ${colors.editModal.void.badge} rounded-full`}>
+              <span className={`px-2 py-1 text-xs font-medium ${colors.modal.void.badge} rounded-full`}>
                 VOID
               </span>
             )}
@@ -252,14 +252,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           {editedProduct.isVoid ? (
             <button
               onClick={handleUnVoid}
-              className={`px-4 py-2 ${colors.editModal.void.unvoidButton} rounded-md transition-colors`}
+              className={`px-4 py-2 ${colors.modal.void.unvoidButton} rounded-md transition-colors`}
             >
               Un-Void Product
             </button>
           ) : (
             <button
               onClick={handleMarkAsVoid}
-              className={`px-4 py-2 ${colors.editModal.void.button} rounded-md transition-colors`}
+              className={`px-4 py-2 ${colors.modal.void.button} rounded-md transition-colors`}
             >
               Mark as Void
             </button>

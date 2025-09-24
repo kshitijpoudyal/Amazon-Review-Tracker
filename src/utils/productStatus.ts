@@ -1,4 +1,5 @@
 import { Product } from '../types/Product';
+import { getBadgeClasses } from './colors';
 
 export type ProductStatusType = 
   | 'void'
@@ -91,19 +92,16 @@ export const getProductStatusType = (product: Product): ProductStatusType => {
   return 'unknown';
 };
 
-/**
- * Maps status types to display information (label and color classes)
- */
 export const getStatusDisplay = (statusType: ProductStatusType): ProductStatusDisplay => {
   const statusMap: Record<ProductStatusType, ProductStatusDisplay> = {
-    'void': { label: 'Void', color: 'bg-gray-100 text-gray-800' },
-    'complete': { label: 'Complete', color: 'bg-green-100 text-green-800' },
-    'refund-pending': { label: 'Refund Pending', color: 'bg-blue-100 text-blue-800' },
-    'send-screenshot': { label: 'Send Screenshot', color: 'bg-indigo-100 text-indigo-800' },
-    'review-pending': { label: 'Review Pending', color: 'bg-yellow-100 text-yellow-800' },
-    'add-review': { label: 'Add Review', color: 'bg-orange-100 text-orange-800' },
-    'order-placed': { label: 'Order Placed', color: 'bg-purple-100 text-purple-800' },
-    'unknown': { label: 'Status Unknown', color: 'bg-gray-100 text-gray-800' }
+    'void': { label: 'Void', color: `${getBadgeClasses('void')}` },
+    'complete': { label: 'Complete', color: `${getBadgeClasses('complete')}` },
+    'refund-pending': { label: 'Refund Pending', color: `${getBadgeClasses('refundPending')}` },
+    'send-screenshot': { label: 'Send Screenshot', color: `${getBadgeClasses('sendScreenshot')}` },
+    'review-pending': { label: 'Review Pending', color: `${getBadgeClasses('reviewPending')}` },
+    'add-review': { label: 'Add Review', color: `${getBadgeClasses('addReview')}` },
+    'order-placed': { label: 'Order Placed', color: `${getBadgeClasses('orderPlaced')}` },
+    'unknown': { label: 'Status Unknown', color: `${getBadgeClasses('unknown')}` }
   };
 
   return statusMap[statusType];

@@ -4,24 +4,24 @@ import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { usePayPalTransactions } from '../hooks/usePayPalTransactions';
 import { useProductCrudFirebase } from '../hooks/useProductCrudFirebase';
-import { PayPalTransactionTable } from './PayPalTransactionTable';
-import { AddPayPalTransactionForm } from './AddPayPalTransactionForm';
+import { PayPalTransactionTable } from '../components/PaypalDashboard/PayPalTransactionTable';
+import { AddPayPalTransactionForm } from '../components/PaypalDashboard/AddPayPalTransactionForm';
 import { 
   DashboardLayout, 
   DashboardStats, 
   DashboardError, 
   DashboardSection,
   FilterControlConfig
-} from './common';
-import Toolbar from './common/Toolbar';
-import { TableViewLoading } from './common/TableViewLoading';
+} from '../components/common';
+import Toolbar from '../components/common/Toolbar';
+import { TableViewLoading } from '../components/common/TableViewLoading';
 import { getStatsColor } from '../utils/colors';
 
 interface PayPalDashboardProps {
   user?: User;
 }
 
-export const PayPalDashboard: React.FC<PayPalDashboardProps> = ({ user: propUser }) => {
+export const PayPalPage: React.FC<PayPalDashboardProps> = ({ user: propUser }) => {
   const user = propUser;
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
   

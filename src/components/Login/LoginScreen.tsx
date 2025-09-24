@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '../firebase/config';
-import { useAuth } from '../hooks/useAuth';
+import { auth } from '../../firebase/config';
+import { useAuth } from '../../hooks/useAuth';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
