@@ -238,13 +238,12 @@ export const PayPalPage: React.FC = () => {
       </DashboardSection>
 
       {/* Add Transaction Form Modal */}
-      {showAddForm && (
-        <AddPayPalTransactionForm
-          onAddTransaction={handleAddTransaction}
-          onImportTransactions={handleImport}
-          onCancel={handleHideAddForm}
-        />
-      )}
+      <AddPayPalTransactionForm
+        isOpen={showAddForm}
+        onAddTransaction={handleAddTransaction}
+        onImportTransactions={handleImport}
+        onCancel={handleHideAddForm}
+      />
     </DashboardLayout>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Product } from '../types/Product';
 import { colors } from '../utils/colors';
+import { Modal } from './common';
 
 interface ProductDropdownProps {
   products: Product[];
@@ -31,13 +32,13 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     if (!searchTerm.trim()) {
       return true;
     }
-    
+
     const searchLower = searchTerm.toLowerCase();
     const nameMatch = product.item?.toLowerCase().includes(searchLower);
     const paidMatch = product.paid?.toString().includes(searchTerm);
     const receivedMatch = product.received?.toString().includes(searchTerm);
     const orderNumberMatch = product.orderNumber?.toLowerCase().includes(searchLower);
-    
+
     return nameMatch || paidMatch || receivedMatch || orderNumberMatch;
   });
 
@@ -67,17 +68,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     }
   }, [isModalOpen]);
 
-  // Close modal on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isModalOpen) {
-        handleCloseModal();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isModalOpen]);
+  // ESC key handling is now managed by the Modal component
 
   const handleProductClick = (productId: string | null) => {
     setTempSelectedProductId(productId);
@@ -96,12 +87,11 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
 
   // Helper function to render a product item
   const renderProductItem = (product: Product, isLinked: boolean = false) => (
-    <li 
+    <li
       key={product.id}
       onClick={() => handleProductClick(product.id || null)}
-      className={`flex gap-x-4 px-4 py-3 cursor-pointer ${colors.modal.item.hover} ${
-        tempSelectedProductId === product.id ? colors.modal.item.selected : ''
-      }`}
+      className={`flex gap-x-4 px-4 py-3 cursor-pointer ${colors.modal.item.hover} ${tempSelectedProductId === product.id ? colors.modal.item.selected : ''
+        }`}
     >
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-semibold ${isLinked ? colors.text.green : colors.text.primary}`}>
@@ -136,151 +126,132 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     return 'No Product Linked';
   };
 
+  const modalHeader = (
+    <div className="mb-4">
+      <h3 className={`text-lg font-medium ${colors.text.primary} mb-4`}>
+        Select Product to Link
+      </h3>
+      {/* Search Input */}
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Search by product name, paid amount, or received amount..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md ${colors.form.input.placeholder}`}
+      />
+    </div>
+  );
+
+  const modalBody = (
+    <div className="px-6">
+      {/* Products List - Scrollable */}
+      <div className={`${colors.border.default} rounded`}>
+        <ul role="list" className="divide-y divide-gray-100">
+          {(unlinkedProducts.length > 0 || linkedProducts.length > 0) ? (
+            <>
+              {/* Unlinked Products */}
+              {unlinkedProducts.map((product) => renderProductItem(product, false))}
+
+              {/* Divider between unlinked and linked products */}
+              {unlinkedProducts.length > 0 && linkedProducts.length > 0 && (
+                <li className={`px-4 py-2 ${colors.background.muted} border-t-2 ${colors.border.default}`}>
+                  <div className="flex items-center">
+                    <div className={`flex-1 border-t ${colors.border.default}`}></div>
+                    <span className={`mx-3 text-xs font-medium ${colors.text.muted} uppercase tracking-wide`}>
+                      Already Linked Products
+                    </span>
+                    <div className={`flex-1 border-t ${colors.border.default}`}></div>
+                  </div>
+                </li>
+              )}
+
+              {/* Linked Products */}
+              {linkedProducts.map((product) => renderProductItem(product, true))}
+            </>
+          ) : searchTerm ? (
+            <div className={`px-4 py-8 text-center ${colors.text.muted}`}>
+              <div className="text-4xl mb-2">🔍</div>
+              <div>No products found matching "{searchTerm}"</div>
+              <div className="text-sm">Try a different search term</div>
+            </div>
+          ) : (
+            <div className={`px-4 py-8 text-center ${colors.text.muted}`}>
+              <div className="text-4xl mb-2">📦</div>
+              <div>No products available</div>
+              <div className="text-sm">Add some products first to link them to PayPal transactions</div>
+            </div>
+          )}
+        </ul>
+      </div>
+    </div>
+  );
+
+  const modalFooter = (
+    <form onSubmit={handleSave}>
+      {(tempSelectedProductId != null) && (
+        <button
+          type="button"
+          onClick={() => handleProductClick(null)}
+          className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.danger}`}
+        >
+          <span>Remove Product Link</span>
+        </button>
+      )}
+      <div className="flex space-x-3">
+        <button
+          type="button"
+          onClick={handleCloseModal}
+          className={`flex-1 px-4 py-3 ${colors.button.secondary} rounded-lg font-medium text-base`}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className={`flex-1 px-4 py-3 ${colors.button.primary} rounded-lg font-medium text-base`}
+        >
+          Add Product
+        </button>
+      </div>
+    </form>
+  );
+
   return (
     <>
       {/* Trigger Button */}
-        <button
-          type="button"
-          onClick={() => {
-            if (!disabled) {
-              setTempSelectedProductId(selectedProductId); // Initialize temp selection
-              setIsModalOpen(true);
-            }
-          }}
-          disabled={disabled}
-          className={getButtonClassName()}
+      <button
+        type="button"
+        onClick={() => {
+          if (!disabled) {
+            setTempSelectedProductId(selectedProductId); // Initialize temp selection
+            setIsModalOpen(true);
+          }
+        }}
+        disabled={disabled}
+        className={getButtonClassName()}
+      >
+        <span className={selectedProduct ? colors.text.primary : colors.text.muted}>
+          {getDisplayText()}
+        </span>
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          <span className={selectedProduct ? colors.text.primary : colors.text.muted}>
-            {getDisplayText()}
-          </span>
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            {/* Background overlay */}
-            <div 
-              className={`fixed inset-0 ${colors.modal.overlay} transition-opacity`}
-              onClick={handleCloseModal}
-            ></div>
-
-            {/* Modal panel */}
-            <div className={`inline-block align-bottom ${colors.background.primary} rounded-lg text-left overflow-hidden ${colors.modal.shadow} transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full max-h-[80vh] flex flex-col`}>
-              {/* Header */}
-              <div className={`${colors.background.primary} px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex-shrink-0`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className={`text-lg font-medium ${colors.text.primary}`}>
-                    Select Product to Link
-                  </h3>
-                  <button
-                    onClick={handleCloseModal}
-                    className={`${colors.button.secondary}`}
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Search Input */}
-                <div className="mb-4">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    placeholder="Search by product name, paid amount, or received amount..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md ${colors.form.input.placeholder}`}
-                  />
-                </div>
-              </div>
-
-              {/* Products List - Scrollable */}
-              <div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
-                <div className={`${colors.border.default} rounded`}>
-                  <ul role="list" className="divide-y divide-gray-100"> 
-                  {(unlinkedProducts.length > 0 || linkedProducts.length > 0) ? (
-                    <>
-                      {/* Unlinked Products */}
-                      {unlinkedProducts.map((product) => renderProductItem(product, false))}
-                      
-                      {/* Divider between unlinked and linked products */}
-                      {unlinkedProducts.length > 0 && linkedProducts.length > 0 && (
-                        <li className={`px-4 py-2 ${colors.background.muted} border-t-2 ${colors.border.default}`}>
-                          <div className="flex items-center">
-                            <div className={`flex-1 border-t ${colors.border.default}`}></div>
-                            <span className={`mx-3 text-xs font-medium ${colors.text.muted} uppercase tracking-wide`}>
-                              Already Linked Products
-                            </span>
-                            <div className={`flex-1 border-t ${colors.border.default}`}></div>
-                          </div>
-                        </li>
-                      )}
-                      
-                      {/* Linked Products */}
-                      {linkedProducts.map((product) => renderProductItem(product, true))}
-                    </>
-                  ) : searchTerm ? (
-                    <div className={`px-4 py-8 text-center ${colors.text.muted}`}>
-                      <div className="text-4xl mb-2">🔍</div>
-                      <div>No products found matching "{searchTerm}"</div>
-                      <div className="text-sm">Try a different search term</div>
-                    </div>
-                  ) : (
-                    <div className={`px-4 py-8 text-center ${colors.text.muted}`}>
-                      <div className="text-4xl mb-2">📦</div>
-                      <div>No products available</div>
-                      <div className="text-sm">Add some products first to link them to PayPal transactions</div>
-                    </div>
-                )}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className={`${colors.background.secondary} px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3`}>
-                {/* No Product Linked Option */}
-                {(tempSelectedProductId != null) && (
-                  <button
-                    type="button"
-                    onClick={() => handleProductClick(null)}
-                    className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.danger}`}
-                  >
-                  <span>Remove Product Link</span>
-                </button>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.secondary}`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.primary}`}
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        header={modalHeader}
+        body={modalBody}
+        footer={modalFooter}
+        size="md"
+      />
     </>
   );
 };
