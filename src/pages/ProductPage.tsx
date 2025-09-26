@@ -200,12 +200,11 @@ const ProductPage: React.FC = () => {
       </DashboardSection>
 
       {/* Add Product Modal */}
-      {showAddForm && (
-        <AddProductForm
-          onAdd={handleAddProduct}
-          onCancel={handleHideAddForm}
-        />
-      )}
+      <AddProductForm
+        isOpen={showAddForm}
+        onAdd={handleAddProduct}
+        onCancel={handleHideAddForm}
+      />
     </DashboardContainer>
   );
 };

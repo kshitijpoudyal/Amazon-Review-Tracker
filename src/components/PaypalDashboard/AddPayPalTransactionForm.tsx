@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { PayPalTransaction } from '../../types/PayPalTransaction';
 import { PayPalCSVImporter } from './PayPalCSVImporter';
 import { colors } from '../../utils/colors';
+import { Modal } from '../common';
 
 interface AddPayPalTransactionFormProps {
+  isOpen: boolean;
   onAddTransaction: (transaction: PayPalTransaction) => Promise<boolean>;
   onImportTransactions?: (transactions: PayPalTransaction[]) => Promise<{ added: number; skipped: number; withdrawalSkipped?: number }>;
   onCancel: () => void;
@@ -11,12 +13,13 @@ interface AddPayPalTransactionFormProps {
 }
 
 export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> = ({
+  isOpen,
   onAddTransaction,
   onImportTransactions,
   onCancel,
   isLoading = false
 }) => {
-  const [activeTab, setActiveTab] = useState<'manual' | 'import'>('manual');
+  const [activeTab, setActiveTab] = useState<'manual' | 'import'>('import');
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     time: new Date().toTimeString().split(' ')[0], // Current time in HH:MM:SS format
@@ -55,7 +58,7 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
       const amount = parseFloat(name === 'amount' ? value : formData.amount) || 0;
       const fees = parseFloat(name === 'fees' ? value : formData.fees) || 0;
       const total = amount + fees;
-      
+
       setFormData(prev => ({
         ...prev,
         [name]: value,
@@ -86,7 +89,7 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -140,327 +143,217 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
     return { added: 0, skipped: 0 };
   };
 
-  const transactionTypes = [
-    'General Payment',
-    'Express Checkout Payment',
-    'Website Payment',
-    'Mobile Payment',
-    'Mass Pay Payment',
-    'User Initiated Withdrawal',
-    'Payment Review Hold',
-    'Instant Payment Review (IPR) reversal',
-    'Payment Review Release'
-  ];
+  const modalBody = (
+    <div className="p-6">
+      {/* Tab Navigation */}
+      <div className={`border-b ${colors.border.default} mb-6`}>
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('manual')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'manual'
+              ? colors.tabs.active
+              : colors.tabs.inactive
+              }`}
+          >
+            Manual Entry
+          </button>
+          <button
+            onClick={() => setActiveTab('import')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'import'
+              ? colors.tabs.active
+              : colors.tabs.inactive
+              }`}
+          >
+            Import CSV
+          </button>
+        </nav>
+      </div>
 
-  return (
-    <div className={`fixed inset-0 ${colors.modal.overlay} flex items-center justify-center z-50 p-4`}>
-      <div className={`${colors.background.primary} rounded-lg ${colors.modal.shadow} max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className={`text-2xl font-bold ${colors.text.primary}`}>Add PayPal Transaction</h2>
-            <button
-              onClick={onCancel}
-              className={`${colors.button.close} text-2xl`}
-              disabled={isLoading}
-            >
-              ×
-            </button>
-          </div>
-
-          {/* Tab Navigation */}
-          <div className={`border-b ${colors.border.default} mb-6`}>
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('manual')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'manual'
-                    ? colors.tabs.active
-                    : colors.tabs.inactive
-                }`}
-              >
-                Manual Entry
-              </button>
-              <button
-                onClick={() => setActiveTab('import')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'import'
-                    ? colors.tabs.active
-                    : colors.tabs.inactive
-                }`}
-              >
-                Import CSV
-              </button>
-            </nav>
-          </div>
-
-          {/* Tab Content */}
-          {activeTab === 'manual' ? (
-            /* Manual Entry Form */
-            <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Date & Time */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Date *
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Time *
-                </label>
-                <input
-                  type="time"
-                  name="time"
-                  value={formData.time}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Timezone */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Timezone
-                </label>
-                <input
-                  type="text"
-                  name="timeZone"
-                  value={formData.timeZone}
-                  onChange={handleInputChange}
-                  placeholder="PST, EST, etc."
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Name */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Payer/Recipient name"
-                  className={`w-full px-3 py-2 rounded-md ${
-                    errors.name ? colors.form.input.error : colors.form.input.base
-                  }`}
-                  required
-                  disabled={isLoading}
-                />
-                {errors.name && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.name}</p>}
-              </div>
-
-              {/* Type */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Type
-                </label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
-                  disabled={isLoading}
-                >
-                  {transactionTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Currency */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Currency
-                </label>
-                <input
-                  type="text"
-                  name="currency"
-                  value={formData.currency}
-                  onChange={handleInputChange}
-                  placeholder="USD"
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Amount */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Amount *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="amount"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
-                  className={`w-full px-3 py-2 rounded-md ${
-                    errors.amount ? colors.form.input.error : colors.form.input.base
-                  }`}
-                  required
-                  disabled={isLoading}
-                />
-                {errors.amount && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.amount}</p>}
-              </div>
-
-              {/* Fees */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Fees
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="fees"
-                  value={formData.fees}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
-                  className={`w-full px-3 py-2 rounded-md ${
-                    errors.fees ? colors.form.input.error : colors.form.input.base
-                  }`}
-                  disabled={isLoading}
-                />
-                {errors.fees && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.fees}</p>}
-              </div>
-
-              {/* Total (auto-calculated) */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Total (Auto-calculated)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="total"
-                  value={formData.total}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.disabled} ${colors.form.input.base}`}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Transaction ID */}
-              <div className="md:col-span-2">
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Transaction ID *
-                </label>
-                <input
-                  type="text"
-                  name="transactionId"
-                  value={formData.transactionId}
-                  onChange={handleInputChange}
-                  placeholder="Unique PayPal transaction ID"
-                  className={`w-full px-3 py-2 rounded-md ${
-                    errors.transactionId ? colors.form.input.error : colors.form.input.base
-                  }`}
-                  required
-                  disabled={isLoading}
-                />
-                {errors.transactionId && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.transactionId}</p>}
-              </div>
-
-              {/* Optional Fields */}
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Exchange Rate
-                </label>
-                <input
-                  type="text"
-                  name="exchangeRate"
-                  value={formData.exchangeRate}
-                  onChange={handleInputChange}
-                  placeholder="Optional"
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Receipt ID
-                </label>
-                <input
-                  type="text"
-                  name="receiptId"
-                  value={formData.receiptId}
-                  onChange={handleInputChange}
-                  placeholder="Optional"
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Item Title */}
-              <div className="md:col-span-2">
-                <label className={`block text-sm ${colors.form.label} mb-1`}>
-                  Item Title
-                </label>
-                <input
-                  type="text"
-                  name="itemTitle"
-                  value={formData.itemTitle}
-                  onChange={handleInputChange}
-                  placeholder="Description of the transaction"
-                  className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            {/* Submit Buttons */}
-            <div className={`flex justify-end space-x-4 pt-6 border-t ${colors.border.default}`}>
-              <button
-                type="button"
-                onClick={onCancel}
-                className={`px-6 py-2 rounded-md transition-colors ${colors.button.secondary}`}
+      {/* Tab Content */}
+      {
+        activeTab === 'manual' ? (
+          /* Manual Entry Form */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Date & Time */}
+            <div>
+              <label className={`block text-sm ${colors.form.label} mb-1`}>
+                Date *
+              </label>
+              <input
+                type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
+                required
                 disabled={isLoading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className={`px-6 py-2 rounded-md transition-colors ${colors.button.primary}`}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    <span>Adding...</span>
-                  </div>
-                ) : (
-                  'Add Transaction'
-                )}
-              </button>
-            </div>
-          </form>
-          ) : (
-            /* CSV Import Tab */
-            <div className="space-y-4">
-              <PayPalCSVImporter
-                onImportComplete={handleImportComplete}
               />
             </div>
-          )}
-        </div>
-      </div>
+
+            <div>
+              <label className={`block text-sm ${colors.form.label} mb-1`}>
+                Time *
+              </label>
+              <input
+                type="time"
+                name="time"
+                value={formData.time}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Name */}
+            <div>
+              <label className={`block text-sm ${colors.form.label} mb-1`}>
+                Name *
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Payer/Recipient name"
+                className={`w-full px-3 py-2 rounded-md ${errors.name ? colors.form.input.error : colors.form.input.base
+                  }`}
+                required
+                disabled={isLoading}
+              />
+              {errors.name && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.name}</p>}
+            </div>
+
+            {/* Amount */}
+            <div>
+              <label className={`block text-sm ${colors.form.label} mb-1`}>
+                Amount *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="amount"
+                value={formData.amount}
+                onChange={handleInputChange}
+                placeholder="0.00"
+                className={`w-full px-3 py-2 rounded-md ${errors.amount ? colors.form.input.error : colors.form.input.base
+                  }`}
+                required
+                disabled={isLoading}
+              />
+              {errors.amount && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.amount}</p>}
+            </div>
+
+            {/* Fees */}
+            <div>
+              <label className={`block text-sm ${colors.form.label} mb-1`}>
+                Fees
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="fees"
+                value={formData.fees}
+                onChange={handleInputChange}
+                placeholder="0.00"
+                className={`w-full px-3 py-2 rounded-md ${errors.fees ? colors.form.input.error : colors.form.input.base
+                  }`}
+                disabled={isLoading}
+              />
+              {errors.fees && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.fees}</p>}
+            </div>
+
+            {/* Total (auto-calculated) */}
+            <div>
+              <label className={`block text-sm ${colors.form.label} mb-1`}>
+                Total (Auto-calculated)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="total"
+                value={formData.total}
+                onChange={handleInputChange}
+                placeholder="0.00"
+                className={`w-full px-3 py-2 rounded-md ${colors.form.input.disabled} ${colors.form.input.base}`}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Transaction ID */}
+            <div className="md:col-span-2">
+              <label className={`block text-sm ${colors.form.label} mb-1`}>
+                Transaction ID *
+              </label>
+              <input
+                type="text"
+                name="transactionId"
+                value={formData.transactionId}
+                onChange={handleInputChange}
+                placeholder="Unique PayPal transaction ID"
+                className={`w-full px-3 py-2 rounded-md ${errors.transactionId ? colors.form.input.error : colors.form.input.base
+                  }`}
+                required
+                disabled={isLoading}
+              />
+              {errors.transactionId && <p className={`${colors.text.danger} text-sm mt-1`}>{errors.transactionId}</p>}
+            </div>
+
+            <div>
+              <label className={`block text-sm ${colors.form.label} mb-1`}>
+                Receipt ID
+              </label>
+              <input
+                type="text"
+                name="receiptId"
+                value={formData.receiptId}
+                onChange={handleInputChange}
+                placeholder="Optional"
+                className={`w-full px-3 py-2 rounded-md ${colors.form.input.base}`}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+        ) : (
+          /* CSV Import Tab */
+          <div className="space-y-4">
+            <PayPalCSVImporter
+              onImportComplete={handleImportComplete}
+            />
+          </div>
+        )
+      }
     </div>
+  );
+
+  const modalFooter = activeTab === 'manual' ? (
+    <form onSubmit={handleSubmit}>
+      <div className="flex space-x-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className={`flex-1 px-4 py-3 ${colors.button.secondary} rounded-lg font-medium text-base`}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className={`flex-1 px-4 py-3 ${colors.button.primary} rounded-lg font-medium text-base`}
+        >
+          Update
+        </button>
+      </div>
+    </form>
+  ) : null;
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onCancel}
+      title="Add PayPal Transaction"
+      size="md"
+      body={modalBody}
+      footer={modalFooter}
+    />
   );
 };

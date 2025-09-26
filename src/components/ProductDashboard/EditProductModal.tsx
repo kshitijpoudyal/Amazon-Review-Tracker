@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { Product } from '../../types/Product';
 import { colors } from '../../utils/colors';
+import { Modal } from '../common';
 
 interface EditProductModalProps {
   product: Product;
@@ -23,25 +23,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     setEditedProduct({ ...product });
   }, [product]);
 
-  // Handle ESC key press to close modal
-  useEffect(() => {
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onCancel();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscKey);
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscKey);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onCancel]);
-
   const handleInputChange = (field: keyof Product, value: any) => {
     setEditedProduct(prev => ({
       ...prev,
@@ -55,7 +36,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       ...editedProduct,
       [field]: numValue
     };
-    
+
     // Auto-calculate delta when paid or received changes
     if (newProduct.paid !== null && newProduct.received !== null) {
       newProduct.delta = newProduct.received - newProduct.paid;
@@ -66,7 +47,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     } else {
       newProduct.delta = null;
     }
-    
+
     setEditedProduct(newProduct);
   };
 
@@ -84,210 +65,192 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     onSave(unVoidProduct);
   };
 
-  if (!isOpen) return null;
+  const modalBody = (
+    <div className="p-6 space-y-6">
+      {/* Product Name */}
+      <div>
+        <label className={`block text-sm ${colors.form.label} mb-2`}>Product Name</label>
+        <textarea
+          value={editedProduct.item}
+          onChange={(e) => handleInputChange('item', e.target.value)}
+          className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md resize-vertical min-h-[4rem]`}
+          placeholder="Product name"
+          rows={3}
+        />
+      </div>
 
-  return createPortal(
-    <div className={`fixed inset-0 ${colors.modal.overlay} flex items-center justify-center p-4`}>
-      <div className={`${colors.background.primary} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative flex flex-col`}>
-        {/* Modal Header */}
-        <div className={`flex justify-between items-center p-4 border-b ${colors.border.default}`}>
-          <div className="flex items-center space-x-3">
-            <h2 className={`text-xl font-semibold ${colors.text.primary}`}>Edit Product</h2>
-            {editedProduct.isVoid && (
-              <span className={`px-2 py-1 text-xs font-medium ${colors.modal.void.badge} rounded-full`}>
-                VOID
-              </span>
-            )}
-          </div>
-          <button
-            onClick={onCancel}
-            className={`${colors.button.close} transition-colors`}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+      {/* Product URL */}
+      <div>
+        <label className={`block text-sm ${colors.form.label} mb-2`}>Product URL</label>
+        <input
+          type="url"
+          value={editedProduct.url || ''}
+          onChange={(e) => handleInputChange('url', e.target.value || null)}
+          className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
+          placeholder="https://amazon.com/..."
+        />
+      </div>
 
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Product Name */}
-          <div>
-            <label className={`block text-sm ${colors.form.label} mb-2`}>Product Name</label>
-            <textarea
-              value={editedProduct.item}
-              onChange={(e) => handleInputChange('item', e.target.value)}
-              className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md resize-vertical min-h-[4rem]`}
-              placeholder="Product name"
-              rows={3}
-            />
-          </div>
+      {/* Order Date */}
+      <div>
+        <label className={`block text-sm ${colors.form.label} mb-2`}>Order Date</label>
+        <input
+          type="date"
+          value={editedProduct.orderDate || ''}
+          onChange={(e) => handleInputChange('orderDate', e.target.value || null)}
+          className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
+        />
+      </div>
 
-          {/* Product URL */}
-          <div>
-            <label className={`block text-sm ${colors.form.label} mb-2`}>Product URL</label>
+      {/* Order Number - Hidden field for search purposes */}
+      <div>
+        <label className={`block text-sm ${colors.form.label} mb-2`}>Order Number</label>
+        <input
+          type="text"
+          value={editedProduct.orderNumber || ''}
+          onChange={(e) => handleInputChange('orderNumber', e.target.value || null)}
+          className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
+          placeholder="Enter order number for search purposes"
+        />
+      </div>
+
+      {/* Status Checkboxes */}
+      <div>
+        <label className={`block text-sm ${colors.form.label} mb-3`}>Order Status</label>
+        <div className="grid grid-cols-2 gap-4">
+          <label className="flex items-center space-x-3">
             <input
-              type="url"
-              value={editedProduct.url || ''}
-              onChange={(e) => handleInputChange('url', e.target.value || null)}
-              className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
-              placeholder="https://amazon.com/..."
+              type="checkbox"
+              checked={editedProduct.orderPlaced}
+              onChange={(e) => handleInputChange('orderPlaced', e.target.checked)}
+              className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
             />
-          </div>
-
-          {/* Order Date */}
-          <div>
-            <label className={`block text-sm ${colors.form.label} mb-2`}>Order Date</label>
+            <span className={`text-sm ${colors.text.secondary}`}>Order Placed</span>
+          </label>
+          <label className="flex items-center space-x-3">
             <input
-              type="date"
-              value={editedProduct.orderDate || ''}
-              onChange={(e) => handleInputChange('orderDate', e.target.value || null)}
-              className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
+              type="checkbox"
+              checked={editedProduct.orderDelivered}
+              onChange={(e) => handleInputChange('orderDelivered', e.target.checked)}
+              className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
             />
-          </div>
-
-          {/* Order Number - Hidden field for search purposes */}
-          <div>
-            <label className={`block text-sm ${colors.form.label} mb-2`}>Order Number</label>
+            <span className={`text-sm ${colors.text.secondary}`}>Order Delivered</span>
+          </label>
+          <label className="flex items-center space-x-3">
             <input
-              type="text"
-              value={editedProduct.orderNumber || ''}
-              onChange={(e) => handleInputChange('orderNumber', e.target.value || null)}
-              className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
-              placeholder="Enter order number for search purposes"
+              type="checkbox"
+              checked={editedProduct.reviewAdded}
+              onChange={(e) => handleInputChange('reviewAdded', e.target.checked)}
+              className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
             />
-          </div>
-
-          {/* Status Checkboxes */}
-          <div>
-            <label className={`block text-sm ${colors.form.label} mb-3`}>Order Status</label>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={editedProduct.orderPlaced}
-                  onChange={(e) => handleInputChange('orderPlaced', e.target.checked)}
-                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
-                />
-                <span className={`text-sm ${colors.text.secondary}`}>Order Placed</span>
-              </label>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={editedProduct.orderDelivered}
-                  onChange={(e) => handleInputChange('orderDelivered', e.target.checked)}
-                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
-                />
-                <span className={`text-sm ${colors.text.secondary}`}>Order Delivered</span>
-              </label>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={editedProduct.reviewAdded}
-                  onChange={(e) => handleInputChange('reviewAdded', e.target.checked)}
-                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
-                />
-                <span className={`text-sm ${colors.text.secondary}`}>Review Added</span>
-              </label>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={editedProduct.reviewLive}
-                  onChange={(e) => handleInputChange('reviewLive', e.target.checked)}
-                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
-                />
-                <span className={`text-sm ${colors.text.secondary}`}>Review Live</span>
-              </label>
-              <label className="flex items-center space-x-3 col-span-2">
-                <input
-                  type="checkbox"
-                  checked={editedProduct.reviewSSSent}
-                  onChange={(e) => handleInputChange('reviewSSSent', e.target.checked)}
-                  className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
-                />
-                <span className={`text-sm ${colors.text.secondary}`}>Screenshot Sent</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Financial Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={`block text-sm ${colors.form.label} mb-2`}>Amount Paid ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={editedProduct.paid || ''}
-                onChange={(e) => handleNumberChange('paid', e.target.value)}
-                className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
-                placeholder="0.00"
-              />
-            </div>
-            <div>
-              <label className={`block text-sm ${colors.form.label} mb-2`}>Amount Received ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={editedProduct.received || ''}
-                onChange={(e) => handleNumberChange('received', e.target.value)}
-                className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-
-          {/* Delta Display */}
-          <div>
-            <label className={`block text-sm ${colors.form.label} mb-2`}>Profit/Loss (Auto-calculated)</label>
-            <div className={`text-lg font-semibold px-3 py-2 rounded-md border ${
-              editedProduct.delta !== null && editedProduct.delta >= 0 
-                ? colors.financial.positive
-                : editedProduct.delta !== null
-                ? colors.financial.negative
-                : colors.financial.neutral
-            }`}>
-              ${editedProduct.delta?.toFixed(2) || '0.00'}
-            </div>
-          </div>
-          {editedProduct.isVoid ? (
-            <button
-              onClick={handleUnVoid}
-              className={`px-4 py-2 ${colors.modal.void.unvoidButton} rounded-md transition-colors`}
-            >
-              Un-Void Product
-            </button>
-          ) : (
-            <button
-              onClick={handleMarkAsVoid}
-              className={`px-4 py-2 ${colors.modal.void.button} rounded-md transition-colors`}
-            >
-              Mark as Void
-            </button>
-          )}
-        </div>
-
-        
-
-        {/* Modal Footer */}
-        <div className={`flex-shrink-0 p-6 border-t ${colors.border.default} ${colors.background.secondary}`}>
-          <div className="flex space-x-3 w-full">
-            <button
-              onClick={onCancel}
-              className={`flex-1 px-4 py-2 ${colors.button.secondary} rounded-md transition-colors`}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className={`flex-1 px-4 py-2 ${colors.button.primary} rounded-md transition-colors flex items-center justify-center space-x-2`}
-            >
-              <span>Update</span>
-            </button>
-          </div>
+            <span className={`text-sm ${colors.text.secondary}`}>Review Added</span>
+          </label>
+          <label className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              checked={editedProduct.reviewLive}
+              onChange={(e) => handleInputChange('reviewLive', e.target.checked)}
+              className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
+            />
+            <span className={`text-sm ${colors.text.secondary}`}>Review Live</span>
+          </label>
+          <label className="flex items-center space-x-3 col-span-2">
+            <input
+              type="checkbox"
+              checked={editedProduct.reviewSSSent}
+              onChange={(e) => handleInputChange('reviewSSSent', e.target.checked)}
+              className={`w-8 h-8 ${colors.form.checkbox} rounded focus:ring-blue-500`}
+            />
+            <span className={`text-sm ${colors.text.secondary}`}>Screenshot Sent</span>
+          </label>
         </div>
       </div>
-    </div>,
-    document.body
+
+      {/* Financial Fields */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className={`block text-sm ${colors.form.label} mb-2`}>Amount Paid ($)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={editedProduct.paid || ''}
+            onChange={(e) => handleNumberChange('paid', e.target.value)}
+            className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
+            placeholder="0.00"
+          />
+        </div>
+        <div>
+          <label className={`block text-sm ${colors.form.label} mb-2`}>Amount Received ($)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={editedProduct.received || ''}
+            onChange={(e) => handleNumberChange('received', e.target.value)}
+            className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
+            placeholder="0.00"
+          />
+        </div>
+      </div>
+
+      {/* Delta Display */}
+      <div>
+        <label className={`block text-sm ${colors.form.label} mb-2`}>Profit/Loss (Auto-calculated)</label>
+        <div className={`text-lg font-semibold px-3 py-2 rounded-md border ${editedProduct.delta !== null && editedProduct.delta >= 0
+          ? colors.financial.positive
+          : editedProduct.delta !== null
+            ? colors.financial.negative
+            : colors.financial.neutral
+          }`}>
+          ${editedProduct.delta?.toFixed(2) || '0.00'}
+        </div>
+      </div>
+      {editedProduct.isVoid ? (
+        <button
+          onClick={handleUnVoid}
+          className={`px-4 py-2 ${colors.modal.void.unvoidButton} rounded-md transition-colors`}
+        >
+          Un-Void Product
+        </button>
+      ) : (
+        <button
+          onClick={handleMarkAsVoid}
+          className={`px-4 py-2 ${colors.modal.void.button} rounded-md transition-colors`}
+        >
+          Mark as Void
+        </button>
+      )}
+    </div>
+  );
+
+  const modalFooter = (
+    <form onSubmit={handleSave}>
+      <div className="flex space-x-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className={`flex-1 px-4 py-3 ${colors.button.secondary} rounded-lg font-medium text-base`}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className={`flex-1 px-4 py-3 ${colors.button.primary} rounded-lg font-medium text-base`}
+        >
+          Update
+        </button>
+      </div>
+    </form>
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onCancel}
+      title="Edit Product"
+      body={modalBody}
+      footer={modalFooter}
+      size="md"
+    />
   );
 };
 
