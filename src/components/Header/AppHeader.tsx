@@ -24,7 +24,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     return (
-        <header className={`${colors.header.background} ${colors.header.backgroundDark}`}>
+        <header className={`${colors.header.background}`}>
             <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-2 lg:px-8">
                 <div className="flex items-center gap-x-12">
                     <div className="hidden lg:flex lg:gap-x-12">
