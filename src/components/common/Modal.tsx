@@ -65,7 +65,7 @@ const Modal: React.FC<ModalProps> = ({
 
     return (
         <div
-            className={`fixed inset-0 ${colors.modal.overlay} flex justify-center items-center p-4 z-50`}
+            className={`fixed inset-0 ${colors.modal.overlay} flex justify-center p-4 z-50`}
             onClick={handleBackdropClick}
             onKeyDown={handleKeyDown}
             tabIndex={-1}
@@ -100,8 +100,7 @@ const Modal: React.FC<ModalProps> = ({
                                             {title}
                                         </h2>
                                     )}
-                                    {
-                                        showCloseButton && (
+                                    {showCloseButton && (
                                             <button
                                                 onClick={onClose}
                                                 className={`${colors.button.close} transition-colors p-2 sm:p-1 -mr-2 sm:-mr-1`}
