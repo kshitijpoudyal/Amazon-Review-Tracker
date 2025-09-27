@@ -296,7 +296,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                     <td className="px-3 py-4 text-sm dropdown-container">
                       <button
                         onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                        className="flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        className={`flex items-center justify-center w-8 h-8 ${colors.button.primary} hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400`}
                         title="More actions"
                       >
                         <svg

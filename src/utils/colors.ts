@@ -208,15 +208,15 @@ export const colors = {
         background: 'bg-gradient-to-r from-blue-500 to-purple-700',
         backgroundDark: 'dark:from-blue-600 dark:to-purple-800',
         navigation: {
-            link: 'text-gray-900 dark:text-white',
-            linkHover: 'hover:text-gray-700 dark:hover:text-gray-300'
+            link: 'text-white',
+            linkHover: 'hover:text-gray-300'
         },
         mobile: {
-            menuButton: 'text-gray-700 dark:text-gray-400 dark:hover:text-white',
+            menuButton: 'text-gray-400 hover:text-white',
             ring: 'sm:ring-gray-900/10 dark:sm:ring-gray-100/10',
-            closeButton: 'text-gray-700 dark:text-gray-400 dark:hover:text-white',
-            divider: 'divide-gray-500/10 dark:divide-white/10',
-            menuLink: 'text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5'
+            closeButton: 'text-gray-400 hover:text-white',
+            divider: 'divide-white/10',
+            menuLink: 'text-white hover:bg-white/5'
         }
     }
 } as const;
