@@ -81,8 +81,8 @@ export const PayPalPage: React.FC = () => {
     const matchesType = !typeFilter || transaction.type === typeFilter;
     
     const matchesLinkFilter = !linkFilter || 
-      (linkFilter === 'linked' && transaction.linkedProductId) ||
-      (linkFilter === 'unlinked' && !transaction.linkedProductId);
+      (linkFilter === 'linked' && transaction.linkedProductIds && transaction.linkedProductIds.length > 0) ||
+      (linkFilter === 'unlinked' && (!transaction.linkedProductIds || transaction.linkedProductIds.length === 0));
 
     return matchesSearch && matchesType && matchesLinkFilter;
   }) || [];
@@ -129,8 +129,8 @@ export const PayPalPage: React.FC = () => {
     return success;
   };
 
-  const handleUpdateProductLink = async (transactionId: string, productId: string | null) => {
-    const success = await updateProductLink(transactionId, productId);
+  const handleUpdateProductLink = async (transactionId: string, productIds: string[]) => {
+    const success = await updateProductLink(transactionId, productIds);
     if (success) {
       await refetch();
     }
@@ -147,12 +147,12 @@ export const PayPalPage: React.FC = () => {
 
   // Calculate unlinked transactions from filtered data
   const unlinkedTransactionsCount = filteredTransactions.filter(
-    transaction => !transaction.linkedProductId
+    transaction => !transaction.linkedProductIds || transaction.linkedProductIds.length === 0
   ).length;
 
   // Calculate total amount of unlinked transactions from filtered data
   const unlinkedTransactionsAmount = filteredTransactions
-    .filter(transaction => !transaction.linkedProductId)
+    .filter(transaction => !transaction.linkedProductIds || transaction.linkedProductIds.length === 0)
     .reduce((total, transaction) => total + transaction.total, 0);
 
   // Prepare stats data
