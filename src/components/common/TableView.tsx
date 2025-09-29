@@ -210,23 +210,23 @@ export const TableView: React.FC<TableViewProps> = ({
                     {columns.map((column, colIndex) => (
                       <td
                         key={`${row.id}-${column.key}`}
-                        className={`px-6 py-5 ${
+                        className={`${
                           column.align === 'right' ? 'text-right' : 
                           column.align === 'center' ? 'text-center' : 'text-left'
                         }`}
                       >
                         {/* Status indicator bar for first column */}
                         {colIndex === 0 && row.borderColor && (
-                          <div className="flex items-start space-x-3">
-                            <div className={`w-1 h-12 rounded-full flex-shrink-0 ${row.borderColor.replace('border-l-', 'bg-')}`}></div>
-                            <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-3">
+                            <div className={`h-12 flex-shrink-0 border-l-4 ${row.borderColor}`}></div>
+                            <div className="flex-1 min-w-0 my-4">
                               {row.data[column.key]}
                             </div>
                           </div>
                         )}
                         
                         {/* Regular content */}
-                        {!(colIndex === 0 && row.borderColor) && row.data[column.key]}
+                        {colIndex !== 0 && row.data[column.key]}
                         
                         {/* Actions dropdown */}
                         {column.key === 'actions' && row.actions && (
