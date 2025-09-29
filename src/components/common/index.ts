@@ -3,6 +3,7 @@ export { DashboardStats } from './DashboardStats';
 export { DashboardError } from './DashboardError';
 export { DashboardSection } from './DashboardSection';
 export { DashboardLayout } from './DashboardLayout';
+export { EmailReminderPanel } from './EmailReminderPanel';
 export { default as GenericFilterControls } from './Toolbar';
 export type { FilterOption, FilterControlConfig } from './Toolbar';
 export { default as Modal } from './Modal';

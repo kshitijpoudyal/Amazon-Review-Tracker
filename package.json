@@ -12,6 +12,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
+    "@sendgrid/mail": "^8.1.6",
     "csv-parse": "^6.1.0",
     "firebase": "^12.2.1",
     "firebase-admin": "^13.5.0",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
+    "@types/sendgrid": "^2.0.31",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
