@@ -1,6 +1,7 @@
 {
   "projects": {
-    "product-review": "productreview-52e51"
+    "product-review": "productreview-52e51",
+    "default": "productreview-52e51"
   },
   "targets": {},
   "etags": {}
