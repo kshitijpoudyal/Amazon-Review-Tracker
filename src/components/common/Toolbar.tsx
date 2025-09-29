@@ -132,7 +132,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   const renderActions = (actions: ActionButton[]) => {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {actions.map((action, index) => (
           <button
             key={index}
@@ -155,13 +155,61 @@ const Toolbar: React.FC<ToolbarProps> = ({
     );
   };
 
+  const ToolbarShimmer = () => (
+    <div className="bg-white border-b border-gray-200">
+      <div className="px-3 sm:px-4 lg:px-6 py-4">
+        {/* Mobile Layout Shimmer */}
+        <div className="block lg:hidden space-y-4">
+          {/* Search and Clear Shimmer */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="relative">
+                <div className="h-11 bg-gray-200 rounded-xl animate-pulse"></div>
+              </div>
+            </div>
+            <div className="h-11 w-11 bg-gray-200 rounded-xl animate-pulse"></div>
+          </div>
+
+          {/* Filters and Actions Shimmer */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="h-11 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-11 w-28 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="ml-auto">
+              <div className="h-11 w-11 bg-gray-200 rounded-xl animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Layout Shimmer */}
+        <div className="hidden lg:flex lg:items-center lg:gap-4">
+          {/* Filters Shimmer */}
+          <div className="flex items-center gap-3 flex-1">
+            <div className="flex-1 max-w-md h-11 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-11 w-36 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-11 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+          </div>
+
+          {/* Actions Shimmer */}
+          <div className="flex items-center gap-2">
+            <div className="h-11 w-20 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-11 w-28 bg-gray-200 rounded-xl animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <ToolbarShimmer />;
+  }
+
   return (
     <div className="bg-white border-b border-gray-200">
-      <div className="px-4 sm:px-6 lg:px-8 py-4">
+      <div className="px-3 sm:px-4 lg:px-6 py-4">
         {/* Mobile Layout */}
         <div className="block lg:hidden space-y-4">
           {/* Search and Clear */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0">
               {filters
                 .filter(f => f.type === 'search')
@@ -179,7 +227,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </div>
 
           {/* Filters and Actions */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {filters
               .filter(f => f.type === 'select')
               .map(renderFilter)}
@@ -190,14 +238,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden lg:flex lg:items-center lg:gap-6">
+        <div className="hidden lg:flex lg:items-center lg:gap-4">
           {/* Filters */}
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-3 flex-1">
             {filters.map(renderFilter)}
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {showClearButton && hasActiveFilters && onClearFilters && (
               <button
                 onClick={onClearFilters}
