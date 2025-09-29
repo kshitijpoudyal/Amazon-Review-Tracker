@@ -178,7 +178,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
           {/* Amount Paid */}
           <div>
             <label className={`block text-sm ${colors.form.label} mb-2`}>
-              Amount Paid ($)
+              Amount Paid ($) *
             </label>
             <input
               type="number"
@@ -187,6 +187,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
               onChange={(e) => handleNumberChange("paid", e.target.value)}
               className={`w-full px-4 py-3 ${colors.form.input.base} rounded-lg text-base`}
               placeholder="Enter amount paid"
+              required
             />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { PlusIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import React from 'react';
 import { colors } from '../../utils/colors';
@@ -45,31 +45,46 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const hasActiveFilters = filters.some(filter => filter.value && filter.value !== '');
 
   const getButtonClasses = (variant: ActionButton['variant'] = 'primary') => {
-    const baseClasses = 'rounded-full p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2';
+    const baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    const sizeClasses = 'px-4 py-3 text-sm rounded-xl shadow-sm hover:shadow-md';
 
     switch (variant) {
       case 'secondary':
-        return `${baseClasses} ${colors.button.secondary}`;
+        return `${baseClasses} ${sizeClasses} ${colors.button.secondary} py-4`;
       case 'danger':
-        return `${baseClasses} ${colors.button.dangerSolid}`;
+        return `${baseClasses} ${sizeClasses} ${colors.button.danger} py-4`;
       case 'primary':
       default:
-        return `${baseClasses} ${colors.button.indigo}`;
+        return `${baseClasses} ${sizeClasses} ${colors.button.primary} py-4`;
     }
-  }
+  };
 
   const renderFilter = (filter: FilterControlConfig) => {
     switch (filter.type) {
       case 'search':
         return (
           <div key={filter.key} className="flex-1 min-w-0">
-            <input
-              type="text"
-              placeholder={filter.placeholder || 'Search...'}
-              value={filter.value}
-              onChange={(e) => filter.onChange(e.target.value)}
-              className={`w-full px-4 py-3 text-base rounded-md ${colors.form.input.base} ${colors.form.input.text}`}
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder={filter.placeholder || 'Search...'}
+                value={filter.value}
+                onChange={(e) => filter.onChange(e.target.value)}
+                className="block w-full pl-10 pr-4 py-4 text-sm border border-gray-300 rounded-xl bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+              />
+              {filter.value && (
+                <button
+                  type="button"
+                  onClick={() => filter.onChange('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <XMarkIcon className="h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors" />
+                </button>
+              )}
+            </div>
           </div>
         );
 
@@ -77,23 +92,28 @@ const Toolbar: React.FC<ToolbarProps> = ({
         const selectedOption = filter.options?.find(option => option.value === filter.value);
         return (
           <div key={filter.key} className="flex-shrink-0">
-            <Menu as="div" className="relative inline-block">
-              <MenuButton className={`inline-flex w-full justify-center gap-x-1.5 rounded-md px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${colors.modal.menuButton}`}>
-                {selectedOption?.label || 'Select...'}
-                <ChevronDownIcon aria-hidden="true" className={`-mr-1 size-5 ${colors.text.disabled}`} />
+            <Menu as="div" className="relative">
+              <MenuButton className="inline-flex items-center justify-center gap-x-2 px-4 py-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 min-w-[140px]">
+                <span className="truncate">
+                  {selectedOption?.label || filter.label || 'Select...'}
+                </span>
+                <ChevronDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
               </MenuButton>
 
-              <MenuItems
-                transition
-                className={`absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md ${colors.menu.background} ${colors.menu.border} ${colors.menu.shadow} ${colors.menu.outline} transition data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in`}
-              >
-                <div className="py-1">
-                  {filter.options?.map(option => (
+              <MenuItems className="absolute left-0 sm:right-0 z-20 mt-2 w-56 origin-top-left sm:origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transform transition-all duration-200 data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75">
+                <div className="py-2">
+                  {filter.options?.map((option, index) => (
                     <MenuItem key={option.value}>
                       <button
                         type="button"
                         onClick={() => filter.onChange(option.value)}
-                        className={`block w-full px-4 py-2 text-left text-sm ${colors.modal.menuItem} data-[focus]:outline-none`}
+                        className={`block w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 ${colors.modal.menuItem} ${
+                          option.value === filter.value
+                            ? `${colors.modal.item.selected} font-medium`
+                            : `${colors.text.primary} ${colors.modal.item.hover}`
+                        } ${index === 0 ? 'rounded-t-lg' : ''} ${
+                          index === (filter.options?.length || 0) - 1 ? 'rounded-b-lg' : ''
+                        }`}
                       >
                         {option.label}
                       </button>
@@ -110,40 +130,87 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }
   };
 
-  const renderAction = (actions: ActionButton[]) => {
+  const renderActions = (actions: ActionButton[]) => {
     return (
-      <div>
+      <div className="flex items-center gap-3">
         {actions.map((action, index) => (
           <button
             key={index}
             onClick={action.onClick}
             className={getButtonClasses(action.variant)}
             disabled={action.disabled || loading}
+            title={action.label}
           >
-            <PlusIcon aria-hidden="true" className="size-5" />
+            {action.icon && typeof action.icon === 'string' ? (
+              <span className="mr-2">{action.icon}</span>
+            ) : action.icon ? (
+              <span className="mr-2">{action.icon}</span>
+            ) : (
+              <PlusIcon className="h-4 w-4 mr-2" />
+            )}
+            <span className="hidden sm:inline">{action.label}</span>
           </button>
         ))}
       </div>
     );
-  }
+  };
 
   return (
-    <div className="px-4 mt-0">
-      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        {filters.map(renderFilter)}
+    <div className="bg-white border-b border-gray-200">
+      <div className="px-4 sm:px-6 lg:px-8 py-4">
+        {/* Mobile Layout */}
+        <div className="block lg:hidden space-y-4">
+          {/* Search and Clear */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              {filters
+                .filter(f => f.type === 'search')
+                .map(renderFilter)}
+            </div>
+            {showClearButton && hasActiveFilters && onClearFilters && (
+              <button
+                onClick={onClearFilters}
+                className={getButtonClasses('secondary')}
+                title="Clear filters"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-        {/* Clear Filters */}
-        {showClearButton && hasActiveFilters && onClearFilters && (
-          <button
-            onClick={onClearFilters}
-            className={`flex-shrink-0 px-3 py-3 rounded-md transition-colors ${colors.button.secondary}`}
-          >
-            Clear Filters
-          </button>
-        )}
+          {/* Filters and Actions */}
+          <div className="flex flex-wrap items-center gap-3">
+            {filters
+              .filter(f => f.type === 'select')
+              .map(renderFilter)}
+            <div className="ml-auto">
+              {renderActions(actions)}
+            </div>
+          </div>
+        </div>
 
-        {/* Action Buttons */}
-        {renderAction(actions)}
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex lg:items-center lg:gap-6">
+          {/* Filters */}
+          <div className="flex items-center gap-4 flex-1">
+            {filters.map(renderFilter)}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            {showClearButton && hasActiveFilters && onClearFilters && (
+              <button
+                onClick={onClearFilters}
+                className={getButtonClasses('secondary')}
+                title="Clear all filters"
+              >
+                <XMarkIcon className="h-4 w-4 mr-2" />
+                Clear
+              </button>
+            )}
+            {renderActions(actions)}
+          </div>
+        </div>
       </div>
     </div>
   );
