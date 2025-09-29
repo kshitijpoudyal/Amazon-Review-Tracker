@@ -142,11 +142,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
             title={action.label}
           >
             {action.icon && typeof action.icon === 'string' ? (
-              <span className="mr-2">{action.icon}</span>
+              <span>{action.icon}</span>
             ) : action.icon ? (
-              <span className="mr-2">{action.icon}</span>
+              <span>{action.icon}</span>
             ) : (
-              <PlusIcon className="h-4 w-4 mr-2" />
+              <PlusIcon className="h-4 w-4" />
             )}
             <span className="hidden sm:inline">{action.label}</span>
           </button>
@@ -252,7 +252,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 className={getButtonClasses('secondary')}
                 title="Clear all filters"
               >
-                <XMarkIcon className="h-4 w-4 mr-2" />
+                <XMarkIcon className="h-4 w-4" />
                 Clear
               </button>
             )}

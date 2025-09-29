@@ -108,12 +108,12 @@ const TableLoadingView: React.FC<{ columns: TableColumn[]; loadingRows?: number 
         <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden">
           <table className="w-full">
             {/* Table Header */}
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200/50 sticky top-0 z-10">
+            <thead className={`${colors.background.gradient} border-b border-gray-200/50 sticky top-0 z-10`}>
               <tr>
                 {columns.map((column) => (
                   <th
                     key={`header-${column.key}`}
-                    className={`px-6 py-4 text-gray-700 font-medium text-sm tracking-wide ${
+                    className={`px-6 py-4 text-white font-medium text-sm tracking-wide ${
                       column.align === 'right' ? 'text-right' : 
                       column.align === 'center' ? 'text-center' : 'text-left'
                     } ${column.width || ''} ${column.className || ''}`}
@@ -184,12 +184,12 @@ export const TableView: React.FC<TableViewProps> = ({
           <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden">
             <table className="w-full">
               {/* Table Header */}
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200/50 sticky top-0 z-10">
+              <thead className={`${colors.background.gradient} border-b border-gray-200/50 sticky top-0 z-10`}>
                 <tr>
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`px-6 py-4 text-gray-700 font-medium text-sm tracking-wide ${
+                      className={`px-6 py-4 text-white font-medium text-sm tracking-wide ${
                         column.align === 'right' ? 'text-right' : 
                         column.align === 'center' ? 'text-center' : 'text-left'
                       } ${column.width || ''} ${column.className || ''}`}
