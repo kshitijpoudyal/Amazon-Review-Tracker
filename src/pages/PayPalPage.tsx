@@ -7,15 +7,14 @@ import { useProductCrudFirebase } from '../hooks/useProductCrudFirebase';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { PayPalTransactionTable } from '../components/PaypalDashboard/PayPalTransactionTable';
 import { AddPayPalTransactionForm } from '../components/PaypalDashboard/AddPayPalTransactionForm';
-import { 
-  DashboardLayout, 
-  DashboardStats, 
-  DashboardError, 
+import {
+  DashboardLayout,
+  DashboardStats,
+  DashboardError,
   DashboardSection,
   FilterControlConfig
 } from '../components/common';
 import Toolbar from '../components/common/Toolbar';
-import { TableViewLoading } from '../components/common/TableViewLoading';
 import { getStatsColor } from '../utils/colors';
 
 /**
@@ -32,12 +31,12 @@ import { getStatsColor } from '../utils/colors';
 export const PayPalPage: React.FC = () => {
   const { user } = useAuth();
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
-  
+
   // Filter state management
-  const { 
-    updateFilter, 
+  const {
+    updateFilter,
     clearFilters: clearAllFilters,
-    getFilterValue 
+    getFilterValue
   } = useGenericFilters({
     initialFilters: {
       searchTerm: '',
@@ -66,21 +65,21 @@ export const PayPalPage: React.FC = () => {
 
   // Enforce minimum loading time of 3 seconds for main transactions
   const displayLoading = useMinimumLoading(loading);
-  
+
   // Enforce minimum loading time for products loading as well
   const displayProductsLoading = useMinimumLoading(productsLoading, 0);
 
   // Filter transactions based on current filter values
   const filteredTransactions = data?.transactions.filter(transaction => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       transaction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.itemTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType = !typeFilter || transaction.type === typeFilter;
-    
-    const matchesLinkFilter = !linkFilter || 
+
+    const matchesLinkFilter = !linkFilter ||
       (linkFilter === 'linked' && transaction.linkedProductIds && transaction.linkedProductIds.length > 0) ||
       (linkFilter === 'unlinked' && (!transaction.linkedProductIds || transaction.linkedProductIds.length === 0));
 
@@ -111,12 +110,12 @@ export const PayPalPage: React.FC = () => {
 
   const handleImport = async (transactions: any[]) => {
     const result = await importTransactions(transactions);
-    
+
     // Show detailed import results including withdrawal skips
     if (result.withdrawalSkipped > 0) {
       // Import completed with some withdrawals skipped
     }
-    
+
     return result;
   };
 
@@ -223,10 +222,7 @@ export const PayPalPage: React.FC = () => {
 
       {/* Transactions Table */}
       <DashboardSection>
-        {displayLoading ? (
-          <TableViewLoading />
-        ) : (
-          <PayPalTransactionTable
+        <PayPalTransactionTable
           transactions={filteredTransactions}
           products={productData?.products || []}
           loading={displayLoading}
@@ -234,7 +230,6 @@ export const PayPalPage: React.FC = () => {
           onDeleteTransaction={handleDeleteTransaction}
           onUpdateProductLink={handleUpdateProductLink}
         />
-        )}
       </DashboardSection>
 
       {/* Add Transaction Form Modal */}

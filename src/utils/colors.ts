@@ -23,10 +23,12 @@ export const colors = {
     status: {
         linked: {
             bg: 'bg-green-500',
+            border: 'border-green-500',
             text: 'text-white'
         },
         unlinked: {
             bg: 'bg-yellow-500',
+            border: 'border-yellow-500',
             text: 'text-white'
         },
         error: {
@@ -37,35 +39,43 @@ export const colors = {
         },
         void: {
             bg: 'bg-gray-500',
+            border: 'border-gray-500',
             text: 'text-white'
         },
         complete: {
             bg: 'bg-green-500',
+            border: 'border-green-500',
             text: 'text-white'
         },
         refundPending: {
             bg: 'bg-blue-500',
-            text: 'text-white'
+            text: 'text-white',
+            border: 'border-blue-500'
         },
         sendScreenshot: {
             bg: 'bg-indigo-500',
-            text: 'text-white'
+            text: 'text-white',
+            border: 'border-indigo-500'
         },
         reviewPending: {
             bg: 'bg-yellow-500',
             text: 'text-white',
+            border: 'border-yellow-500'
         },
         addReview: {
             bg: 'bg-orange-500',
-            text: 'text-white'
+            text: 'text-white',
+            border: 'border-orange-500'
         },
         orderPlaced: {
             bg: 'bg-purple-500',
-            text: 'text-white'
+            text: 'text-white',
+            border: 'border-purple-500'
         },
         unknown: {
             bg: 'bg-gray-500',
-            text: 'text-white'
+            text: 'text-white',
+            border: 'border-gray-500'
         }
     },
 
@@ -249,7 +259,7 @@ export const getActionButtonClasses = () => {
 };
 
 // Stats color utility
-export const getStatsColor = (type: 'completed' | 'paid' | 'received' | 'remaining' | 'netDelta' | 'income' | 'fees' | 'netReceived' | 'transactionCount' | 'unlinkedCount' | 'unlinkedAmount', value?: number): string => {
+export const getStatsColor = (type: string, value?: number): string => {
     switch (type) {
         case 'completed':
             return colors.financial.positive;
@@ -273,5 +283,37 @@ export const getStatsColor = (type: 'completed' | 'paid' | 'received' | 'remaini
             return colors.financial.neutral2;
         default:
             return colors.text.primary;
+    }
+};
+
+// Product status border color utility
+export const getStatusBorderColor = (statusType: string): string => {
+    switch (statusType) {
+        case 'void':
+            return colors.status.void.border.replace('border-', 'border-l-');
+        case 'complete':
+            return colors.status.complete.border.replace('border-', 'border-l-');
+        case 'refund-pending':
+        case 'refundPending':
+            return colors.status.refundPending.border.replace('border-', 'border-l-');
+        case 'send-screenshot':
+        case 'sendScreenshot':
+            return colors.status.sendScreenshot.border.replace('border-', 'border-l-');
+        case 'review-pending':
+        case 'reviewPending':
+            return colors.status.reviewPending.border.replace('border-', 'border-l-');
+        case 'add-review':
+        case 'addReview':
+            return colors.status.addReview.border.replace('border-', 'border-l-');
+        case 'order-placed':
+        case 'orderPlaced':
+            return colors.status.orderPlaced.border.replace('border-', 'border-l-');
+        case 'linked':
+            return colors.status.linked.border.replace('border-', 'border-l-');
+        case 'unlinked':
+            return colors.status.unlinked.border.replace('border-', 'border-l-');
+        case 'unknown':
+        default:
+            return colors.status.unknown.border.replace('border-', 'border-l-');
     }
 };

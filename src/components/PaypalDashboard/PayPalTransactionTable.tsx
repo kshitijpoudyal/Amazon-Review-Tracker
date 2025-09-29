@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { PayPalTransaction } from '../../types/PayPalTransaction';
 import { Product } from '../../types/Product';
 import { ProductDropdown } from '../ProductDropdown';
-import { MobileItemCard } from '../common/MobileItemCard';
+import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
 import { 
   colors, 
   getFinancialColor, 
@@ -36,7 +36,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
       .filter((id): id is string => id !== null && id !== undefined);
   }, [transactions]);
 
-  const [showDropdown, setShowDropdown] = useState<number | null>(null);
+  const [showDropdown, setShowDropdown] = useState<string | number | null>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -87,274 +87,274 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     }
   };
 
-  if (transactions.length === 0) {
-    return (
-      <div className={`text-center py-16 ${colors.text.muted}`}>
-        <p className="text-lg">No PayPal transactions found.</p>
-      </div>
+  // Define table columns
+  const columns: TableColumn[] = [
+    { 
+      key: 'datetime', 
+      label: `Date/Time (${filteredAndSortedTransactions.length})`,
+      align: 'left'
+    },
+    { 
+      key: 'transactionId', 
+      label: 'Transaction ID',
+      align: 'left'
+    },
+    { 
+      key: 'name', 
+      label: 'Name',
+      align: 'left'
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      align: 'left'
+    },
+    { 
+      key: 'amount', 
+      label: 'Amount',
+      align: 'right'
+    },
+    { 
+      key: 'fees', 
+      label: 'Fees',
+      align: 'right'
+    },
+    { 
+      key: 'netReceived', 
+      label: 'Net Received',
+      align: 'right'
+    },
+    { 
+      key: 'productLink', 
+      label: 'Product Link',
+      align: 'left'
+    },
+    ...(onDeleteTransaction ? [{ 
+      key: 'actions', 
+      label: 'Actions',
+      align: 'center' as const,
+      width: 'w-16'
+    }] : [])
+  ];
+
+  // Transform transactions into table rows
+  const rows: TableRow[] = filteredAndSortedTransactions.map((transaction, index) => {
+    const isLinked = !!(transaction.linkedProductIds && transaction.linkedProductIds.length > 0);
+
+    return {
+      id: transaction.id || index,
+      borderColor: isLinked ? 'border-l-green-500' : 'border-l-yellow-500',
+      className: getRowBackgroundColor(isLinked),
+      data: {
+        datetime: (
+          <div>
+            <div className="font-medium">{formatDate(transaction.date)}</div>
+            <div className={colors.text.muted}>{transaction.time}</div>
+          </div>
+        ),
+        transactionId: (
+          <span className={`${colors.text.muted} font-mono text-sm`}>
+            {transaction.transactionId}
+          </span>
+        ),
+        name: (
+          <div>
+            <div className="font-medium">{transaction.name}</div>
+            {transaction.itemTitle && (
+              <div className={`${colors.text.muted} text-xs truncate max-w-xs`}>
+                {transaction.itemTitle}
+              </div>
+            )}
+          </div>
+        ),
+        status: (
+          <>
+            {isLinked ? (
+              <span className={getBadgeClasses('linked')}>
+                {transaction.linkedProductIds!.length === 1 ? 'Linked' : `${transaction.linkedProductIds!.length} Linked`}
+              </span>
+            ) : (
+              <span className={getBadgeClasses('unlinked')}>
+                Unlinked
+              </span>
+            )}
+          </>
+        ),
+        amount: (
+          <span className={`font-mono font-semibold ${getFinancialColor(transaction.amount)}`}>
+            {formatCurrency(transaction.amount)}
+          </span>
+        ),
+        fees: (
+          <span className={`font-mono font-semibold ${colors.financial.negative}`}>
+            {formatCurrency(transaction.fees)}
+          </span>
+        ),
+        netReceived: (
+          <span className={`font-mono font-semibold ${getFinancialColor(transaction.total)}`}>
+            {formatCurrency(transaction.total)}
+          </span>
+        ),
+        productLink: (
+          <div className="flex flex-col space-y-1">
+            {onUpdateProductLink ? (
+              <ProductDropdown
+                products={products}
+                selectedProductIds={transaction.linkedProductIds || []}
+                onProductSelect={async (productIds: string[]) => {
+                  if (transaction.id) {
+                    await onUpdateProductLink(transaction.id, productIds);
+                  }
+                }}
+                disabled={loading}
+                loading={productsLoading}
+                linkedProductIds={linkedProductIds}
+              />
+            ) : (
+              <span className="text-gray-400 text-xs">No mapping available</span>
+            )}
+          </div>
+        ),
+        actions: null // Will be handled by the actions array below
+      },
+      actions: onDeleteTransaction ? [
+        {
+          label: 'Delete Transaction',
+          variant: 'danger' as const,
+          icon: (
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          ),
+          onClick: async () => {
+            if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
+              await onDeleteTransaction(transaction.id);
+            }
+          }
+        }
+      ] : []
+    };
+  });
+
+  // Mobile cards data
+  const mobileCards: MobileCardContent[] = filteredAndSortedTransactions.map((transaction, index) => {
+    const isLinked = !!(transaction.linkedProductIds && transaction.linkedProductIds.length > 0);
+
+    const headerContent = (
+      <>
+        <h3 className={`font-semibold text-lg ${colors.text.primary} mb-1`}>{transaction.transactionId}</h3>
+        <p className={`text-sm ${colors.text.secondary}`}>
+          {transaction.name} | {formatDate(transaction.date)} • {transaction.time}
+        </p>
+        {transaction.itemTitle && (
+          <p className={`text-sm ${colors.text.muted} truncate`}>{transaction.itemTitle}</p>
+        )}
+        <div className="flex flex-col items-end space-y-1 mt-2">
+          {isLinked ? (
+            <span className={getBadgeClasses('linked')}>
+              {transaction.linkedProductIds!.length === 1 ? 'Linked' : `${transaction.linkedProductIds!.length} Linked`}
+            </span>
+          ) : (
+            <span className={getBadgeClasses('unlinked')}>
+              Unlinked
+            </span>
+          )}
+        </div>
+      </>
     );
-  }
+
+    const financialContent = (
+      <>
+        <div className="grid grid-cols-3 gap-3 text-sm mb-3">
+          <div className="text-center">
+            <p className={`${colors.text.secondary} mb-1`}>Amount</p>
+            <p className={`font-mono font-semibold ${getFinancialColor(transaction.amount)}`}>
+              {formatCurrency(transaction.amount)}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className={`${colors.text.secondary} mb-1`}>Fees</p>
+            <p className={`font-mono font-semibold ${colors.financial.negative}`}>{formatCurrency(transaction.fees)}</p>
+          </div>
+          <div className="text-center">
+            <p className={`${colors.text.secondary} mb-1`}>Net Received</p>
+            <p className={`font-mono font-semibold ${getFinancialColor(transaction.total)}`}>
+              {formatCurrency(transaction.total)}
+            </p>
+          </div>
+        </div>
+        
+        {/* Product Link */}
+        <div className="border-t pt-3">
+          <p className={`text-sm ${colors.text.secondary} mb-2`}>Product Link:</p>
+          {onUpdateProductLink ? (
+            <ProductDropdown
+              products={products}
+              selectedProductIds={transaction.linkedProductIds || []}
+              onProductSelect={async (productIds: string[]) => {
+                if (transaction.id) {
+                  await onUpdateProductLink(transaction.id, productIds);
+                }
+              }}
+              disabled={loading}
+              loading={productsLoading}
+              linkedProductIds={linkedProductIds}
+            />
+          ) : (
+            <span className={`${colors.text.disabled} text-xs`}>No mapping available</span>
+          )}
+        </div>
+      </>
+    );
+
+    const actionsContent = onDeleteTransaction ? (
+      <>
+        <button
+          onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+          className={getActionButtonClasses()}
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+          </svg>
+        </button>
+
+        {/* Dropdown Menu */}
+        {showDropdown === index && (
+          <div className={`absolute right-0 top-10 ${colors.background.primary} ${colors.border.default} rounded-md shadow-lg z-10`}>
+            <button
+              onClick={async () => {
+                if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
+                  await onDeleteTransaction(transaction.id);
+                }
+                setShowDropdown(null);
+              }}
+              className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger}`}
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </>
+    ) : null;
+
+    return {
+      headerContent,
+      financialContent,
+      actionsContent,
+      borderColor: isLinked ? 'border-l-green-500' : 'border-l-yellow-500',
+      className: isLinked ? 'bg-green-50' : 'bg-orange-50'
+    };
+  });
 
   return (
-    <>
-      {/* Mobile Card Layout */}
-      <div className="block md:hidden space-y-4">
-        {filteredAndSortedTransactions.map((transaction, index) => {
-          const headerContent = (
-            <>
-              <h3 className={`font-semibold text-lg ${colors.text.primary} mb-1`}>{transaction.transactionId}</h3>
-              <p className={`text-sm ${colors.text.secondary}`}>
-                {transaction.name} | {formatDate(transaction.date)} • {transaction.time}
-              </p>
-              {transaction.itemTitle && (
-                <p className={`text-sm ${colors.text.muted} truncate`}>{transaction.itemTitle}</p>
-              )}
-              <div className="flex flex-col items-end space-y-1 mt-2">
-                {(transaction.linkedProductIds && transaction.linkedProductIds.length > 0) ? (
-                  <span className={getBadgeClasses('linked')}>
-                    {transaction.linkedProductIds.length === 1 ? 'Linked' : `${transaction.linkedProductIds.length} Linked`}
-                  </span>
-                ) : (
-                  <span className={getBadgeClasses('unlinked')}>
-                    Unlinked
-                  </span>
-                )}
-              </div>
-            </>
-          );
-
-          const financialContent = (
-            <>
-              <div className="grid grid-cols-3 gap-3 text-sm mb-3">
-                <div className="text-center">
-                  <p className={`${colors.text.secondary} mb-1`}>Amount</p>
-                  <p className={`font-mono font-semibold ${getFinancialColor(transaction.amount)}`}>
-                    {formatCurrency(transaction.amount)}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className={`${colors.text.secondary} mb-1`}>Fees</p>
-                  <p className={`font-mono font-semibold ${colors.financial.negative}`}>{formatCurrency(transaction.fees)}</p>
-                </div>
-                <div className="text-center">
-                  <p className={`${colors.text.secondary} mb-1`}>Net Received</p>
-                  <p className={`font-mono font-semibold ${getFinancialColor(transaction.total)}`}>
-                    {formatCurrency(transaction.total)}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Product Link */}
-              <div className="border-t pt-3">
-                <p className={`text-sm ${colors.text.secondary} mb-2`}>Product Link:</p>
-                {onUpdateProductLink ? (
-                  <ProductDropdown
-                    products={products}
-                    selectedProductIds={transaction.linkedProductIds || []}
-                    onProductSelect={async (productIds: string[]) => {
-                      if (transaction.id) {
-                        await onUpdateProductLink(transaction.id, productIds);
-                      }
-                    }}
-                    disabled={loading}
-                    loading={productsLoading}
-                    linkedProductIds={linkedProductIds}
-                  />
-                ) : (
-                  <span className={`${colors.text.disabled} text-xs`}>No mapping available</span>
-                )}
-              </div>
-            </>
-          );
-
-          const actionsContent = onDeleteTransaction ? (
-            <>
-              <button
-                onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                className={getActionButtonClasses()}
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                </svg>
-              </button>
-
-              {/* Dropdown Menu */}
-              {showDropdown === index && (
-                <div className={`absolute right-0 top-10 ${colors.background.primary} ${colors.border.default} rounded-md shadow-lg z-10`}>
-                  <button
-                    onClick={async () => {
-                      if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
-                        await onDeleteTransaction(transaction.id);
-                      }
-                      setShowDropdown(null);
-                    }}
-                    className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger}`}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </>
-          ) : null;
-
-          return (
-            <MobileItemCard
-              key={transaction.id}
-              headerContent={headerContent}
-              financialContent={financialContent}
-              actionsContent={actionsContent}
-              className={(transaction.linkedProductIds && transaction.linkedProductIds.length > 0) ? 'bg-green-50' : 'bg-orange-50'}
-            />
-          );
-        })}
-      </div>
-
-      {/* Desktop Table Layout */}
-      <div className="hidden md:block">
-        <div className="max-h-[100vh] overflow-y-auto rounded-md scrollbar-hidden">
-          <table className="w-full">
-            <thead className={`${colors.background.gradient} sticky top-0 z-5 shadow-sm`}>
-              <tr>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Date/Time ({filteredAndSortedTransactions.length})
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Transaction ID
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Fees
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Net Received
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Product Link
-                </th>
-                {onDeleteTransaction && (
-                  <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSortedTransactions.map((transaction, index) => (
-                <tr
-                  key={transaction.id}
-                  className={`${colors.border.default} hover:bg-gray-50 transition-colors ${getRowBackgroundColor(!!(transaction.linkedProductIds && transaction.linkedProductIds.length > 0))}`}
-                >
-                  <td className="px-3 py-4 text-sm">
-                    <div>
-                      <div className="font-medium">{formatDate(transaction.date)}</div>
-                      <div className={colors.text.muted}>{transaction.time}</div>
-                    </div>
-                  </td>
-                  <td className={`px-3 py-4 text-sm ${colors.text.muted} font-mono`}>
-                    {transaction.transactionId}
-                  </td>
-                  <td className={`px-3 py-4 text-sm ${colors.text.primary}`}>
-                    <div>
-                      <div className="font-medium">{transaction.name}</div>
-                      {transaction.itemTitle && (
-                        <div className={`${colors.text.muted} text-xs truncate max-w-xs`}>
-                          {transaction.itemTitle}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-3 py-4 text-sm">
-                    {(transaction.linkedProductIds && transaction.linkedProductIds.length > 0) ? (
-                      <span className={getBadgeClasses('linked')}>
-                        {transaction.linkedProductIds.length === 1 ? 'Linked' : `${transaction.linkedProductIds.length} Linked`}
-                      </span>
-                    ) : (
-                      <span className={getBadgeClasses('unlinked')}>
-                        Unlinked
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-4 text-sm font-mono font-semibold">
-                    <span className={getFinancialColor(transaction.amount)}>
-                      {formatCurrency(transaction.amount)}
-                    </span>
-                  </td>
-                  <td className={`px-3 py-4 text-sm font-mono font-semibold ${colors.financial.negative}`}>
-                    {formatCurrency(transaction.fees)}
-                  </td>
-                  <td className="px-3 py-4 text-sm font-mono font-semibold">
-                    <span className={getFinancialColor(transaction.total)}>
-                      {formatCurrency(transaction.total)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-sm">
-                    <div className="flex flex-col space-y-1">
-                      {onUpdateProductLink ? (
-                        <ProductDropdown
-                          products={products}
-                          selectedProductIds={transaction.linkedProductIds || []}
-                          onProductSelect={async (productIds: string[]) => {
-                            if (transaction.id) {
-                              await onUpdateProductLink(transaction.id, productIds);
-                            }
-                          }}
-                          disabled={loading}
-                          loading={productsLoading}
-                          linkedProductIds={linkedProductIds}
-                        />
-                      ) : (
-                        <span className="text-gray-400 text-xs">No mapping available</span>
-                      )}
-                    </div>
-                  </td>
-                  {onDeleteTransaction && (
-                    <td className="px-3 py-4 text-sm dropdown-container">
-                      <button
-                        onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                        className={`flex items-center justify-center w-8 h-8 ${colors.button.primary} text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400`}
-                        title="More actions"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-                        </svg>
-                      </button>
-
-                      {/* Dropdown Menu */}
-                      {showDropdown === index && (
-                        <div className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
-                          <button
-                            onClick={async () => {
-                              if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
-                                await onDeleteTransaction(transaction.id);
-                              }
-                              setShowDropdown(null);
-                            }}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
+    <TableView
+      columns={columns}
+      rows={rows}
+      mobileCards={mobileCards}
+      emptyMessage="No PayPal transactions found."
+      loading={loading}
+      activeDropdown={showDropdown}
+      onDropdownToggle={(rowId) => setShowDropdown(prev => prev === rowId ? null : rowId as number)}
+    />
   );
 };
