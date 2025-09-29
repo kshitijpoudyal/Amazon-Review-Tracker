@@ -4,19 +4,15 @@
 export type StatusType =
     | 'void'
     | 'complete'
-    | 'refundPending'
-    | 'sendScreenshot'
-    | 'reviewPending'
-    | 'addReview'
-    | 'orderPlaced'
+    | 'refund-pending'
+    | 'send-screenshot'
+    | 'review-pending'
+    | 'add-review'
+    | 'order-placed'
     | 'unknown'
     | 'linked'
     | 'unlinked'
     | 'unknown';
-export interface StatusTypeDisplay {
-    label: string;
-    color: string;
-}
 
 export const colors = {
     // Status colors
@@ -47,27 +43,27 @@ export const colors = {
             border: 'border-green-500',
             text: 'text-white'
         },
-        refundPending: {
+        'refund-pending': {
             bg: 'bg-blue-500',
             text: 'text-white',
             border: 'border-blue-500'
         },
-        sendScreenshot: {
+        'send-screenshot': {
             bg: 'bg-indigo-500',
             text: 'text-white',
             border: 'border-indigo-500'
         },
-        reviewPending: {
+        'review-pending': {
             bg: 'bg-yellow-500',
             text: 'text-white',
             border: 'border-yellow-500'
         },
-        addReview: {
+        'add-review': {
             bg: 'bg-orange-500',
             text: 'text-white',
             border: 'border-orange-500'
         },
-        orderPlaced: {
+        'order-placed': {
             bg: 'bg-purple-500',
             text: 'text-white',
             border: 'border-purple-500'
@@ -283,37 +279,5 @@ export const getStatsColor = (type: string, value?: number): string => {
             return colors.financial.neutral2;
         default:
             return colors.text.primary;
-    }
-};
-
-// Product status border color utility
-export const getStatusBorderColor = (statusType: string): string => {
-    switch (statusType) {
-        case 'void':
-            return colors.status.void.border.replace('border-', 'border-l-');
-        case 'complete':
-            return colors.status.complete.border.replace('border-', 'border-l-');
-        case 'refund-pending':
-        case 'refundPending':
-            return colors.status.refundPending.border.replace('border-', 'border-l-');
-        case 'send-screenshot':
-        case 'sendScreenshot':
-            return colors.status.sendScreenshot.border.replace('border-', 'border-l-');
-        case 'review-pending':
-        case 'reviewPending':
-            return colors.status.reviewPending.border.replace('border-', 'border-l-');
-        case 'add-review':
-        case 'addReview':
-            return colors.status.addReview.border.replace('border-', 'border-l-');
-        case 'order-placed':
-        case 'orderPlaced':
-            return colors.status.orderPlaced.border.replace('border-', 'border-l-');
-        case 'linked':
-            return colors.status.linked.border.replace('border-', 'border-l-');
-        case 'unlinked':
-            return colors.status.unlinked.border.replace('border-', 'border-l-');
-        case 'unknown':
-        default:
-            return colors.status.unknown.border.replace('border-', 'border-l-');
     }
 };

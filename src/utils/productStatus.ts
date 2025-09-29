@@ -96,11 +96,11 @@ export const getStatusDisplay = (statusType: ProductStatusType): ProductStatusDi
   const statusMap: Record<ProductStatusType, ProductStatusDisplay> = {
     'void': { label: 'Void', color: `${getBadgeClasses('void')}` },
     'complete': { label: 'Complete', color: `${getBadgeClasses('complete')}` },
-    'refund-pending': { label: 'Refund Pending', color: `${getBadgeClasses('refundPending')}` },
-    'send-screenshot': { label: 'Send Screenshot', color: `${getBadgeClasses('sendScreenshot')}` },
-    'review-pending': { label: 'Review Pending', color: `${getBadgeClasses('reviewPending')}` },
-    'add-review': { label: 'Add Review', color: `${getBadgeClasses('addReview')}` },
-    'order-placed': { label: 'Order Placed', color: `${getBadgeClasses('orderPlaced')}` },
+    'refund-pending': { label: 'Refund Pending', color: `${getBadgeClasses('refund-pending')}` },
+    'send-screenshot': { label: 'Send Screenshot', color: `${getBadgeClasses('send-screenshot')}` },
+    'review-pending': { label: 'Review Pending', color: `${getBadgeClasses('review-pending')}` },
+    'add-review': { label: 'Add Review', color: `${getBadgeClasses('add-review')}` },
+    'order-placed': { label: 'Order Placed', color: `${getBadgeClasses('order-placed')}` },
     'unknown': { label: 'Status Unknown', color: `${getBadgeClasses('unknown')}` }
   };
 

@@ -4,7 +4,7 @@ import EditProductModal from './EditProductModal';
 import { getProductStatus } from '../../utils/productStatus';
 import { useProductPayPalLinks } from '../../hooks/useProductPayPalLinks';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
-import { colors, getBadgeClasses, getStatusBorderColor } from '../../utils/colors';
+import { colors, getBadgeClasses } from '../../utils/colors';
 
 interface ProductTableProps {
   products: Product[];
@@ -140,7 +140,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
     return {
       id: product.id || index,
-      borderColor: getStatusBorderColor(status.type),
+      borderColor: colors.status[status.type].border,
       data: {
         item: (
           <div className="flex-1 min-w-0">
@@ -174,7 +174,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
           </span>
         ),
         status: (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${colors.status[status.type].bg} ${colors.status[status.type].text} ${colors.status[status.type].border}`}>
             {status.label}
           </span>
         ),
@@ -322,7 +322,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       headerContent,
       financialContent,
       actionsContent,
-      borderColor: getStatusBorderColor(status.type),
+      borderColor: colors.status[status.type].border,
       className: product.id && isProductLinked(product.id) ? 'bg-green-50' : ''
     };
   });
