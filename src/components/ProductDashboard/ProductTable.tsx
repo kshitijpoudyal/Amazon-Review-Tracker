@@ -3,14 +3,15 @@ import { Product } from '../../types/Product';
 import EditProductModal from './EditProductModal';
 import { getProductStatus } from '../../utils/productStatus';
 import { useProductPayPalLinks } from '../../hooks/useProductPayPalLinks';
-import { MobileItemCard } from '../common/MobileItemCard';
-import { colors, getBadgeClasses } from '../../utils/colors';
+import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
+import { colors, getBadgeClasses, getStatusBorderColor } from '../../utils/colors';
 
 interface ProductTableProps {
   products: Product[];
   onUpdateProduct?: (index: number, updatedProduct: Product) => void;
   onDeleteProduct?: (productId: string) => void;
   readOnly?: boolean;
+  loading?: boolean;
   userId?: string; // Add userId to check for linked PayPal transactions
 }
 
@@ -19,9 +20,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
   onUpdateProduct,
   onDeleteProduct,
   readOnly = false,
+  loading = false,
   userId,
 }) => {
-  const [showDropdown, setShowDropdown] = useState<number | null>(null);
+  const [showDropdown, setShowDropdown] = useState<string | number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -91,254 +93,251 @@ const ProductTable: React.FC<ProductTableProps> = ({
     }
   };
 
-  if (products.length === 0) {
-    return (
-      <div className={`text-center py-16 ${colors.text.muted}`}>
-        <p className="text-lg">No products found matching your criteria.</p>
-      </div>
-    );
-  }
+  // Define table columns
+  const columns: TableColumn[] = [
+    { 
+      key: 'item', 
+      label: `Item (${products.length})`,
+      align: 'left'
+    },
+    { 
+      key: 'date', 
+      label: 'Date',
+      align: 'left'
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      align: 'left'
+    },
+    { 
+      key: 'paid', 
+      label: 'Paid',
+      align: 'right'
+    },
+    { 
+      key: 'received', 
+      label: 'Received',
+      align: 'right'
+    },
+    { 
+      key: 'delta', 
+      label: 'Delta',
+      align: 'right'
+    },
+    ...(readOnly ? [] : [{ 
+      key: 'actions', 
+      label: 'Actions',
+      align: 'center' as const,
+      width: 'w-16'
+    }])
+  ];
 
-  return (
-    <>
-      {/* Mobile Card Layout */}
-      <div className="block md:hidden space-y-4">
-        {products.map((product, index) => {
-          const status = getProductStatus(product);
-          
-          const headerContent = (
-            <>
+  // Transform products into table rows
+  const rows: TableRow[] = products.map((product, index) => {
+    const status = getProductStatus(product);
+    const isLinked = product.id && isProductLinked(product.id);
+
+    return {
+      id: product.id || index,
+      borderColor: getStatusBorderColor(status.type),
+      data: {
+        item: (
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center">
               {product.url ? (
                 <a
                   href={product.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`font-semibold text-lg ${colors.text.link} hover:${colors.text.linkHover} underline mb-1 block`}
+                  className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate"
+                  title={product.item}
                 >
-                  {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
+                  {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
                 </a>
               ) : (
-                <h3 className={`font-semibold text-lg ${colors.text.primary} mb-1`}>
-                  {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
-                </h3>
-              )}
-              <p className={`text-sm ${colors.text.secondary}`}>Order Date: {formatDate(product.orderDate)}</p>
-              <div className="flex flex-col items-end space-y-1 mt-2">
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
-                  {status.label}
+                <span className="font-medium text-gray-900 truncate" title={product.item}>
+                  {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
                 </span>
-                {product.id && isProductLinked(product.id) && (
-                  <span className={getBadgeClasses('linked')}>
-                    Linked
-                  </span>
-                )}
-              </div>
-            </>
-          );
-
-          const financialContent = (
-            <div className="grid grid-cols-3 gap-3 text-sm">
-              <div className="text-center">
-                <p className={`${colors.text.secondary} mb-1`}>Paid</p>
-                <p className="font-mono font-semibold">{formatCurrency(product.paid)}</p>
-              </div>
-              <div className="text-center">
-                <p className={`${colors.text.secondary} mb-1`}>Received</p>
-                <p className="font-mono font-semibold">{formatCurrency(product.received)}</p>
-              </div>
-              <div className="text-center">
-                <p className={`${colors.text.secondary} mb-1`}>Delta</p>
-                <p className={`font-mono font-semibold ${getDeltaClass(product.delta)}`}>
-                  {formatCurrency(product.delta)}
-                </p>
-              </div>
-            </div>
-          );
-
-          const actionsContent = (
-            <>
-              <button
-                onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                className={`flex items-center justify-center w-8 h-8 ${colors.button.primary} rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400`}
-                title="More actions"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-                </svg>
-              </button>
-
-              {/* Dropdown Menu */}
-              {showDropdown === index && (
-                <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  <button
-                    onClick={() => handleEditProduct(product)}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-                        onDeleteProduct?.(product.id);
-                      }
-                      setShowDropdown(null);
-                    }}
-                    className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger}`}
-                  >
-                    Delete
-                  </button>
-                </div>
               )}
-            </>
-          );
+              {isLinked && (
+                <svg className="w-5 h-5 text-green-500 ml-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+          </div>
+        ),
+        date: (
+          <span className="text-sm text-gray-600 font-medium">
+            {formatDate(product.orderDate)}
+          </span>
+        ),
+        status: (
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
+            {status.label}
+          </span>
+        ),
+        paid: (
+          <span className="font-mono text-sm font-semibold text-gray-900">
+            {formatCurrency(product.paid)}
+          </span>
+        ),
+        received: (
+          <span className="font-mono text-sm font-semibold text-gray-900">
+            {formatCurrency(product.received)}
+          </span>
+        ),
+        delta: (
+          <span className={`font-mono text-sm font-semibold ${getDeltaClass(product.delta)}`}>
+            {formatCurrency(product.delta)}
+          </span>
+        ),
+        actions: null // Will be handled by the actions array below
+      },
+      actions: readOnly ? [] : [
+        {
+          label: 'Edit Product',
+          icon: (
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          ),
+          onClick: () => handleEditProduct(product)
+        },
+        {
+          label: 'Delete Product',
+          variant: 'danger' as const,
+          icon: (
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          ),
+          onClick: () => {
+            if (product.id && window.confirm('Are you sure you want to delete this product?')) {
+              onDeleteProduct?.(product.id);
+            }
+          }
+        }
+      ]
+    };
+  });
 
-          return (
-            <MobileItemCard
-              key={index}
-              headerContent={headerContent}
-              financialContent={financialContent}
-              actionsContent={actionsContent}
-              className={product.id && isProductLinked(product.id) ? 'bg-green-50' : ''}
-            />
-          );
-        })}
-      </div>
+  // Mobile cards data
+  const mobileCards: MobileCardContent[] = products.map((product, index) => {
+    const status = getProductStatus(product);
 
-      {/* Desktop Table Layout */}
-      <div className="hidden md:block">
-        <div className="max-h-[100vh] overflow-y-auto border border-gray-200 rounded-md scrollbar-hidden">
-          <table className="w-full">
-            <thead className={`${colors.background.gradient} sticky top-0 z-5 shadow-sm`}>
-              <tr>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Item ({products.length})
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Order Date
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Paid
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Received
-                </th>
-                <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  Delta
-                </th>
-                {!readOnly && (
-                  <th className="px-3 py-4 text-left text-white font-semibold text-sm uppercase tracking-wider">
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product, index) => (
-                <tr
-                  key={index}
-                  className={`border-b border-gray-200 hover:bg-gray-100 transition-colors ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  }`}
-                >
-                  <td className="px-3 py-4 text-sm">
-                    {product.url ? (
-                      <a
-                        href={product.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-blue-600 hover:text-blue-800 underline"
-                      >
-                        {product.item.length > 90 ? `${product.item.substring(0, 90)}...` : product.item}
-                      </a>
-                    ) : (
-                      <strong>{product.item.length > 70 ? `${product.item.substring(0, 70)}...` : product.item}</strong>
-                    )}
-                    {product.id && isProductLinked(product.id) && (
-                      <span className={`inline-block rounded-full text-center text-xs font-semibold tracking-wider mx-2 ${colors.status.linked.bg} ${colors.status.linked.text}`}>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-4 inline-block m-1">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
-                        </svg>
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-4 text-sm text-gray-600">
-                    {formatDate(product.orderDate)}
-                  </td>
-                  <td className="px-3 py-4 text-sm">
-                    {(() => {
-                      const status = getProductStatus(product);
-                      return (
-                        <div className="flex flex-col space-y-1">
-                          <span className={`inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider ${status.color}`}>
-                            {status.label}
-                          </span>
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-3 py-4 text-sm font-mono font-semibold">
-                    {formatCurrency(product.paid)}
-                  </td>
-                  <td className="px-3 py-4 text-sm font-mono font-semibold">
-                    {formatCurrency(product.received)}
-                  </td>
-                  <td className={`px-3 py-4 text-sm font-mono font-semibold ${getDeltaClass(product.delta)}`}>
-                    {formatCurrency(product.delta)}
-                  </td>
-                  {!readOnly && (
-                    <td className="px-3 py-4 text-sm dropdown-container">
-                      <button
-                        onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-                        className={`flex items-center justify-center w-8 h-8 ${colors.button.primary} hover:bg-gray-300 text-gray-700 rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400`}
-                        title="More actions"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-                        </svg>
-                      </button>
+    const headerContent = (
+      <>
+        {product.url ? (
+          <a
+            href={product.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`font-semibold text-lg ${colors.text.link} hover:${colors.text.linkHover} underline mb-1 block`}
+          >
+            {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
+          </a>
+        ) : (
+          <h3 className={`font-semibold text-lg ${colors.text.primary} mb-1`}>
+            {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
+          </h3>
+        )}
+        <p className={`text-sm ${colors.text.secondary}`}>Order Date: {formatDate(product.orderDate)}</p>
+        <div className="flex flex-col items-end space-y-1 mt-2">
+          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
+            {status.label}
+          </span>
+          {product.id && isProductLinked(product.id) && (
+            <span className={getBadgeClasses('linked')}>
+              Linked
+            </span>
+          )}
+        </div>
+      </>
+    );
 
-                      {/* Dropdown Menu */}
-                      {showDropdown === index && (
-                        <div className="right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
-                          <button
-                            onClick={() => handleEditProduct(product)}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-                                onDeleteProduct?.(product.id);
-                              }
-                              setShowDropdown(null);
-                            }}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    const financialContent = (
+      <div className="grid grid-cols-3 gap-3 text-sm">
+        <div className="text-center">
+          <p className={`${colors.text.secondary} mb-1`}>Paid</p>
+          <p className="font-mono font-semibold">{formatCurrency(product.paid)}</p>
+        </div>
+        <div className="text-center">
+          <p className={`${colors.text.secondary} mb-1`}>Received</p>
+          <p className="font-mono font-semibold">{formatCurrency(product.received)}</p>
+        </div>
+        <div className="text-center">
+          <p className={`${colors.text.secondary} mb-1`}>Delta</p>
+          <p className={`font-mono font-semibold ${getDeltaClass(product.delta)}`}>
+            {formatCurrency(product.delta)}
+          </p>
         </div>
       </div>
+    );
+
+    const actionsContent = (
+      <>
+        <button
+          onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+          className={`flex items-center justify-center w-8 h-8 ${colors.button.primary} rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400`}
+          title="More actions"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+          </svg>
+        </button>
+
+        {/* Dropdown Menu */}
+        {showDropdown === index && (
+          <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+            <button
+              onClick={() => handleEditProduct(product)}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => {
+                if (product.id && window.confirm('Are you sure you want to delete this product?')) {
+                  onDeleteProduct?.(product.id);
+                }
+                setShowDropdown(null);
+              }}
+              className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger}`}
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </>
+    );
+
+    return {
+      headerContent,
+      financialContent,
+      actionsContent,
+      borderColor: getStatusBorderColor(status.type),
+      className: product.id && isProductLinked(product.id) ? 'bg-green-50' : ''
+    };
+  });
+
+  return (
+    <>
+      <TableView
+        columns={columns}
+        rows={rows}
+        mobileCards={mobileCards}
+        emptyMessage="No products found matching your criteria."
+        activeDropdown={showDropdown}
+        loading={loading}
+        onDropdownToggle={(rowId) => setShowDropdown(prev => prev === rowId ? null : rowId)}
+      />
 
       {/* Edit Product Modal */}
       {isModalOpen && editingProduct && (

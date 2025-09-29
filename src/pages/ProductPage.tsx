@@ -18,7 +18,6 @@ import {
   FilterControlConfig
 } from '../components/common';
 import Toolbar from '../components/common/Toolbar';
-import { TableViewLoading } from '../components/common/TableViewLoading';
 import { getStatsColor } from '../utils/colors';
 
 /**
@@ -187,16 +186,13 @@ const ProductPage: React.FC = () => {
 
       {/* Product Table */}
       <DashboardSection>
-        {displayLoading ? (
-          <TableViewLoading />
-        ) : (
-          <ProductTable
-            products={filteredProducts}
-            onUpdateProduct={updateProduct}
-            onDeleteProduct={deleteProduct}
-            userId={user?.uid}
-          />
-        )}
+        <ProductTable
+          products={filteredProducts}
+          onUpdateProduct={updateProduct}
+          onDeleteProduct={deleteProduct}
+          loading={displayLoading}
+          userId={user?.uid}
+        />
       </DashboardSection>
 
       {/* Add Product Modal */}
