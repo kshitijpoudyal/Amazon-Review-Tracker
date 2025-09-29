@@ -13,11 +13,11 @@ import {
 
 interface PayPalTransactionTableProps {
   transactions: PayPalTransaction[];
-  products?: Product[];
+  products: Product[];
   loading?: boolean;
   productsLoading?: boolean;
+  onUpdateProductLink?: (transactionId: string, productIds: string[]) => Promise<boolean>;
   onDeleteTransaction?: (transactionId: string) => Promise<boolean>;
-  onUpdateProductLink?: (transactionId: string, productId: string | null) => Promise<boolean>;
 }
 
 export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
@@ -32,7 +32,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   // Calculate which product IDs are already linked to transactions
   const linkedProductIds = useMemo(() => {
     return transactions
-      .map(t => t.linkedProductId)
+      .flatMap(t => t.linkedProductIds || [])
       .filter((id): id is string => id !== null && id !== undefined);
   }, [transactions]);
 
@@ -55,8 +55,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   const filteredAndSortedTransactions = useMemo(() => {
     // Sort transactions with unlinked ones first
     return [...transactions].sort((a, b) => {
-      const aLinked = !!a.linkedProductId;
-      const bLinked = !!b.linkedProductId;
+      const aLinked = !!(a.linkedProductIds && a.linkedProductIds.length > 0);
+      const bLinked = !!(b.linkedProductIds && b.linkedProductIds.length > 0);
 
       if (aLinked !== bLinked) {
         return aLinked ? 1 : -1; // Unlinked (false) comes first
@@ -110,9 +110,9 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 <p className={`text-sm ${colors.text.muted} truncate`}>{transaction.itemTitle}</p>
               )}
               <div className="flex flex-col items-end space-y-1 mt-2">
-                {transaction.linkedProductId ? (
+                {(transaction.linkedProductIds && transaction.linkedProductIds.length > 0) ? (
                   <span className={getBadgeClasses('linked')}>
-                    Linked
+                    {transaction.linkedProductIds.length === 1 ? 'Linked' : `${transaction.linkedProductIds.length} Linked`}
                   </span>
                 ) : (
                   <span className={getBadgeClasses('unlinked')}>
@@ -150,10 +150,10 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 {onUpdateProductLink ? (
                   <ProductDropdown
                     products={products}
-                    selectedProductId={transaction.linkedProductId || null}
-                    onProductSelect={async (productId: string | null) => {
+                    selectedProductIds={transaction.linkedProductIds || []}
+                    onProductSelect={async (productIds: string[]) => {
                       if (transaction.id) {
-                        await onUpdateProductLink(transaction.id, productId);
+                        await onUpdateProductLink(transaction.id, productIds);
                       }
                     }}
                     disabled={loading}
@@ -203,7 +203,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               headerContent={headerContent}
               financialContent={financialContent}
               actionsContent={actionsContent}
-              className={transaction.linkedProductId ? 'bg-green-50' : 'bg-orange-50'}
+              className={(transaction.linkedProductIds && transaction.linkedProductIds.length > 0) ? 'bg-green-50' : 'bg-orange-50'}
             />
           );
         })}
@@ -249,7 +249,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               {filteredAndSortedTransactions.map((transaction, index) => (
                 <tr
                   key={transaction.id}
-                  className={`${colors.border.default} hover:bg-gray-50 transition-colors ${getRowBackgroundColor(!!transaction.linkedProductId)}`}
+                  className={`${colors.border.default} hover:bg-gray-50 transition-colors ${getRowBackgroundColor(!!(transaction.linkedProductIds && transaction.linkedProductIds.length > 0))}`}
                 >
                   <td className="px-3 py-4 text-sm">
                     <div>
@@ -271,9 +271,9 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                     </div>
                   </td>
                   <td className="px-3 py-4 text-sm">
-                    {transaction.linkedProductId ? (
+                    {(transaction.linkedProductIds && transaction.linkedProductIds.length > 0) ? (
                       <span className={getBadgeClasses('linked')}>
-                        Linked
+                        {transaction.linkedProductIds.length === 1 ? 'Linked' : `${transaction.linkedProductIds.length} Linked`}
                       </span>
                     ) : (
                       <span className={getBadgeClasses('unlinked')}>
@@ -299,10 +299,10 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                       {onUpdateProductLink ? (
                         <ProductDropdown
                           products={products}
-                          selectedProductId={transaction.linkedProductId || null}
-                          onProductSelect={async (productId: string | null) => {
+                          selectedProductIds={transaction.linkedProductIds || []}
+                          onProductSelect={async (productIds: string[]) => {
                             if (transaction.id) {
-                              await onUpdateProductLink(transaction.id, productId);
+                              await onUpdateProductLink(transaction.id, productIds);
                             }
                           }}
                           disabled={loading}

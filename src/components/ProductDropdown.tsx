@@ -2,30 +2,31 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Product } from '../types/Product';
 import { colors } from '../utils/colors';
 import { Modal } from './common';
+import { getProductStatus } from '../utils/productStatus';
 
 interface ProductDropdownProps {
   products: Product[];
-  selectedProductId: string | null;
-  onProductSelect: (productId: string | null) => void;
+  selectedProductIds: string[];
+  onProductSelect: (productIds: string[]) => void;
   disabled?: boolean;
   loading?: boolean;
-  linkedProductIds?: string[]; // Array of product IDs that are already linked to transactions
+  linkedProductIds?: string[];
 }
 
 export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   products,
-  selectedProductId,
+  selectedProductIds,
   onProductSelect,
   disabled = false,
   linkedProductIds = []
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [tempSelectedProductId, setTempSelectedProductId] = useState<string | null>(selectedProductId);
+  const [tempSelectedProductIds, setTempSelectedProductIds] = useState<string[]>(selectedProductIds);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Find selected product
-  const selectedProduct = products.find(p => p.id === selectedProductId);
+  // Find selected products
+  const selectedProducts = products.filter(p => selectedProductIds.includes(p.id || ''));
 
   // Filter products based on search term and group by linked status
   const allFilteredProducts = products.filter(product => {
@@ -70,49 +71,87 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
 
   // ESC key handling is now managed by the Modal component
 
-  const handleProductClick = (productId: string | null) => {
-    setTempSelectedProductId(productId);
+  const handleProductClick = (productId: string) => {
+    if (true) {
+      setTempSelectedProductIds(prev => {
+        if (prev.includes(productId)) {
+          // Remove if already selected
+          return prev.filter(id => id !== productId);
+        } else {
+          // Add to selection
+          return [...prev, productId];
+        }
+      });
+    } else {
+      // Single selection mode
+      setTempSelectedProductIds([productId]);
+    }
+  };
+
+  const handleRemoveAll = () => {
+    setTempSelectedProductIds([]);
   };
 
   const handleSave = () => {
-    onProductSelect(tempSelectedProductId);
+    onProductSelect(tempSelectedProductIds);
     handleCloseModal();
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSearchTerm('');
-    setTempSelectedProductId(selectedProductId); // Reset to original selection
+    setTempSelectedProductIds(selectedProductIds); // Reset to original selection
   };
 
   // Helper function to render a product item
-  const renderProductItem = (product: Product, isLinked: boolean = false) => (
-    <li
-      key={product.id}
-      onClick={() => handleProductClick(product.id || null)}
-      className={`flex gap-x-4 px-4 py-3 cursor-pointer ${colors.modal.item.hover} ${tempSelectedProductId === product.id ? colors.modal.item.selected : ''
-        }`}
-    >
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold ${isLinked ? colors.text.green : colors.text.primary}`}>
-          {product.item.length > 50 ? `${product.item.substring(0, 50)}...` : product.item}
-        </p>
-        <p className={`mt-1 truncate text-xs ${isLinked ? colors.text.green : colors.text.primary}`}>
-          {product.orderDate && (
-            <>
-              <span className="font-medium">
-                {new Date(product.orderDate).toLocaleDateString()}
-              </span>
-              {(product.paid || product.received) && ' • '}
-            </>
-          )}
-          {product.paid && `Paid: $${product.paid}`}
-          {product.paid && product.received && ' • '}
-          {product.received && `Received: $${product.received}`}
-        </p>
-      </div>
-    </li>
-  );
+  const renderProductItem = (product: Product, isLinked: boolean = false) => {
+    const isSelected = tempSelectedProductIds.includes(product.id || '');
+    const productId = product.id || '';
+
+    return (
+      <li
+        key={product.id}
+        onClick={() => productId && handleProductClick(productId)}
+        className={`flex gap-x-4 px-4 py-3 cursor-pointer ${colors.modal.item.hover} ${isSelected ? colors.modal.item.selected : ''}`}
+      >
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => productId && handleProductClick(productId)}
+            className={`w-4 h-4 ${colors.form.checkbox} rounded focus:ring-blue-500`}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <p className={`text-sm font-semibold flex-1 ${isLinked ? colors.text.green : colors.text.primary}`}>
+              {product.item.length > 50 ? `${product.item.substring(0, 50)}...` : product.item}
+            </p>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${getProductStatus(product).color}`}
+              title={getProductStatus(product).label}
+            >
+              {getProductStatus(product).label}
+            </span>
+          </div>
+          <p className={`truncate text-xs ${isLinked ? colors.text.green : colors.text.primary}`}>
+            {product.orderDate && (
+              <>
+                <span className="font-medium">
+                  {new Date(product.orderDate).toLocaleDateString()}
+                </span>
+                {(product.paid || product.received) && ' • '}
+              </>
+            )}
+            {product.paid && `Paid: $${product.paid}`}
+            {product.paid && product.received && ' • '}
+            {product.received && `Received: $${product.received}`}
+          </p>
+        </div>
+      </li>
+    );
+  };
 
   const getButtonClassName = () => {
     const baseClass = `${colors.form.input.base} ${colors.background.primary} ${colors.form.input.disabled} disabled:cursor-not-allowed flex items-center justify-between`;
@@ -120,17 +159,28 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   };
 
   const getDisplayText = () => {
-    if (selectedProduct) {
-      return selectedProduct.item.length > 25 ? `${selectedProduct.item.substring(0, 25)}...` : selectedProduct.item;
+    if (selectedProducts.length === 0) {
+      return 'No Product(s) Linked';
+    } else if (selectedProducts.length === 1) {
+      const product = selectedProducts[0];
+      return product.item.length > 25 ? `${product.item.substring(0, 25)}...` : product.item;
+    } else {
+      return `${selectedProducts.length} Products Selected`;
     }
-    return 'No Product Linked';
   };
 
   const modalHeader = (
     <div className="mb-4">
-      <h3 className={`text-lg font-medium ${colors.text.primary} mb-4`}>
-        Select Product to Link
-      </h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className={`text-lg font-medium ${colors.text.primary}`}>
+          {'Select Product(s) to Link'}
+        </h3>
+        {tempSelectedProductIds.length > 0 && (
+          <span className={`text-sm ${colors.text.muted} bg-gray-100 px-2 py-1 rounded`}>
+            {tempSelectedProductIds.length} selected
+          </span>
+        )}
+      </div>
       {/* Search Input */}
       <input
         ref={inputRef}
@@ -188,32 +238,36 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   );
 
   const modalFooter = (
-    <form onSubmit={handleSave}>
-      {(tempSelectedProductId != null) && (
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+      {/* Clear All / Remove Link Option */}
+      {tempSelectedProductIds.length > 0 && (
         <button
           type="button"
-          onClick={() => handleProductClick(null)}
+          onClick={handleRemoveAll}
           className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.danger}`}
         >
-          <span>Remove Product Link</span>
+          <span>{'Clear All'}</span>
         </button>
       )}
-      <div className="flex space-x-3">
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
         <button
           type="button"
           onClick={handleCloseModal}
-          className={`flex-1 px-4 py-3 ${colors.button.secondary} rounded-lg font-medium text-base`}
+          className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.secondary}`}
         >
           Cancel
         </button>
         <button
-          type="submit"
-          className={`flex-1 px-4 py-3 ${colors.button.primary} rounded-lg font-medium text-base`}
+          type="button"
+          onClick={handleSave}
+          className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.primary}`}
         >
-          Add Product
+          {'Link Product(s)'}
         </button>
       </div>
-    </form>
+    </div>
   );
 
   return (
@@ -223,14 +277,14 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
         type="button"
         onClick={() => {
           if (!disabled) {
-            setTempSelectedProductId(selectedProductId); // Initialize temp selection
+            setTempSelectedProductIds(selectedProductIds); // Initialize temp selection
             setIsModalOpen(true);
           }
         }}
         disabled={disabled}
         className={getButtonClassName()}
       >
-        <span className={selectedProduct ? colors.text.primary : colors.text.muted}>
+        <span className={selectedProducts.length > 0 ? colors.text.primary : colors.text.muted}>
           {getDisplayText()}
         </span>
         <svg

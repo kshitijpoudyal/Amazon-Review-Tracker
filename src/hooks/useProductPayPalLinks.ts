@@ -15,15 +15,19 @@ export const useProductPayPalLinks = (userId?: string, productIds?: string[]) =>
     const fetchLinkedProducts = async () => {
       setLoading(true);
       try {
-        // Query all PayPal transactions that have linkedProductId in our product list
+        // Query all PayPal transactions that have linkedProductIds in our product list
         const transactionsRef = collection(db, 'users', userId, 'paypal_transactions');
         const transactionsSnapshot = await getDocs(transactionsRef);
         
         const linkedIds = new Set<string>();
         transactionsSnapshot.docs.forEach(doc => {
           const data = doc.data();
-          if (data.linkedProductId && productIds.includes(data.linkedProductId)) {
-            linkedIds.add(data.linkedProductId);
+          if (data.linkedProductIds && Array.isArray(data.linkedProductIds)) {
+            data.linkedProductIds.forEach((linkedId: string) => {
+              if (productIds.includes(linkedId)) {
+                linkedIds.add(linkedId);
+              }
+            });
           }
         });
 

@@ -144,19 +144,19 @@ export const usePayPalTransactions = (userId?: string) => {
     return { added, skipped, withdrawalSkipped };
   };
 
-  const updateTransactionProductLink = async (transactionId: string, linkedProductId: string | null): Promise<boolean> => {
+  const updateTransactionProductLink = async (transactionId: string, linkedProductIds: string[]): Promise<boolean> => {
     if (!userId) return false;
 
     try {
-      // Get the current transaction to check its previous linked product
+      // Get the current transaction to check its previous linked products
       const transactionRef = doc(db, 'users', userId, 'paypal_transactions', transactionId);
       const transactionSnap = await getDoc(transactionRef);
       const currentTransaction = transactionSnap.data();
-      const previousLinkedProductId = currentTransaction?.linkedProductId;
+      const previousLinkedProductIds = currentTransaction?.linkedProductIds || [];
 
       // Update the transaction link
       await updateDoc(transactionRef, {
-        linkedProductId: linkedProductId || null,
+        linkedProductIds: linkedProductIds.length > 0 ? linkedProductIds : null,
         updatedAt: serverTimestamp()
       });
       
@@ -164,11 +164,18 @@ export const usePayPalTransactions = (userId?: string) => {
       await fetchTransactions();
       
       // Update product received amounts for affected products
-      if (previousLinkedProductId) {
-        await updateProductReceivedAmount(previousLinkedProductId);
+      // Update previously linked products that are no longer linked
+      for (const prevProductId of previousLinkedProductIds) {
+        if (!linkedProductIds.includes(prevProductId)) {
+          await updateProductReceivedAmount(prevProductId);
+        }
       }
-      if (linkedProductId && linkedProductId !== previousLinkedProductId) {
-        await updateProductReceivedAmount(linkedProductId);
+      
+      // Update newly linked products
+      for (const productId of linkedProductIds) {
+        if (!previousLinkedProductIds.includes(productId)) {
+          await updateProductReceivedAmount(productId);
+        }
       }
       
       return true;
@@ -193,7 +200,7 @@ export const usePayPalTransactions = (userId?: string) => {
 
       // Calculate total received amount from all linked transactions
       const linkedTransactions = transactions.filter(
-        transaction => transaction.linkedProductId === productId
+        transaction => transaction.linkedProductIds && transaction.linkedProductIds.includes(productId)
       );
       
       const totalReceived = linkedTransactions.reduce(
