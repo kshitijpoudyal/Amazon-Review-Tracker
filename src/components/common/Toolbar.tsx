@@ -2,6 +2,7 @@ import { PlusIcon, ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from '@hero
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import React from 'react';
 import { colors } from '../../utils/colors';
+import { Button } from './Button';
 
 export interface FilterOption {
   value: string;
@@ -100,14 +101,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 <ChevronDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
               </MenuButton>
 
-              <MenuItems className="absolute left-0 sm:right-0 z-20 mt-2 w-56 origin-top-left sm:origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transform transition-all duration-200 data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75">
+              <MenuItems className="absolute left-0 sm:right-0 z-20 mt-2 w-48 origin-top-left sm:origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transform transition-all duration-200 data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75">
                 <div className="py-2">
                   {filter.options?.map((option, index) => (
                     <MenuItem key={option.value}>
                       <button
                         type="button"
                         onClick={() => filter.onChange(option.value)}
-                        className={`block w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 ${colors.modal.menuItem} ${
+                        className={`block w-full px-4 py-3 text-left text-sm transition-colors duration-150 ${colors.modal.menuItem} ${
                           option.value === filter.value
                             ? `${colors.modal.item.selected} font-medium`
                             : `${colors.text.primary} ${colors.modal.item.hover}`
@@ -132,7 +133,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   const renderActions = (actions: ActionButton[]) => {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center">
         {actions.map((action, index) => (
           <button
             key={index}
@@ -204,8 +205,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   }
 
   return (
-    <div className="bg-white border-b border-gray-200">
-      <div className="px-3 sm:px-4 lg:px-6 py-4">
+    <div className={`${colors.background.secondary}`} style={{ marginTop: '0px' }}>
+      <div className="px-3 sm:px-2 lg:px-4 py-4">
         {/* Mobile Layout */}
         <div className="block lg:hidden space-y-4">
           {/* Search and Clear */}
@@ -247,14 +248,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {/* Actions */}
           <div className="flex items-center gap-2">
             {showClearButton && hasActiveFilters && onClearFilters && (
-              <button
+              <Button
+                variant="secondary"
+                label="Clear"
                 onClick={onClearFilters}
-                className={getButtonClasses('secondary')}
+                icon={<XMarkIcon className="h-4 w-4" />}
                 title="Clear all filters"
-              >
-                <XMarkIcon className="h-4 w-4" />
-                Clear
-              </button>
+              />
             )}
             {renderActions(actions)}
           </div>

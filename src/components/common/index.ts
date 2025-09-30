@@ -8,3 +8,5 @@ export { default as GenericFilterControls } from './Toolbar';
 export type { FilterOption, FilterControlConfig } from './Toolbar';
 export { default as Modal } from './Modal';
 export type { ModalProps } from './Modal';
+export { Button } from './Button';
+export type { ButtonVariant, ButtonSize } from './Button';

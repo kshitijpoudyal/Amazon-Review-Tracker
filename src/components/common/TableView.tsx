@@ -1,6 +1,7 @@
 import React from 'react';
 import { MobileItemCard, MobileCardSkeleton } from './MobileItemCard';
 import { colors } from '../../utils/colors';
+import { Button } from './Button';
 
 export interface TableColumn {
   key: string;
@@ -104,7 +105,7 @@ const TableLoadingView: React.FC<{ columns: TableColumn[]; loadingRows?: number 
 
     {/* Desktop Loading Layout */}
     <div className="hidden md:block">
-      <div className="overflow-hidden rounded-xl border border-gray-200/50 bg-white shadow-sm">
+      <div className="overflow-hidden border border-gray-200/50 bg-white shadow-sm">
         <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden">
           <table className="w-full">
             {/* Table Header */}
@@ -180,7 +181,7 @@ export const TableView: React.FC<TableViewProps> = ({
 
       {/* Desktop Table Layout */}
       <div className="hidden md:block">
-        <div className="overflow-hidden rounded-xl border border-gray-200/50 bg-white shadow-sm">
+        <div className={`overflow-hidden border border-gray-200/50 ${colors.background.primary} shadow-sm`}>
           <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden">
             <table className="w-full">
               {/* Table Header */}
@@ -231,15 +232,17 @@ export const TableView: React.FC<TableViewProps> = ({
                         {/* Actions dropdown */}
                         {column.key === 'actions' && row.actions && (
                           <div className="relative dropdown-container">
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => onDropdownToggle?.(row.id)}
-                              className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                              icon={
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                              }
                               title="More actions"
-                            >
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                              </svg>
-                            </button>
+                            />
 
                             {activeDropdown === row.id && (
                               <div className="absolute right-0 top-10 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">

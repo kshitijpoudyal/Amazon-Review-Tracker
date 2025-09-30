@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Product } from '../types/Product';
-import { colors } from '../utils/colors';
-import { Modal } from './common';
+import { Modal, Button } from './common';
 import { getProductStatus } from '../utils/productStatus';
 
 interface ProductDropdownProps {
@@ -103,7 +102,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     setTempSelectedProductIds(selectedProductIds); // Reset to original selection
   };
 
-  // Helper function to render a product item
+  // Helper function to render a product item with modern design
   const renderProductItem = (product: Product, isLinked: boolean = false) => {
     const isSelected = tempSelectedProductIds.includes(product.id || '');
     const productId = product.id || '';
@@ -112,160 +111,258 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
       <li
         key={product.id}
         onClick={() => productId && handleProductClick(productId)}
-        className={`flex gap-x-4 px-4 py-3 cursor-pointer ${colors.modal.item.hover} ${isSelected ? colors.modal.item.selected : ''}`}
+        className={`group relative flex items-center gap-4 p-4 cursor-pointer transition-all duration-200 rounded-lg mx-2 my-1 ${
+          isSelected 
+            ? 'bg-blue-50 border border-blue-200 shadow-sm' 
+            : 'hover:bg-gray-50 border border-transparent hover:border-gray-200'
+        }`}
       >
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => productId && handleProductClick(productId)}
-            className={`w-4 h-4 ${colors.form.checkbox} rounded focus:ring-blue-500`}
-            onClick={(e) => e.stopPropagation()}
-          />
+        {/* Modern Checkbox */}
+        <div className="flex-shrink-0">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => productId && handleProductClick(productId)}
+              className="sr-only"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className={`w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center ${
+              isSelected 
+                ? 'bg-blue-500 border-blue-500' 
+                : 'border-gray-300 group-hover:border-gray-400'
+            }`}>
+              {isSelected && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Product Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <p className={`text-sm font-semibold flex-1 ${isLinked ? colors.text.green : colors.text.primary}`}>
-              {product.item.length > 50 ? `${product.item.substring(0, 50)}...` : product.item}
-            </p>
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${getProductStatus(product).color}`}
-              title={getProductStatus(product).label}
-            >
+          <div className="flex items-start justify-between">
+            <h4 className={`font-medium text-sm leading-5 ${isLinked ? 'text-green-700' : 'text-gray-900'} ${isSelected ? 'text-blue-900' : ''}`}>
+              {product.item.length > 45 ? `${product.item.substring(0, 45)}...` : product.item}
+            </h4>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${getProductStatus(product).color}`}>
               {getProductStatus(product).label}
             </span>
           </div>
-          <p className={`truncate text-xs ${isLinked ? colors.text.green : colors.text.primary}`}>
+          
+          <div className="flex items-center gap-2 text-xs text-gray-500">
             {product.orderDate && (
-              <>
-                <span className="font-medium">
-                  {new Date(product.orderDate).toLocaleDateString()}
-                </span>
-                {(product.paid || product.received) && ' • '}
-              </>
+              <span className="font-medium">
+                {new Date(product.orderDate).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </span>
             )}
-            {product.paid && `Paid: $${product.paid}`}
-            {product.paid && product.received && ' • '}
-            {product.received && `Received: $${product.received}`}
-          </p>
+            {product.paid && (
+              <span className="font-mono">
+                • Paid:${product.paid.toFixed(2)}
+              </span>
+            )}
+            {product.received && (
+              <span className="font-mono text-green-600">
+                • Received:{product.received.toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
       </li>
     );
   };
 
   const getButtonClassName = () => {
-    const baseClass = `${colors.form.input.base} ${colors.background.primary} ${colors.form.input.disabled} disabled:cursor-not-allowed flex items-center justify-between`;
-    return `w-full min-w-48 max-w-96 px-3 py-2 ${baseClass}`;
+    const baseClass = "transition-all duration-200 flex items-center justify-between rounded-lg border";
+    const enabledClass = "bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+    const disabledClass = "bg-gray-50 border-gray-200 cursor-not-allowed opacity-60";
+    
+    return `w-full min-w-48 max-w-96 px-4 py-3 ${baseClass} ${disabled ? disabledClass : enabledClass}`;
   };
 
   const getDisplayText = () => {
     if (selectedProducts.length === 0) {
-      return 'No Product(s) Linked';
+      return (
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          <span>Link Products</span>
+        </div>
+      );
     } else if (selectedProducts.length === 1) {
       const product = selectedProducts[0];
-      return product.item.length > 25 ? `${product.item.substring(0, 25)}...` : product.item;
+      return (
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+          <span className="font-medium">
+            {product.item.length > 28 ? `${product.item.substring(0, 28)}...` : product.item}
+          </span>
+        </div>
+      );
     } else {
-      return `${selectedProducts.length} Products Selected`;
+      return (
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+          <span className="font-medium">{selectedProducts.length} Products Linked</span>
+        </div>
+      );
     }
   };
 
   const modalHeader = (
-    <div className="mb-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className={`text-lg font-medium ${colors.text.primary}`}>
-          {'Select Product(s) to Link'}
-        </h3>
-        {tempSelectedProductIds.length > 0 && (
-          <span className={`text-sm ${colors.text.muted} bg-gray-100 px-2 py-1 rounded`}>
-            {tempSelectedProductIds.length} selected
-          </span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-xl font-semibold text-gray-900">
+            Link Products to PayPal Transaction
+          </h3>
+        </div>
+      </div>
+
+      {/* Search Input */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Search by product name, amount, or order date..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-3 bg-gray-50 border-0 rounded-lg text-gray-900 placeholder-gray-500 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         )}
       </div>
-      {/* Search Input */}
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder="Search by product name, paid amount, or received amount..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md ${colors.form.input.placeholder}`}
-      />
     </div>
   );
 
   const modalBody = (
-    <div className="px-6">
-      {/* Products List - Scrollable */}
-      <div className={`${colors.border.default} rounded`}>
-        <ul role="list" className="divide-y divide-gray-100">
-          {(unlinkedProducts.length > 0 || linkedProducts.length > 0) ? (
-            <>
-              {/* Unlinked Products */}
-              {unlinkedProducts.map((product) => renderProductItem(product, false))}
-
-              {/* Divider between unlinked and linked products */}
-              {unlinkedProducts.length > 0 && linkedProducts.length > 0 && (
-                <li className={`px-4 py-2 ${colors.background.muted} border-t-2 ${colors.border.default}`}>
-                  <div className="flex items-center">
-                    <div className={`flex-1 border-t ${colors.border.default}`}></div>
-                    <span className={`mx-3 text-xs font-medium ${colors.text.muted} uppercase tracking-wide`}>
-                      Already Linked Products
-                    </span>
-                    <div className={`flex-1 border-t ${colors.border.default}`}></div>
+    <div className="relative">
+      {/* Modern Products List */}
+      <div className="max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        {(unlinkedProducts.length > 0 || linkedProducts.length > 0) ? (
+          <div className="space-y-1">
+            {/* Available Products Section */}
+            {unlinkedProducts.length > 0 && (
+              <div>
+                <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <h4 className="font-medium text-gray-900">
+                      Available Products ({unlinkedProducts.length})
+                    </h4>
                   </div>
-                </li>
-              )}
+                </div>
+                <ul role="list" className="space-y-1 pb-4">
+                  {unlinkedProducts.map((product) => renderProductItem(product, false))}
+                </ul>
+              </div>
+            )}
 
-              {/* Linked Products */}
-              {linkedProducts.map((product) => renderProductItem(product, true))}
-            </>
-          ) : searchTerm ? (
-            <div className={`px-4 py-8 text-center ${colors.text.muted}`}>
-              <div className="text-4xl mb-2">🔍</div>
-              <div>No products found matching "{searchTerm}"</div>
-              <div className="text-sm">Try a different search term</div>
+            {/* Already Linked Products Section */}
+            {linkedProducts.length > 0 && (
+              <div>
+                <div className="sticky top-0 bg-gradient-to-r from-green-50 to-emerald-50 z-10 px-4 py-3 border-b border-green-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <h4 className="font-medium text-green-800">
+                      Already Linked Products ({linkedProducts.length})
+                    </h4>
+                    <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                      Previously linked
+                    </span>
+                  </div>
+                </div>
+                <ul role="list" className="space-y-1 pb-4">
+                  {linkedProducts.map((product) => renderProductItem(product, true))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : searchTerm ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-          ) : (
-            <div className={`px-4 py-8 text-center ${colors.text.muted}`}>
-              <div className="text-4xl mb-2">📦</div>
-              <div>No products available</div>
-              <div className="text-sm">Add some products first to link them to PayPal transactions</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+            <p className="text-gray-500 max-w-sm">
+              No products match "<span className="font-medium">{searchTerm}</span>". Try adjusting your search terms.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
             </div>
-          )}
-        </ul>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No products available</h3>
+            <p className="text-gray-500 max-w-sm">
+              Add some products first to link them to your PayPal transactions.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 
   const modalFooter = (
-    <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-      {/* Clear All / Remove Link Option */}
-      {tempSelectedProductIds.length > 0 && (
-        <button
-          type="button"
+    <div className="flex items-center justify-between">
+      {/* Clear All Button */}
+      {tempSelectedProductIds.length > 0 ? (
+        <Button
+          variant="danger"
+          label="Clear All"
           onClick={handleRemoveAll}
-          className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.danger}`}
-        >
-          <span>{'Clear All'}</span>
-        </button>
+          icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          }
+        />
+      ) : (
+        <div></div>
       )}
 
       {/* Action Buttons */}
       <div className="flex gap-3">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          label="Cancel"
           onClick={handleCloseModal}
-          className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.secondary}`}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
+        />
+        <Button
+          variant="primary"
+          label={`Link ${tempSelectedProductIds.length > 0 ? `${tempSelectedProductIds.length} ` : ''}Product${tempSelectedProductIds.length !== 1 ? 's' : ''}`}
           onClick={handleSave}
-          className={`px-4 py-2 text-sm font-medium rounded-md ${colors.button.primary}`}
-        >
-          {'Link Product(s)'}
-        </button>
+          icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+          }
+        />
       </div>
     </div>
   );
@@ -284,11 +381,11 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
         disabled={disabled}
         className={getButtonClassName()}
       >
-        <span className={selectedProducts.length > 0 ? colors.text.primary : colors.text.muted}>
+        <div className={`flex-1 text-left ${selectedProducts.length > 0 ? 'text-gray-900' : 'text-gray-500'}`}>
           {getDisplayText()}
-        </span>
+        </div>
         <svg
-          className="w-4 h-4"
+          className={`w-5 h-5 transition-transform duration-200 ${disabled ? 'text-gray-400' : 'text-gray-500'}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
