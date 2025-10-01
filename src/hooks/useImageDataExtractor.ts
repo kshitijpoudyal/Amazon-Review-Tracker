@@ -33,6 +33,252 @@ export const useImageDataExtractor = () => {
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
+  // Helper function to extract order date from different layouts
+  const extractOrderDate = (cleanText: string, _lines: string[]): string | null => {
+    const datePatterns = [
+      /Order placed\s+([A-Za-z]+ \d{1,2}, \d{4})/i,
+      /placed\s+([A-Za-z]+ \d{1,2}, \d{4})/i,
+      /Order placed\s+([A-Za-z]+ \d{1,2}, \d{4})/i,
+      /([A-Za-z]+ \d{1,2}, \d{4})/g
+    ];
+
+    for (const pattern of datePatterns) {
+      const matches = cleanText.match(pattern);
+      if (matches) {
+        const date = matches[1] || matches[0];
+        // Validate it's a reasonable date format
+        if (date && date.length > 8) {
+          return date.trim();
+        }
+      }
+    }
+    return null;
+  };
+
+  // Helper function to extract order number with enhanced patterns
+  const extractOrderNumber = (cleanText: string, _lines: string[]): string | null => {
+    const orderNumberPatterns = [
+      /Order #\s*([0-9-]+)/i,
+      /Order Number:?\s*([0-9-]+)/i,
+      /Order #?\s*([0-9-]+)/i,
+      /#\s*([0-9-]{10,})/i,
+      /(\d{3}-\d{7}-\d{7})/g, // Amazon format XXX-XXXXXXX-XXXXXXX (like 112-9101337-0744250)
+      /(\d{3}-\d{6,8}-\d{6,8})/g, // Variations of Amazon format
+      /Order:\s*([0-9-]+)/i
+    ];
+
+    for (const pattern of orderNumberPatterns) {
+      const match = cleanText.match(pattern);
+      if (match && match[1]) {
+        const orderNum = match[1].trim();
+        // Validate order number length and format - Amazon orders are typically 15+ chars
+        if (orderNum.length >= 12 && orderNum.includes('-')) {
+          return orderNum;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Helper function to extract grand total with multiple approaches
+  const extractGrandTotal = (cleanText: string, _lines: string[]): number | null => {
+    const totalPatterns = [
+      /Grand Total:\s*\$?([\d.,]+)/i,
+      /Grand Total\s*\$?([\d.,]+)/i,
+      /Total:\s*\$?([\d.,]+)/i,
+      /Grand Total\s*\$?([\d.,]+)/i
+    ];
+
+    for (const pattern of totalPatterns) {
+      const match = cleanText.match(pattern);
+      if (match && match[1]) {
+        const total = parseFloat(match[1].replace(/[,$]/g, ''));
+        if (!isNaN(total) && total > 0) {
+          return total;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Enhanced product information extraction for different layouts
+  const extractProductInformation = (_cleanText: string, lines: string[]): {
+    title: string;
+    quantity?: number;
+    price?: number;
+  } | null => {
+    
+    // Method 1: Look for product titles with enhanced pattern matching
+    // Handle both layout variants - mobile (stacked) and desktop (horizontal)
+    const productCandidates = lines.filter(line => {
+      const cleanLine = line.trim();
+      
+      return cleanLine.length > 15 &&
+        cleanLine.length < 400 &&
+        !cleanLine.includes('$') &&
+        !cleanLine.toLowerCase().includes('order placed') &&
+        !cleanLine.toLowerCase().includes('order #') &&
+        !cleanLine.toLowerCase().includes('ship to') &&
+        !cleanLine.toLowerCase().includes('payment method') &&
+        !cleanLine.toLowerCase().includes('sold by:') &&
+        !cleanLine.toLowerCase().includes('supplied by:') &&
+        !cleanLine.toLowerCase().includes('arriving') &&
+        !cleanLine.toLowerCase().includes('track package') &&
+        !cleanLine.toLowerCase().includes('cancel items') &&
+        !cleanLine.toLowerCase().includes('view invoice') &&
+        !cleanLine.toLowerCase().includes('change') &&
+        !cleanLine.toLowerCase().includes('buy it again') &&
+        !cleanLine.toLowerCase().includes('ask product') &&
+        !cleanLine.toLowerCase().includes('write a product') &&
+        !cleanLine.toLowerCase().includes('subtotal') &&
+        !cleanLine.toLowerCase().includes('shipping') &&
+        !cleanLine.toLowerCase().includes('grand total') &&
+        !cleanLine.toLowerCase().includes('estimated tax') &&
+        !cleanLine.toLowerCase().includes('total before tax') &&
+        // Must be descriptive (contain multiple words or product indicators)
+        (cleanLine.split(' ').length >= 3 || 
+         /\b(tier|acrylic|coffee|station|organizer|countertop|kitchen|counter|holder|bags|mugs|cups|syrup|sugar|condiment|storage|rack|multifunctional|shelf|accessories|bar)\b/i.test(cleanLine));
+    });
+
+    // Sort by length and keyword relevance with enhanced scoring
+    const scoredCandidates = productCandidates.map(line => {
+      const lowercaseLine = line.toLowerCase();
+      
+      // High-value product keywords (from your examples)
+      const highValueKeywords = [
+        'tier', 'acrylic', 'coffee', 'station', 'organizer', 'countertop', 'kitchen',
+        'counter', 'holder', 'bags', 'mugs', 'cups', 'syrup', 'sugar', 'condiment',
+        'storage', 'rack', 'multifunctional', 'shelf', 'accessories', 'bar'
+      ];
+      
+      // General product keywords
+      const generalKeywords = [
+        'women', 'men', 'kids', 'black', 'white', 'blue', 'red', 'pink',
+        'tank', 'tops', 'shirt', 'underwear', 'briefs', 'light', 'pack', 'set',
+        'for', 'with'
+      ];
+      
+      // Count keyword matches with different weights
+      const highValueMatches = highValueKeywords.filter(keyword => 
+        lowercaseLine.includes(keyword)
+      ).length;
+      
+      const generalMatches = generalKeywords.filter(keyword => 
+        lowercaseLine.includes(keyword)
+      ).length;
+      
+      // Bonus for descriptive patterns
+      const descriptiveBonus = 
+        (lowercaseLine.includes(' for ') ? 10 : 0) +
+        (lowercaseLine.includes(' with ') ? 8 : 0) +
+        (line.split(' ').length >= 8 ? 15 : 0) + // Long descriptive titles
+        (line.split(' ').length >= 12 ? 10 : 0); // Very long titles
+      
+      // Penalty for certain patterns
+      const penalties = 
+        (lowercaseLine.includes('aileming') ? -5 : 0) + // Seller name
+        (line.length < 30 ? -10 : 0); // Too short
+      
+      // Calculate final score
+      const score = 
+        (highValueMatches * 25) + 
+        (generalMatches * 8) + 
+        (line.length * 0.8) + 
+        descriptiveBonus + 
+        penalties;
+      
+      return { line: line.trim(), score };
+    });
+
+    // Get the highest scoring candidate
+    if (scoredCandidates.length > 0) {
+      const bestCandidate = scoredCandidates.sort((a, b) => b.score - a.score)[0];
+      if (bestCandidate.score > 25) {
+        return {
+          title: bestCandidate.line.trim(),
+          quantity: 1
+        };
+      }
+    }
+
+    // Method 2: Fallback - look for any long descriptive line
+    const fallbackCandidate = lines.find(line => 
+      line.length > 30 && 
+      line.length < 200 && 
+      !line.includes('$') && 
+      /^[A-Z0-9]/.test(line) &&
+      !line.toLowerCase().includes('order') &&
+      !line.toLowerCase().includes('ship')
+    );
+
+    if (fallbackCandidate) {
+      return {
+        title: fallbackCandidate.trim(),
+        quantity: 1
+      };
+    }
+
+    return null;
+  };
+
+  // Extract shipping address information
+  const extractShippingAddress = (cleanText: string, _lines: string[]): {
+    name?: string;
+    street?: string;
+    cityStateZip?: string;
+    country?: string;
+  } | null => {
+    const addressInfo: any = {};
+    
+    // Look for name patterns (usually after "Ship to")
+    const nameMatch = cleanText.match(/Ship to\s+([A-Za-z\s]+)\s+\d/i);
+    if (nameMatch && nameMatch[1]) {
+      addressInfo.name = nameMatch[1].trim();
+    }
+
+    // Look for street address patterns
+    const streetMatch = cleanText.match(/(\d+\s+[A-Za-z\s]+(?:ST|STREET|AVE|AVENUE|RD|ROAD|BLVD|BOULEVARD|DR|DRIVE|LN|LANE|CT|COURT)\s+\w*)/i);
+    if (streetMatch && streetMatch[1]) {
+      addressInfo.street = streetMatch[1].trim();
+    }
+
+    // Look for city, state, zip patterns
+    const cityStateZipMatch = cleanText.match(/([A-Za-z\s]+,\s+[A-Z]{2}\s+\d{5}(?:-\d{4})?)/i);
+    if (cityStateZipMatch && cityStateZipMatch[1]) {
+      addressInfo.cityStateZip = cityStateZipMatch[1].trim();
+    }
+
+    // Look for country
+    if (cleanText.toLowerCase().includes('united states')) {
+      addressInfo.country = 'United States';
+    }
+
+    return Object.keys(addressInfo).length > 0 ? addressInfo : null;
+  };
+
+  // Extract payment method information
+  const extractPaymentMethod = (cleanText: string, _lines: string[]): {
+    method?: string;
+  } | null => {
+    const paymentPatterns = [
+      /Amazon\s+Visa\s+ending\s+in\s+(\d{4})/i,
+      /Visa\s+ending\s+in\s+(\d{4})/i,
+      /Mastercard\s+ending\s+in\s+(\d{4})/i,
+      /ending\s+in\s+(\d{4})/i
+    ];
+
+    for (const pattern of paymentPatterns) {
+      const match = cleanText.match(pattern);
+      if (match) {
+        return {
+          method: match[0].trim()
+        };
+      }
+    }
+
+    return null;
+  };
+
   const parseAmazonOrder = useCallback((text: string): ExtractedOrderData => {
     const orderData: ExtractedOrderData = {
       orderNumber: null,
@@ -47,124 +293,43 @@ export const useImageDataExtractor = () => {
     const cleanText = text.replace(/\s+/g, ' ').trim();
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
-    // 1. Extract Date - Look for "Order placed [Month Day, Year]" pattern
-    const datePatterns = [
-      /Order placed\s+([A-Za-z]+ \d{1,2}, \d{4})/i,
-      /placed\s+([A-Za-z]+ \d{1,2}, \d{4})/i,
-      /([A-Za-z]+ \d{1,2}, \d{4})/g
-    ];
+    console.log('🔍 Processing Amazon receipt text...');
+    console.log('📄 Extracted lines count:', lines.length);
 
-    for (const pattern of datePatterns) {
-      const matches = cleanText.match(pattern);
-      if (matches) {
-        orderData.orderDate = matches[1] || matches[0];
-        break;
-      }
-    }
-
-    // 2. Extract Grand Total - Look for "Grand Total: $XX.XX" pattern
-    const totalPatterns = [
-      /Grand Total:\s*\$?([\d.,]+)/i,
-      /Grand Total\s*\$?([\d.,]+)/i,
-      /Total:\s*\$?([\d.,]+)/i
-    ];
-
-    for (const pattern of totalPatterns) {
-      const match = cleanText.match(pattern);
-      if (match) {
-        orderData.orderTotal = parseFloat(match[1].replace(/[,$]/g, ''));
-        break;
-      }
-    }
-
-    // 3. Extract Product Title - Look for lines after "Delivered" and before "Sold by"
-    // Strategy: Find the longest meaningful text line that appears in the product section
-    let productTitle = null;
+    // Enhanced extraction approach for different layout variants
+    orderData.orderDate = extractOrderDate(cleanText, lines);
+    orderData.orderNumber = extractOrderNumber(cleanText, lines);
+    orderData.orderTotal = extractGrandTotal(cleanText, lines);
     
-    // Method 1: Look for text between "Delivered [date]" and "Sold by"
-    const deliveredMatch = cleanText.match(/Delivered\s+[A-Za-z]+ \d+\s+(.*?)\s+Sold by/i);
-    if (deliveredMatch && deliveredMatch[1] && deliveredMatch[1].length > 15) {
-      productTitle = deliveredMatch[1].trim();
-    }
-
-    // Method 2: If not found, look for the longest line that contains product-like keywords
-    if (!productTitle) {
-      const productKeywords = [
-        'women', 'men', 'kids', 'black', 'white', 'blue', 'red', 'pink',
-        'tank', 'tops', 'shirt', 'underwear', 'briefs', 'alarm', 'clock',
-        'light', 'pack', 'set', 'for', 'with', 'cotton', 'yoga', 'workout',
-        'sleeveless', 'moisture', 'wicking', 'athletic', 'open', 'back'
-      ];
-
-      let bestMatch = '';
-      let bestScore = 0;
-
-      for (const line of lines) {
-        if (line.length > 20 && line.length < 200) {
-          // Count keyword matches
-          const keywordCount = productKeywords.filter(keyword => 
-            line.toLowerCase().includes(keyword.toLowerCase())
-          ).length;
-          
-          // Prefer longer lines with more keywords
-          const score = keywordCount * 10 + line.length;
-          
-          if (score > bestScore && !line.includes('$') && !line.includes('Sold by')) {
-            bestScore = score;
-            bestMatch = line;
-          }
-        }
-      }
-
-      if (bestMatch && bestScore > 20) {
-        productTitle = bestMatch.trim();
-      }
-    }
-
-    // Method 3: Look for lines that start with capital letter and contain common product patterns
-    if (!productTitle) {
-      for (const line of lines) {
-        if (line.length > 20 && 
-            /^[A-Z]/.test(line) && 
-            !line.includes('$') && 
-            !line.includes('Order') && 
-            !line.includes('Ship') && 
-            !line.includes('Payment') &&
-            !line.includes('Sold by') &&
-            !line.includes('Return') &&
-            (line.includes('for') || line.includes('with') || line.includes('-') || line.includes(','))) {
-          productTitle = line.trim();
-          break;
-        }
-      }
-    }
-
-    // Add the product to items if found
-    if (productTitle) {
+    console.log('📅 Extracted date:', orderData.orderDate);
+    console.log('🔢 Extracted order number:', orderData.orderNumber);
+    console.log('💰 Extracted total:', orderData.orderTotal);
+    
+    const productInfo = extractProductInformation(cleanText, lines);
+    if (productInfo) {
+      console.log('📦 Extracted product:', productInfo.title);
       orderData.items.push({
-        quantity: 1,
-        name: productTitle,
-        price: orderData.orderTotal || 0
+        quantity: productInfo.quantity || 1,
+        name: productInfo.title,
+        price: productInfo.price || orderData.orderTotal || 0
       });
+    } else {
+      console.log('❌ No product information extracted');
     }
 
-    // Extract order number if available - Enhanced patterns for better detection
-    const orderNumberPatterns = [
-      /Order #?\s*([0-9-]+)/i,
-      /Order Number:?\s*([0-9-]+)/i,
-      /#([0-9-]{10,})/i,  // Direct order number format
-      /(\d{3}-\d{7}-\d{7})/i,  // Amazon format XXX-XXXXXXX-XXXXXXX
-      /Order:\s*([0-9-]+)/i
-    ];
-
-    for (const pattern of orderNumberPatterns) {
-      const orderNumberMatch = cleanText.match(pattern);
-      if (orderNumberMatch && orderNumberMatch[1]) {
-        orderData.orderNumber = orderNumberMatch[1];
-        break;
-      }
+    const addressInfo = extractShippingAddress(cleanText, lines);
+    if (addressInfo) {
+      console.log('🏠 Extracted address info:', addressInfo);
+      orderData.shippingAddress = addressInfo;
     }
 
+    const paymentInfo = extractPaymentMethod(cleanText, lines);
+    if (paymentInfo) {
+      console.log('💳 Extracted payment info:', paymentInfo);
+      orderData.paymentInfo = paymentInfo;
+    }
+
+    console.log('✅ Final extracted data:', orderData);
     return orderData;
   }, []);
 
