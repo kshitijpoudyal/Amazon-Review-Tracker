@@ -295,10 +295,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
         {/* Dropdown Menu */}
         {showDropdown === index && (
-          <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+          <div className="absolute right-0 bottom-full mb-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[120px]">
             <button
               onClick={() => handleEditProduct(product)}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
             >
               Edit
             </button>
@@ -309,7 +309,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 }
                 setShowDropdown(null);
               }}
-              className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger}`}
+              className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger} rounded-b-lg transition-colors`}
             >
               Delete
             </button>
