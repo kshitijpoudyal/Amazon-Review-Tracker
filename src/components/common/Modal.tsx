@@ -128,13 +128,13 @@ const Modal: React.FC<ModalProps> = ({
                 )}
 
                 {/* Body - Scrollable */}
-                <div className="flex-1 overflow-y-auto scrollbar-hidden">
+                <div className="flex-1 overflow-y-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     {body}
                 </div>
 
                 {/* Footer */}
                 {footer && (
-                    <div className={`flex-shrink-0 ${colors.background.primary} border-t ${colors.border.default} p-4 sm:p-6 rounded-b-lg`}>
+                    <div className={`flex-shrink-0 ${colors.background.primary} border-t ${colors.border.default} p-4 sm:p-6 justify-between`}>
                         {footer}
                     </div>
                 )}

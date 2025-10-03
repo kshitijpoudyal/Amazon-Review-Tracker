@@ -9,6 +9,10 @@ interface ProductDropdownProps {
   onProductSelect: (productIds: string[]) => void;
   disabled?: boolean;
   linkedProductIds?: string[];
+  onCloseModal?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onOpen?: () => void;
 }
 
 export const ProductDropdown: React.FC<ProductDropdownProps> = ({
@@ -16,16 +20,26 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   selectedProductIds,
   onProductSelect,
   disabled = false,
-  linkedProductIds = []
+  linkedProductIds = [],
+  onCloseModal,
+  isOpen: externalIsOpen,
+  onClose: externalOnClose,
+  onOpen: externalOnOpen
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [internalIsModalOpen, setInternalIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSelectedProductIds, setTempSelectedProductIds] = useState<string[]>(selectedProductIds);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Use external modal state if provided, otherwise use internal state
+  const isModalOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsModalOpen;
+  const setIsModalOpen = externalOnClose !== undefined 
+    ? (open: boolean) => { if (!open) externalOnClose(); }
+    : setInternalIsModalOpen;
+
   // Memoized computations for better performance
-  const selectedProducts = useMemo(() => 
-    products.filter(p => selectedProductIds.includes(p.id || '')), 
+  const selectedProducts = useMemo(() =>
+    products.filter(p => selectedProductIds.includes(p.id || '')),
     [products, selectedProductIds]
   );
 
@@ -67,8 +81,8 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
 
   // Event handlers
   const handleProductToggle = (productId: string) => {
-    setTempSelectedProductIds(prev => 
-      prev.includes(productId) 
+    setTempSelectedProductIds(prev =>
+      prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
@@ -85,12 +99,18 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     setIsModalOpen(false);
     setSearchTerm('');
     setTempSelectedProductIds(selectedProductIds);
+    onCloseModal?.();
   };
 
   const openModal = () => {
     if (!disabled) {
       setTempSelectedProductIds(selectedProductIds);
-      setIsModalOpen(true);
+      if (externalOnOpen) {
+        // External modal management - trigger parent to open modal
+        externalOnOpen();
+      } else {
+        setIsModalOpen(true);
+      }
     }
   };
 
@@ -99,27 +119,25 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     const isSelected = tempSelectedProductIds.includes(product.id || '');
     const productId = product.id || '';
     const status = getProductStatus(product);
-    const truncatedName = product.item.length > 45 
-      ? `${product.item.substring(0, 45)}...` 
+    const truncatedName = product.item.length > 45
+      ? `${product.item.substring(0, 45)}...`
       : product.item;
 
     return (
       <li
         key={product.id}
         onClick={() => productId && handleProductToggle(productId)}
-        className={`group relative flex items-center gap-4 p-4 cursor-pointer transition-all duration-200 rounded-lg mx-2 my-1 ${
-          isSelected 
-            ? 'bg-blue-50 border border-blue-200 shadow-sm' 
+        className={`group relative flex items-center gap-4 p-4 cursor-pointer transition-all duration-200 rounded-lg mx-2 my-1 ${isSelected
+            ? 'bg-blue-50 border border-blue-200 shadow-sm'
             : 'hover:bg-gray-50 border border-transparent hover:border-gray-200'
-        }`}
+          }`}
       >
         {/* Checkbox */}
         <div className="flex-shrink-0">
-          <div className={`w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center ${
-            isSelected 
-              ? 'bg-blue-500 border-blue-500' 
+          <div className={`w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center ${isSelected
+              ? 'bg-blue-500 border-blue-500'
               : 'border-gray-300 group-hover:border-gray-400'
-          }`}>
+            }`}>
             {isSelected && (
               <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -131,21 +149,20 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
-            <h4 className={`font-medium text-sm leading-5 ${
-              isLinked ? 'text-green-700' : isSelected ? 'text-blue-900' : 'text-gray-900'
-            }`}>
+            <h4 className={`font-medium text-sm leading-5 ${isLinked ? 'text-green-700' : isSelected ? 'text-blue-900' : 'text-gray-900'
+              }`}>
               {truncatedName}
             </h4>
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${status.color}`}>
               {status.label}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-2 text-xs text-gray-500">
             {product.orderDate && (
               <span className="font-medium">
-                {new Date(product.orderDate).toLocaleDateString('en-US', { 
-                  month: 'short', 
+                {new Date(product.orderDate).toLocaleDateString('en-US', {
+                  month: 'short',
                   day: 'numeric',
                   year: 'numeric'
                 })}
@@ -162,7 +179,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   // UI Helper functions
   const buttonClassName = useMemo(() => {
     const base = "w-full min-w-48 max-w-96 px-4 py-3 transition-all duration-200 flex items-center justify-between rounded-lg border";
-    return disabled 
+    return disabled
       ? `${base} bg-gray-50 border-gray-200 cursor-not-allowed opacity-60`
       : `${base} bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`;
   }, [disabled]);
@@ -178,13 +195,13 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
         </div>
       );
     }
-    
+
     if (selectedProducts.length === 1) {
       const product = selectedProducts[0];
-      const truncatedName = product.item.length > 28 
-        ? `${product.item.substring(0, 28)}...` 
+      const truncatedName = product.item.length > 28
+        ? `${product.item.substring(0, 28)}...`
         : product.item;
-      
+
       return (
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
@@ -192,7 +209,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
         </div>
       );
     }
-    
+
     return (
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
@@ -309,41 +326,37 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   );
 
   const ModalFooter = () => {
-    const linkButtonLabel = tempSelectedProductIds.length > 0 
+    const linkButtonLabel = tempSelectedProductIds.length > 0
       ? `Link ${tempSelectedProductIds.length} Product${tempSelectedProductIds.length !== 1 ? 's' : ''}`
       : 'Link Products';
 
     return (
-      <div className="flex items-center justify-between">
-        {tempSelectedProductIds.length > 0 ? (
+      <form onSubmit={handleSave} className="flex gap-3">
+        {tempSelectedProductIds.length > 0 && (
           <Button
             variant="danger"
             label="Clear All"
             onClick={handleClearAll}
+            className="flex-1"
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             }
           />
-        ) : (
-          <div />
         )}
-
-        <div className="flex gap-3">
-          <Button variant="secondary" label="Cancel" onClick={closeModal} />
-          <Button
-            variant="primary"
-            label={linkButtonLabel}
-            onClick={handleSave}
-            icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-            }
-          />
-        </div>
-      </div>
+        <Button variant="secondary" label="Cancel" onClick={closeModal} className="flex-1" />
+        <Button
+          variant="primary"
+          label={linkButtonLabel}
+          className="flex-1"
+          icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+          }
+        />
+      </form>
     );
   };
 

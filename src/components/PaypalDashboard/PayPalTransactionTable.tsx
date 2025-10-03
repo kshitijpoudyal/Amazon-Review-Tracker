@@ -24,7 +24,6 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   transactions,
   products = [],
   loading = false,
-  productsLoading = false,
   onDeleteTransaction,
   onUpdateProductLink
 }) => {
@@ -37,6 +36,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   }, [transactions]);
 
   const [showDropdown, setShowDropdown] = useState<string | number | null>(null);
+  const [isModalActive, setIsModalActive] = useState<boolean>(false);
+  const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -204,11 +205,25 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 onProductSelect={async (productIds: string[]) => {
                   if (transaction.id) {
                     await onUpdateProductLink(transaction.id, productIds);
+                    setIsModalActive(false);
+                    setActiveTransactionId(null);
                   }
                 }}
                 disabled={loading}
-                loading={productsLoading}
                 linkedProductIds={linkedProductIds}
+                isOpen={isModalActive && activeTransactionId === transaction.id}
+                onOpen={() => {
+                  setIsModalActive(true);
+                  setActiveTransactionId(transaction.id || '');
+                }}
+                onClose={() => {
+                  setIsModalActive(false);
+                  setActiveTransactionId(null);
+                }}
+                onCloseModal={() => {
+                  setIsModalActive(false);
+                  setActiveTransactionId(null);
+                }}
               />
             ) : (
               <span className="text-gray-400 text-xs">No mapping available</span>
@@ -294,11 +309,25 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               onProductSelect={async (productIds: string[]) => {
                 if (transaction.id) {
                   await onUpdateProductLink(transaction.id, productIds);
+                  setIsModalActive(false);
+                  setActiveTransactionId(null);
                 }
               }}
               disabled={loading}
-              loading={productsLoading}
               linkedProductIds={linkedProductIds}
+              isOpen={isModalActive && activeTransactionId === transaction.id}
+              onOpen={() => {
+                setIsModalActive(true);
+                setActiveTransactionId(transaction.id || '');
+              }}
+              onClose={() => {
+                setIsModalActive(false);
+                setActiveTransactionId(null);
+              }}
+              onCloseModal={() => {
+                setIsModalActive(false);
+                setActiveTransactionId(null);
+              }}
             />
           ) : (
             <span className={`${colors.text.disabled} text-xs`}>No mapping available</span>
