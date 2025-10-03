@@ -211,7 +211,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
 
   const modalFooter = (
     <form onSubmit={handleSubmit}>
-      <div className="flex space-x-3">
+      <div className="flex gap-3">
         <button
           type="button"
           onClick={onCancel}
