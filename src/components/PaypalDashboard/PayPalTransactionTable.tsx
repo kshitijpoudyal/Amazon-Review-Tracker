@@ -103,7 +103,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     { 
       key: 'name', 
       label: 'Name',
-      align: 'left'
+      align: 'center'
     },
     { 
       key: 'status', 
@@ -128,7 +128,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     { 
       key: 'productLink', 
       label: 'Product Link',
-      align: 'left'
+      align: 'left',
+      width: 'w-64 lg:w-84'
     },
     ...(onDeleteTransaction ? [{ 
       key: 'actions', 
@@ -148,7 +149,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
       className: getRowBackgroundColor(isLinked),
       data: {
         datetime: (
-          <div>
+          <div className='flex flex-col'>
             <div className="font-medium">{formatDate(transaction.date)}</div>
             <div className={colors.text.muted}>{transaction.time}</div>
           </div>
@@ -159,7 +160,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           </span>
         ),
         name: (
-          <div>
+          <div className="flex flex-col items-center ml-4">
             <div className="font-medium">{transaction.name}</div>
             {transaction.itemTitle && (
               <div className={`${colors.text.muted} text-xs truncate max-w-xs`}>
@@ -169,7 +170,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           </div>
         ),
         status: (
-          <>
+          <div className='flex flex-col items-center'>
             {isLinked ? (
               <span className={getBadgeClasses('linked')}>
                 {transaction.linkedProductIds!.length === 1 ? 'Linked' : `${transaction.linkedProductIds!.length} Linked`}
@@ -179,25 +180,31 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 Unlinked
               </span>
             )}
-          </>
+          </div>
         ),
         amount: (
-          <span className={`font-mono font-semibold ${getFinancialColor(transaction.amount)}`}>
+          <div className="flex flex-col">
+            <span className={`font-mono font-semibold ${colors.financial.neutral}`}>
             {formatCurrency(transaction.amount)}
           </span>
+          </div>
         ),
         fees: (
-          <span className={`font-mono font-semibold ${colors.financial.negative}`}>
-            {formatCurrency(transaction.fees)}
-          </span>
+          <div className="flex flex-col">
+            <span className={`font-mono font-semibold ${colors.financial.negative}`}>
+              {formatCurrency(transaction.fees)}
+            </span>
+          </div>
         ),
         netReceived: (
-          <span className={`font-mono font-semibold ${getFinancialColor(transaction.total)}`}>
-            {formatCurrency(transaction.total)}
-          </span>
+          <div className="flex flex-col">
+            <span className={`font-mono font-semibold ${getFinancialColor(transaction.total)}`}>
+              {formatCurrency(transaction.total)}
+            </span>
+          </div>
         ),
         productLink: (
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col ml-2 max-w-64 lg:max-w-84">
             {onUpdateProductLink ? (
               <button
                 type="button"
@@ -207,18 +214,15 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 }}
                 disabled={loading}
                 className={`
-                  flex items-center justify-between px-3 py-2 text-sm border rounded-md transition-colors
-                  ${loading 
-                    ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed' 
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                  }
+                  flex items-center justify-between px-3 py-2 text-sm border rounded-md transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400
+                  
                   ${transaction.linkedProductIds?.length 
                     ? 'border-green-300 bg-green-50' 
                     : 'border-gray-300'
                   }
                 `}
               >
-                <div className={`flex-1 text-left ${transaction.linkedProductIds?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                <div className={`flex-1 text-left truncate pr-2 ${transaction.linkedProductIds?.length ? 'text-gray-900' : 'text-gray-500'}`}>
                   {(() => {
                     if (!transaction.linkedProductIds?.length) {
                       return 'Link Product(s)';

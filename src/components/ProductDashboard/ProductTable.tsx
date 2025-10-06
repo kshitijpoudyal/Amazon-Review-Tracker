@@ -221,22 +221,22 @@ const ProductTable: React.FC<ProductTableProps> = ({
     { 
       key: 'status', 
       label: 'Status',
-      align: 'left'
+      align: 'center'
     },
     { 
       key: 'paid', 
       label: 'Paid',
-      align: 'right'
+      align: 'center'
     },
     { 
       key: 'received', 
       label: 'Received',
-      align: 'right'
+      align: 'center'
     },
     { 
       key: 'delta', 
       label: 'Delta',
-      align: 'right'
+      align: 'center'
     },
     ...(readOnly ? [] : [{ 
       key: 'actions', 
@@ -256,55 +256,67 @@ const ProductTable: React.FC<ProductTableProps> = ({
       borderColor: colors.status[status.type].border,
       data: {
         item: (
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center">
-              {product.url ? (
-                <a
-                  href={product.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate"
-                  title={product.item}
-                >
-                  {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
-                </a>
-              ) : (
-                <span className="font-medium text-gray-900 truncate" title={product.item}>
-                  {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
-                </span>
-              )}
-              {isLinked && (
-                <svg className="w-5 h-5 text-green-500 ml-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
-                </svg>
-              )}
+          <div className='flex flex-col'>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center">
+                {product.url ? (
+                  <a
+                    href={product.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate"
+                    title={product.item}
+                  >
+                    {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
+                  </a>
+                ) : (
+                  <span className="font-medium text-gray-900 truncate" title={product.item}>
+                    {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
+                  </span>
+                )}
+                {isLinked && (
+                  <svg className="w-5 h-5 text-green-500 ml-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
             </div>
           </div>
         ),
         date: (
-          <span className="text-sm text-gray-600 font-medium">
-            {formatDate(product.orderDate)}
-          </span>
+          <div className='flex flex-col'>
+            <span className="text-sm text-gray-600 font-medium">
+              {formatDate(product.orderDate)}
+            </span>
+          </div>
         ),
         status: (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${colors.status[status.type].bg} ${colors.status[status.type].text} ${colors.status[status.type].border}`}>
-            {status.label}
-          </span>
+          <div className='flex flex-col items-center'>
+            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${colors.status[status.type].bg} ${colors.status[status.type].text} ${colors.status[status.type].border}`}>
+              {status.label}
+            </span>
+          </div>
         ),
         paid: (
-          <span className="font-mono text-sm font-semibold text-gray-900">
-            {formatCurrency(product.paid)}
-          </span>
+          <div className='flex flex-col'>
+            <span className="font-mono text-sm font-semibold text-gray-900">
+              {formatCurrency(product.paid)}
+            </span>
+          </div>
         ),
         received: (
-          <span className="font-mono text-sm font-semibold text-gray-900">
-            {formatCurrency(product.received)}
-          </span>
+          <div className='flex flex-col'>
+            <span className="font-mono text-sm font-semibold text-gray-900">
+              {formatCurrency(product.received)}
+            </span>
+          </div>
         ),
         delta: (
-          <span className={`font-mono text-sm font-semibold ${getDeltaClass(product.delta)}`}>
-            {formatCurrency(product.delta)}
-          </span>
+          <div className='flex flex-col'>
+            <span className={`font-mono text-sm font-semibold ${getDeltaClass(product.delta)}`}>
+              {formatCurrency(product.delta)}
+            </span>
+          </div>
         ),
         actions: null // Will be handled by the actions array below
       },
