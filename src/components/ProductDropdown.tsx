@@ -75,7 +75,11 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   // Focus search input when modal opens
   useEffect(() => {
     if (isModalOpen && inputRef.current) {
-      inputRef.current.focus();
+      // Small delay to ensure modal is fully rendered
+      const timeoutId = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timeoutId);
     }
   }, [isModalOpen]);
 
@@ -219,7 +223,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   }, [selectedProducts]);
 
   // Modal components
-  const ModalHeader = () => (
+  const ModalHeader = useMemo(() => (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-gray-900">
         Link Products to PayPal Transaction
@@ -232,12 +236,14 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
           </svg>
         </div>
         <input
+          key="product-search-input"
           ref={inputRef}
           type="text"
           placeholder="Search by product name, amount, or order date..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-3 bg-gray-50 border-0 rounded-lg text-gray-900 placeholder-gray-500 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+          autoComplete="off"
         />
         {searchTerm && (
           <button
@@ -251,7 +257,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
         )}
       </div>
     </div>
-  );
+  ), [searchTerm]);
 
   const modalBody = (
     <div className="relative">
@@ -386,7 +392,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        header={<ModalHeader />}
+        header={ModalHeader}
         body={modalBody}
         footer={<ModalFooter />}
         size="md"
