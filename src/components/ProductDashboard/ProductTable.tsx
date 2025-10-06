@@ -93,6 +93,119 @@ const ProductTable: React.FC<ProductTableProps> = ({
     }
   };
 
+  // Shared function to get next status action for a product
+  const getNextStatusAction = (product: Product) => {
+    if (product.isVoid) return null; // No actions for void products
+    
+    // Order Placed -> Mark as Order Delivered
+    if (product.orderPlaced && !product.orderDelivered) {
+      return {
+        type: 'delivered',
+        label: 'Mark as Delivered',
+        icon: (
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        ),
+        updateFn: () => ({ ...product, orderDelivered: true })
+      };
+    }
+    
+    // Order Delivered -> Mark as Review Added
+    if (product.orderPlaced && product.orderDelivered && !product.reviewAdded) {
+      return {
+        type: 'review-added',
+        label: 'Mark as Review Added',
+        icon: (
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+        ),
+        updateFn: () => ({ ...product, reviewAdded: true })
+      };
+    }
+    
+    // Review Added -> Mark as Review Live
+    if (product.orderPlaced && product.orderDelivered && product.reviewAdded && !product.reviewLive) {
+      return {
+        type: 'review-live',
+        label: 'Mark as Review Live',
+        icon: (
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        ),
+        updateFn: () => ({ ...product, reviewLive: true })
+      };
+    }
+    
+    // Review Live -> Mark as Screenshot Sent
+    if (product.orderPlaced && product.orderDelivered && product.reviewAdded && product.reviewLive && !product.reviewSSSent) {
+      return {
+        type: 'screenshot-sent',
+        label: 'Mark as Screenshot Sent',
+        icon: (
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        ),
+        updateFn: () => ({ ...product, reviewSSSent: true })
+      };
+    }
+    
+    return null; // No next step available
+  };
+
+  // Shared function to handle status update
+  const handleStatusUpdate = (product: Product, updateFn: () => Product) => {
+    const updatedProduct = updateFn();
+    const productIndex = products.findIndex(p => p.id === product.id);
+    if (productIndex !== -1 && onUpdateProduct) {
+      onUpdateProduct(productIndex, updatedProduct);
+    }
+    setShowDropdown(null);
+  };
+
+  // Shared dropdown menu component for mobile
+  const renderMobileDropdown = (product: Product, index: number) => {
+    if (showDropdown !== index) return null;
+    
+    const nextAction = getNextStatusAction(product);
+    
+    return (
+      <div className="absolute right-0 bottom-full mb-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[180px]">
+        {/* Dynamic status update button */}
+        {nextAction && (
+          <button
+            onClick={() => handleStatusUpdate(product, nextAction.updateFn)}
+            className="block w-full text-left px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors font-medium"
+          >
+            {nextAction.label}
+          </button>
+        )}
+        
+        <button
+          onClick={() => handleEditProduct(product)}
+          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => {
+            if (product.id && window.confirm('Are you sure you want to delete this product?')) {
+              onDeleteProduct?.(product.id);
+            }
+            setShowDropdown(null);
+          }}
+          className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger} transition-colors`}
+        >
+          Delete
+        </button>
+      </div>
+    );
+  };
+
   // Define table columns
   const columns: TableColumn[] = [
     { 
@@ -196,97 +309,15 @@ const ProductTable: React.FC<ProductTableProps> = ({
         actions: null // Will be handled by the actions array below
       },
       actions: readOnly ? [] : [
-        // Dynamic status update button
+        // Dynamic status update button using shared logic
         ...(() => {
-          const getNextStatusAction = () => {
-            if (product.isVoid) return null; // No actions for void products
-            
-            // Order Placed -> Mark as Order Delivered
-            if (product.orderPlaced && !product.orderDelivered) {
-              return {
-                label: 'Mark as Order Delivered',
-                variant: 'default' as const,
-                icon: (
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                ),
-                onClick: () => {
-                  const updatedProduct = { ...product, orderDelivered: true };
-                  const productIndex = products.findIndex(p => p.id === product.id);
-                  if (productIndex !== -1 && onUpdateProduct) {
-                    onUpdateProduct(productIndex, updatedProduct);
-                  }
-                }
-              };
-            }
-            
-            // Order Delivered -> Mark as Review Added
-            if (product.orderPlaced && product.orderDelivered && !product.reviewAdded) {
-              return {
-                label: 'Mark as Review Added',
-                variant: 'default' as const,
-                icon: (
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                  </svg>
-                ),
-                onClick: () => {
-                  const updatedProduct = { ...product, reviewAdded: true };
-                  const productIndex = products.findIndex(p => p.id === product.id);
-                  if (productIndex !== -1 && onUpdateProduct) {
-                    onUpdateProduct(productIndex, updatedProduct);
-                  }
-                }
-              };
-            }
-            
-            // Review Added -> Mark as Review Live
-            if (product.orderPlaced && product.orderDelivered && product.reviewAdded && !product.reviewLive) {
-              return {
-                label: 'Mark as Review Live',
-                variant: 'default' as const,
-                icon: (
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                ),
-                onClick: () => {
-                  const updatedProduct = { ...product, reviewLive: true };
-                  const productIndex = products.findIndex(p => p.id === product.id);
-                  if (productIndex !== -1 && onUpdateProduct) {
-                    onUpdateProduct(productIndex, updatedProduct);
-                  }
-                }
-              };
-            }
-            
-            // Review Live -> Mark as Screenshot Sent
-            if (product.orderPlaced && product.orderDelivered && product.reviewAdded && product.reviewLive && !product.reviewSSSent) {
-              return {
-                label: 'Mark as Screenshot Sent',
-                variant: 'default' as const,
-                icon: (
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                ),
-                onClick: () => {
-                  const updatedProduct = { ...product, reviewSSSent: true };
-                  const productIndex = products.findIndex(p => p.id === product.id);
-                  if (productIndex !== -1 && onUpdateProduct) {
-                    onUpdateProduct(productIndex, updatedProduct);
-                  }
-                }
-              };
-            }
-            
-            return null; // No next step available
-          };
-
-          const nextAction = getNextStatusAction();
-          return nextAction ? [nextAction] : [];
+          const nextAction = getNextStatusAction(product);
+          return nextAction ? [{
+            label: nextAction.label,
+            variant: 'default' as const,
+            icon: nextAction.icon,
+            onClick: () => handleStatusUpdate(product, nextAction.updateFn)
+          }] : [];
         })(),
         {
           label: 'Edit Product',
@@ -386,110 +417,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         </button>
 
         {/* Dropdown Menu */}
-        {showDropdown === index && (
-          <div className="absolute right-0 bottom-full mb-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[180px]">
-            {/* Dynamic status update button */}
-            {(() => {
-              if (product.isVoid) return null;
-              
-              // Order Placed -> Mark as Order Delivered
-              if (product.orderPlaced && !product.orderDelivered) {
-                return (
-                  <button
-                    onClick={() => {
-                      const updatedProduct = { ...product, orderDelivered: true };
-                      const productIndex = products.findIndex(p => p.id === product.id);
-                      if (productIndex !== -1 && onUpdateProduct) {
-                        onUpdateProduct(productIndex, updatedProduct);
-                      }
-                      setShowDropdown(null);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors font-medium"
-                  >
-                    📦 Mark as Delivered
-                  </button>
-                );
-              }
-              
-              // Order Delivered -> Mark as Review Added
-              if (product.orderPlaced && product.orderDelivered && !product.reviewAdded) {
-                return (
-                  <button
-                    onClick={() => {
-                      const updatedProduct = { ...product, reviewAdded: true };
-                      const productIndex = products.findIndex(p => p.id === product.id);
-                      if (productIndex !== -1 && onUpdateProduct) {
-                        onUpdateProduct(productIndex, updatedProduct);
-                      }
-                      setShowDropdown(null);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors font-medium"
-                  >
-                    ⭐ Mark Review Added
-                  </button>
-                );
-              }
-              
-              // Review Added -> Mark as Review Live
-              if (product.orderPlaced && product.orderDelivered && product.reviewAdded && !product.reviewLive) {
-                return (
-                  <button
-                    onClick={() => {
-                      const updatedProduct = { ...product, reviewLive: true };
-                      const productIndex = products.findIndex(p => p.id === product.id);
-                      if (productIndex !== -1 && onUpdateProduct) {
-                        onUpdateProduct(productIndex, updatedProduct);
-                      }
-                      setShowDropdown(null);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors font-medium"
-                  >
-                    👁️ Mark Review Live
-                  </button>
-                );
-              }
-              
-              // Review Live -> Mark as Screenshot Sent
-              if (product.orderPlaced && product.orderDelivered && product.reviewAdded && product.reviewLive && !product.reviewSSSent) {
-                return (
-                  <button
-                    onClick={() => {
-                      const updatedProduct = { ...product, reviewSSSent: true };
-                      const productIndex = products.findIndex(p => p.id === product.id);
-                      if (productIndex !== -1 && onUpdateProduct) {
-                        onUpdateProduct(productIndex, updatedProduct);
-                      }
-                      setShowDropdown(null);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors font-medium"
-                  >
-                    📸 Mark Screenshot Sent
-                  </button>
-                );
-              }
-              
-              return null;
-            })()}
-            
-            <button
-              onClick={() => handleEditProduct(product)}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => {
-                if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-                  onDeleteProduct?.(product.id);
-                }
-                setShowDropdown(null);
-              }}
-              className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger} transition-colors`}
-            >
-              Delete
-            </button>
-          </div>
-        )}
+        {renderMobileDropdown(product, index)}
       </>
     );
 
