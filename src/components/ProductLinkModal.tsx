@@ -1,48 +1,40 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Product } from '../types/Product';
+import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Modal, Button } from './common';
 import { getProductStatus } from '../utils/productStatus';
 
-interface ProductDropdownProps {
+interface ProductLinkModalProps {
   products: Product[];
   selectedProductIds: string[];
   onProductSelect: (productIds: string[]) => void;
-  disabled?: boolean;
   linkedProductIds?: string[];
-  onCloseModal?: () => void;
-  isOpen?: boolean;
-  onClose?: () => void;
-  onOpen?: () => void;
+  transaction?: PayPalTransaction;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export const ProductDropdown: React.FC<ProductDropdownProps> = ({
+export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   products,
   selectedProductIds,
   onProductSelect,
-  disabled = false,
   linkedProductIds = [],
-  onCloseModal,
-  isOpen: externalIsOpen,
-  onClose: externalOnClose,
-  onOpen: externalOnOpen
+  transaction,
+  isOpen,
+  onClose
 }) => {
-  const [internalIsModalOpen, setInternalIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSelectedProductIds, setTempSelectedProductIds] = useState<string[]>(selectedProductIds);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Use external modal state if provided, otherwise use internal state
-  const isModalOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsModalOpen;
-  const setIsModalOpen = externalOnClose !== undefined 
-    ? (open: boolean) => { if (!open) externalOnClose(); }
-    : setInternalIsModalOpen;
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
 
   // Memoized computations for better performance
-  const selectedProducts = useMemo(() =>
-    products.filter(p => selectedProductIds.includes(p.id || '')),
-    [products, selectedProductIds]
-  );
-
   const { unlinkedProducts, linkedProducts } = useMemo(() => {
     const filtered = products.filter(product => {
       if (!searchTerm.trim()) return true;
@@ -74,14 +66,14 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
 
   // Focus search input when modal opens
   useEffect(() => {
-    if (isModalOpen && inputRef.current) {
+    if (isOpen && inputRef.current) {
       // Small delay to ensure modal is fully rendered
       const timeoutId = setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
       return () => clearTimeout(timeoutId);
     }
-  }, [isModalOpen]);
+  }, [isOpen]);
 
   // Event handlers
   const handleProductToggle = (productId: string) => {
@@ -100,22 +92,9 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   };
 
   const closeModal = () => {
-    setIsModalOpen(false);
     setSearchTerm('');
     setTempSelectedProductIds(selectedProductIds);
-    onCloseModal?.();
-  };
-
-  const openModal = () => {
-    if (!disabled) {
-      setTempSelectedProductIds(selectedProductIds);
-      if (externalOnOpen) {
-        // External modal management - trigger parent to open modal
-        externalOnOpen();
-      } else {
-        setIsModalOpen(true);
-      }
-    }
+    onClose();
   };
 
   // Product item component
@@ -180,54 +159,26 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
     );
   };
 
-  // UI Helper functions
-  const buttonClassName = useMemo(() => {
-    const base = "w-full min-w-48 max-w-96 px-4 py-3 transition-all duration-200 flex items-center justify-between rounded-lg border";
-    return disabled
-      ? `${base} bg-gray-50 border-gray-200 cursor-not-allowed opacity-60`
-      : `${base} bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`;
-  }, [disabled]);
+  // Update temp selection when props change
+  useEffect(() => {
+    setTempSelectedProductIds(selectedProductIds);
+  }, [selectedProductIds]);
 
-  const displayText = useMemo(() => {
-    if (selectedProducts.length === 0) {
-      return (
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-          </svg>
-          <span>Link Products</span>
-        </div>
-      );
-    }
 
-    if (selectedProducts.length === 1) {
-      const product = selectedProducts[0];
-      const truncatedName = product.item.length > 28
-        ? `${product.item.substring(0, 28)}...`
-        : product.item;
-
-      return (
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
-          <span className="font-medium">{truncatedName}</span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
-        <span className="font-medium">{selectedProducts.length} Products Linked</span>
-      </div>
-    );
-  }, [selectedProducts]);
 
   // Modal components
   const ModalHeader = useMemo(() => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-gray-900">
-        Link Products to PayPal Transaction
-      </h3>
+      <div>
+        <h3 className="text-xl font-semibold text-gray-900">
+          Link Products
+        </h3>
+        {transaction && (
+          <p className="text-sm text-gray-600 mt-2">
+            Net Received: <span className="font-semibold text-green-600">{formatCurrency(transaction.total)}</span>
+          </p>
+        )}
+      </div>
 
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -257,7 +208,7 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
         )}
       </div>
     </div>
-  ), [searchTerm]);
+  ), [searchTerm, transaction]);
 
   const modalBody = (
     <div className="relative">
@@ -367,36 +318,15 @@ export const ProductDropdown: React.FC<ProductDropdownProps> = ({
   };
 
   return (
-    <>
-      {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={openModal}
-        disabled={disabled}
-        className={buttonClassName}
-      >
-        <div className={`flex-1 text-left ${selectedProducts.length > 0 ? 'text-gray-900' : 'text-gray-500'}`}>
-          {displayText}
-        </div>
-        <svg
-          className={`w-5 h-5 transition-transform duration-200 ${disabled ? 'text-gray-400' : 'text-gray-500'}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {/* Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        header={ModalHeader}
-        body={modalBody}
-        footer={<ModalFooter />}
-        size="md"
-      />
-    </>
+    <Modal
+      isOpen={isOpen}
+      onClose={closeModal}
+      header={ModalHeader}
+      body={modalBody}
+      footer={<ModalFooter />}
+      size="md"
+    />
   );
 };
+
+export default ProductLinkModal;

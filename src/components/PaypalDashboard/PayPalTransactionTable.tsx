@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PayPalTransaction } from '../../types/PayPalTransaction';
 import { Product } from '../../types/Product';
-import { ProductDropdown } from '../ProductDropdown';
+import ProductLinkModal from '../ProductLinkModal';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
 import { 
   colors, 
@@ -199,34 +199,50 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         productLink: (
           <div className="flex flex-col space-y-1">
             {onUpdateProductLink ? (
-              <ProductDropdown
-                products={products}
-                selectedProductIds={transaction.linkedProductIds || []}
-                onProductSelect={async (productIds: string[]) => {
-                  if (transaction.id) {
-                    await onUpdateProductLink(transaction.id, productIds);
-                    setIsModalActive(false);
-                    setActiveTransactionId(null);
-                  }
-                }}
-                disabled={loading}
-                linkedProductIds={linkedProductIds}
-                isOpen={isModalActive && activeTransactionId === transaction.id}
-                onOpen={() => {
+              <button
+                type="button"
+                onClick={() => {
                   setIsModalActive(true);
                   setActiveTransactionId(transaction.id || '');
                 }}
-                onClose={() => {
-                  setIsModalActive(false);
-                  setActiveTransactionId(null);
-                }}
-                onCloseModal={() => {
-                  setIsModalActive(false);
-                  setActiveTransactionId(null);
-                }}
-              />
+                disabled={loading}
+                className={`
+                  flex items-center justify-between px-3 py-2 text-sm border rounded-md transition-colors
+                  ${loading 
+                    ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed' 
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                  }
+                  ${transaction.linkedProductIds?.length 
+                    ? 'border-green-300 bg-green-50' 
+                    : 'border-gray-300'
+                  }
+                `}
+              >
+                <div className={`flex-1 text-left ${transaction.linkedProductIds?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                  {(() => {
+                    if (!transaction.linkedProductIds?.length) {
+                      return 'Link Product(s)';
+                    }
+                    
+                    if (transaction.linkedProductIds.length === 1) {
+                      const linkedProduct = products.find(p => p.id === transaction.linkedProductIds![0]);
+                      return linkedProduct?.item || 'Product linked';
+                    }
+                    
+                    return `${transaction.linkedProductIds.length} Products linked`;
+                  })()}
+                </div>
+                <svg
+                  className={`w-5 h-5 transition-transform duration-200 ${loading ? 'text-gray-400' : 'text-gray-500'}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             ) : (
-              <span className="text-gray-400 text-xs">No mapping available</span>
+              <span className="text-sm text-gray-500">No link action available</span>
             )}
           </div>
         ),
@@ -303,32 +319,48 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         <div className="border-t pt-3">
           <p className={`text-sm ${colors.text.secondary} mb-2`}>Product Link:</p>
           {onUpdateProductLink ? (
-            <ProductDropdown
-              products={products}
-              selectedProductIds={transaction.linkedProductIds || []}
-              onProductSelect={async (productIds: string[]) => {
-                if (transaction.id) {
-                  await onUpdateProductLink(transaction.id, productIds);
-                  setIsModalActive(false);
-                  setActiveTransactionId(null);
-                }
-              }}
-              disabled={loading}
-              linkedProductIds={linkedProductIds}
-              isOpen={isModalActive && activeTransactionId === transaction.id}
-              onOpen={() => {
+            <button
+              type="button"
+              onClick={() => {
                 setIsModalActive(true);
                 setActiveTransactionId(transaction.id || '');
               }}
-              onClose={() => {
-                setIsModalActive(false);
-                setActiveTransactionId(null);
-              }}
-              onCloseModal={() => {
-                setIsModalActive(false);
-                setActiveTransactionId(null);
-              }}
-            />
+              disabled={loading}
+              className={`
+                w-full flex items-center justify-between px-3 py-2 text-sm border rounded-md transition-colors
+                ${loading 
+                  ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                }
+                ${transaction.linkedProductIds?.length 
+                  ? 'border-green-300 bg-green-50' 
+                  : 'border-gray-300'
+                }
+              `}
+            >
+              <div className={`flex-1 text-left ${transaction.linkedProductIds?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                {(() => {
+                  if (!transaction.linkedProductIds?.length) {
+                    return 'Link Product(s)';
+                  }
+                  
+                  if (transaction.linkedProductIds.length === 1) {
+                    const linkedProduct = products.find(p => p.id === transaction.linkedProductIds![0]);
+                    return linkedProduct?.item || 'Product linked';
+                  }
+                  
+                  return `${transaction.linkedProductIds.length} Products linked`;
+                })()}
+              </div>
+              <svg
+                className={`w-5 h-5 transition-transform duration-200 ${loading ? 'text-gray-400' : 'text-gray-500'}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           ) : (
             <span className={`${colors.text.disabled} text-xs`}>No mapping available</span>
           )}
@@ -376,14 +408,40 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   });
 
   return (
-    <TableView
-      columns={columns}
-      rows={rows}
-      mobileCards={mobileCards}
-      emptyMessage="No PayPal transactions found."
-      loading={loading}
-      activeDropdown={showDropdown}
-      onDropdownToggle={(rowId) => setShowDropdown(prev => prev === rowId ? null : rowId as number)}
-    />
+    <>
+      <TableView
+        columns={columns}
+        rows={rows}
+        mobileCards={mobileCards}
+        emptyMessage="No PayPal transactions found."
+        loading={loading}
+        activeDropdown={showDropdown}
+        onDropdownToggle={(rowId) => setShowDropdown(prev => prev === rowId ? null : rowId as number)}
+      />
+      
+      {/* Product Link Modal */}
+      {isModalActive && activeTransactionId && (
+        <ProductLinkModal
+          products={products}
+          selectedProductIds={
+            transactions.find(t => t.id === activeTransactionId)?.linkedProductIds || []
+          }
+          onProductSelect={async (productIds: string[]) => {
+            if (onUpdateProductLink && activeTransactionId) {
+              await onUpdateProductLink(activeTransactionId, productIds);
+            }
+            setIsModalActive(false);
+            setActiveTransactionId(null);
+          }}
+          linkedProductIds={linkedProductIds}
+          transaction={transactions.find(t => t.id === activeTransactionId)}
+          isOpen={true}
+          onClose={() => {
+            setIsModalActive(false);
+            setActiveTransactionId(null);
+          }}
+        />
+      )}
+    </>
   );
 };
