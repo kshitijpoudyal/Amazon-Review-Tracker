@@ -158,22 +158,22 @@ export const PayPalPage: React.FC = () => {
   const statsData = data ? [
     {
       value: `$${data.summary.totalIncome.toFixed(2)}`,
-      label: "Total Income",
+      label: "Received",
       className: getStatsColor('income')
     },
     {
       value: `$${data.summary.totalFees.toFixed(2)}`,
-      label: "Total Fees",
+      label: "Fees",
       className: getStatsColor('fees')
     },
     {
       value: `$${data.summary.netReceivedTotal.toFixed(2)}`,
-      label: "Net Received Total",
+      label: "Net Received",
       className: getStatsColor('netReceived')
     },
     {
       value: filteredTransactions.length,
-      label: "Visible Transactions",
+      label: "Transactions Count",
       className: getStatsColor('transactionCount')
     },
     {
