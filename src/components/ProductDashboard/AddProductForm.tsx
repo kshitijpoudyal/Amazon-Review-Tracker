@@ -3,6 +3,7 @@ import { Product } from "../../types/Product";
 import { ImageUploader } from "./ImageUploader";
 import { colors } from "../../utils/colors";
 import { Modal } from "../common";
+import { useVendors } from "../../hooks/useVendors";
 
 interface AddProductFormProps {
   isOpen: boolean;
@@ -11,6 +12,8 @@ interface AddProductFormProps {
 }
 
 const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel }) => {
+  const { activeVendors, DEFAULT_VENDOR_ID } = useVendors();
+  
   const [newProduct, setNewProduct] = useState<Product>({
     item: "",
     url: "",
@@ -25,6 +28,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
     received: null,
     delta: null,
     isVoid: false,
+    vendorId: DEFAULT_VENDOR_ID, // Default to MD Bro
   });
 
   const handleInputChange = (field: keyof Product, value: string | number | boolean | null) => {
@@ -156,6 +160,26 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
             className={`w-full px-4 py-3 ${colors.form.input.base} rounded-lg text-base`}
             placeholder="Enter product URL (e.g., Amazon product link)"
           />
+        </div>
+
+        {/* Vendor Selection */}
+        <div>
+          <label className={`block text-sm ${colors.form.label} mb-2`}>
+            Vendor *
+          </label>
+          <select
+            value={newProduct.vendorId || DEFAULT_VENDOR_ID}
+            onChange={(e) => handleInputChange("vendorId", e.target.value)}
+            className={`w-full px-4 py-3 ${colors.form.input.base} rounded-lg text-base`}
+            required
+          >
+            <option value="">Select a vendor...</option>
+            {activeVendors.map((vendor) => (
+              <option key={vendor.id} value={vendor.id}>
+                {vendor.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Order Date and Amount Paid in one row */}

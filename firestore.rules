@@ -27,6 +27,11 @@ service cloud.firestore {
       match /paypal_transactions/{transactionId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+      
+      // User's vendors subcollection - private to each user
+      match /vendors/{vendorId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }

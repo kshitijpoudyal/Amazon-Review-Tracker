@@ -1,11 +1,12 @@
-import { Product, StatusFilter, DeltaFilter } from '../types/Product';
+import { Product, StatusFilter, DeltaFilter, VendorFilter } from '../types/Product';
 import { getProductStatusType } from '../utils/productStatus';
 
 export const useProductFilters = (products: Product[]) => {
   const applyFilters = (
     searchTerm: string,
     statusFilter: StatusFilter,
-    deltaFilter: DeltaFilter
+    deltaFilter: DeltaFilter,
+    vendorFilter?: VendorFilter
   ): Product[] => {
     return products.filter(product => {
       // Skip empty products
@@ -55,7 +56,13 @@ export const useProductFilters = (products: Product[]) => {
         }
       }
 
-      return matchesSearch && matchesStatus && matchesDelta;
+      // Vendor filter
+      let matchesVendor = true;
+      if (vendorFilter && vendorFilter !== '') {
+        matchesVendor = product.vendorId === vendorFilter;
+      }
+
+      return matchesSearch && matchesStatus && matchesDelta && matchesVendor;
     });
   };
 

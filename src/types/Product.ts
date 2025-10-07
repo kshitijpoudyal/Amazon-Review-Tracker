@@ -1,3 +1,10 @@
+export interface Vendor {
+  id: string;
+  name: string;
+  createdAt: string;
+  isActive: boolean;
+}
+
 export interface Product {
   id?: string; // Firebase document ID
   item: string;
@@ -13,6 +20,7 @@ export interface Product {
   received: number | null;
   delta: number | null;
   isVoid?: boolean;
+  vendorId?: string; // Reference to vendor ID
 }
 
 export interface ProductData {
@@ -26,3 +34,4 @@ export interface ProductData {
 
 export type StatusFilter = '' | 'order-placed' | 'add-review' | 'review-pending' | 'send-screenshot' |'refund-pending' | 'complete' | 'void';
 export type DeltaFilter = '' | 'positive' | 'negative' | 'zero';
+export type VendorFilter = '' | string; // Empty string for all vendors, or specific vendor ID
