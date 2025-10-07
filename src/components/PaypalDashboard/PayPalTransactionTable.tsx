@@ -103,32 +103,32 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     { 
       key: 'name', 
       label: 'Name',
-      align: 'center'
+      align: 'left'
     },
     { 
       key: 'status', 
       label: 'Status',
-      align: 'left'
+      align: 'center'
     },
     { 
       key: 'amount', 
       label: 'Amount',
-      align: 'right'
+      align: 'center'
     },
     { 
       key: 'fees', 
       label: 'Fees',
-      align: 'right'
+      align: 'center'
     },
     { 
       key: 'netReceived', 
       label: 'Net Received',
-      align: 'right'
+      align: 'center'
     },
     { 
       key: 'productLink', 
       label: 'Product Link',
-      align: 'left',
+      align: 'center',
       width: 'w-64 lg:w-84'
     },
     ...(onDeleteTransaction ? [{ 
@@ -160,7 +160,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           </span>
         ),
         name: (
-          <div className="flex flex-col items-center ml-4">
+          <div className="flex flex-col ml-4">
             <div className="font-medium">{transaction.name}</div>
             {transaction.itemTitle && (
               <div className={`${colors.text.muted} text-xs truncate max-w-xs`}>
