@@ -6,6 +6,7 @@ import { useProductPayPalLinks } from '../../hooks/useProductPayPalLinks';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
 import { colors, getBadgeClasses } from '../../utils/colors';
 import { useVendors } from '../../hooks/useVendors';
+import { formatCurrency } from '../../utils/currency';
 
 interface ProductTableProps {
   products: Product[];
@@ -74,11 +75,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
     if (delta > 0) return colors.financial.positive;
     if (delta < 0) return colors.financial.negative;
     return colors.text.muted;
-  };
-
-  const formatCurrency = (amount: number | null) => {
-    if (amount === null) return '-';
-    return `$${amount.toFixed(2)}`;
   };
 
   const formatDate = (dateString: string | null) => {

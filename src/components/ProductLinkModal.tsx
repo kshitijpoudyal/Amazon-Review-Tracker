@@ -3,7 +3,7 @@ import { Product } from '../types/Product';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Modal, Button } from './common';
 import { getProductStatus, isVoid, isRefundPending } from '../utils/productStatus';
-import { colors } from '../utils/colors';
+import { formatCurrency } from '../utils/currency';
 
 interface ProductLinkModalProps {
   products: Product[];
@@ -35,12 +35,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
     'others': false           // Collapsed by default
   });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+
 
   // Toggle accordion section
   const toggleAvailableAccordion = (section: keyof typeof availableAccordionState) => {
@@ -280,8 +275,8 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                 })}
               </span>
             )}
-            {product.paid && <span className="font-mono">• Paid: ${product.paid.toFixed(2)}</span>}
-            {product.received && <span className="font-mono text-green-600">• Received: ${product.received.toFixed(2)}</span>}
+            {product.paid && <span className="font-mono">• Paid: {formatCurrency(product.paid)}</span>}
+            {product.received && <span className="font-mono text-green-600">• Received: {formatCurrency(product.received)}</span>}
           </div>
         </div>
       </li>

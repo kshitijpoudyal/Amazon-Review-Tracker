@@ -22,6 +22,7 @@ import {
 } from '../components/common';
 import Toolbar from '../components/common/Toolbar';
 import { getStatsColor } from '../utils/colors';
+import { formatCurrency } from '../utils/currency';
 
 /**
  * ProductPage Component
@@ -172,22 +173,22 @@ const ProductPage: React.FC = () => {
       className: getStatsColor('completed')
     },
     {
-      value: `$${stats.totalPaid.toFixed(2)}`,
+      value: formatCurrency(stats.totalPaid),
       label: "Total Paid",
       className: getStatsColor('paid')
     },
     {
-      value: `$${stats.totalReceived.toFixed(2)}`,
+      value: formatCurrency(stats.totalReceived),
       label: "Total Received",
       className: getStatsColor('received')
     },
     {
-      value: `$${stats.remainingRefund.toFixed(2)}`,
+      value: formatCurrency(stats.remainingRefund),
       label: "Remaining Refund",
       className: getStatsColor('remaining')
     },
     {
-      value: `$${stats.netDelta.toFixed(2)}`,
+      value: formatCurrency(stats.netDelta),
       label: "Net Profit/Loss",
       className: getStatsColor('netDelta', stats.netDelta)
     }
