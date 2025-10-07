@@ -121,7 +121,8 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
 
   const handleClearAll = () => setTempSelectedProductIds([]);
 
-  const handleSave = () => {
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
     onProductSelect(tempSelectedProductIds);
     closeModal();
   };
@@ -139,8 +140,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
     isExpanded, 
     onToggle, 
     products, 
-    statusType = 'others',
-    description 
+    statusType = 'others'
   }: {
     title: string;
     count: number;
@@ -148,7 +148,6 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
     onToggle: () => void;
     products: Product[];
     statusType?: 'refund-pending' | 'void' | 'others';
-    description?: string;
   }) => {
     // Map statusType to accordion color scheme using colors.ts
     const getAccordionColors = (type: string) => {
@@ -191,11 +190,6 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                 <h4 className="font-medium">
                   {title} ({count})
                 </h4>
-                {description && (
-                  <p className="text-xs opacity-75 mt-0.5">
-                    {description}
-                  </p>
-                )}
               </div>
             </div>
             <svg 
@@ -361,16 +355,14 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                       onToggle={() => toggleAvailableAccordion('refundPending')}
                       products={categorizedProducts['refundPending']}
                       statusType="refund-pending"
-                      description="Items that may need return processing"
                     />
                     <AccordionSection
-                      title="Others"
+                      title="Active status"
                       count={categorizedProducts['others'].length}
                       isExpanded={availableAccordionState.others}
                       onToggle={() => toggleAvailableAccordion('others')}
                       products={categorizedProducts['others']}
                       statusType="others"
-                      description="All other available products"
                     />
                     <AccordionSection
                       title="Void"
@@ -379,7 +371,6 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                       onToggle={() => toggleAvailableAccordion('void')}
                       products={categorizedProducts['void']}
                       statusType="void"
-                      description="Items that may need return processing"
                     />
                   </div>
                 </div>
@@ -460,9 +451,10 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
           variant="primary"
           label={linkButtonLabel}
           className="flex-1"
+          type="submit"
           icon={
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
           }
         />
