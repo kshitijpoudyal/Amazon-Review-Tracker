@@ -5,6 +5,7 @@ import { getProductStatus } from '../../utils/productStatus';
 import { useProductPayPalLinks } from '../../hooks/useProductPayPalLinks';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
 import { colors, getBadgeClasses } from '../../utils/colors';
+import { useVendors } from '../../hooks/useVendors';
 
 interface ProductTableProps {
   products: Product[];
@@ -30,6 +31,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
   // Get product IDs for checking PayPal links
   const productIds = products.map(p => p.id).filter(Boolean) as string[];
   const { isProductLinked } = useProductPayPalLinks(userId, productIds);
+  
+  // Get vendor information
+  const { getVendorName } = useVendors();
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
@@ -214,6 +218,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
       align: 'left'
     },
     { 
+      key: 'vendor', 
+      label: 'Vendor',
+      align: 'left'
+    },
+    { 
       key: 'date', 
       label: 'Date',
       align: 'left'
@@ -281,6 +290,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 )}
               </div>
             </div>
+          </div>
+        ),
+        vendor: (
+          <div className='flex flex-col'>
+            <span className="text-sm text-gray-600 font-medium">
+              {getVendorName(product.vendorId)}
+            </span>
           </div>
         ),
         date: (

@@ -9,13 +9,16 @@ import { useDataSource } from '../hooks/useDataSource';
 import { useProductStats } from '../hooks/useProductStats';
 import { useSortedProducts } from '../hooks/useSortedProducts';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
-import { StatusFilter, DeltaFilter, Product } from '../types/Product';
+import { useVendors } from '../hooks/useVendors';
+import { StatusFilter, DeltaFilter, VendorFilter, Product } from '../types/Product';
+import { VendorAdminUtils } from '../components/VendorAdminUtils';
 import {
   DashboardContainer,
   DashboardStats,
   DashboardError,
   DashboardSection,
-  FilterControlConfig
+  FilterControlConfig,
+  EmailReminderPanel
 } from '../components/common';
 import Toolbar from '../components/common/Toolbar';
 import { getStatsColor } from '../utils/colors';
@@ -32,6 +35,10 @@ import { getStatsColor } from '../utils/colors';
  */
 const ProductPage: React.FC = () => {
   const { user } = useAuth();
+  const { activeVendors } = useVendors();
+  
+  // Show admin utils when URL contains ?admin=true
+  const showAdminUtils = new URLSearchParams(window.location.search).get('admin') === 'true';
 
   // Dashboard state management
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
@@ -45,7 +52,8 @@ const ProductPage: React.FC = () => {
     initialFilters: {
       searchTerm: '',
       statusFilter: '',
-      deltaFilter: ''
+      deltaFilter: '',
+      vendorFilter: ''
     }
   });
 
@@ -53,6 +61,7 @@ const ProductPage: React.FC = () => {
   const searchTerm = getFilterValue('searchTerm');
   const statusFilter = getFilterValue('statusFilter') as StatusFilter;
   const deltaFilter = getFilterValue('deltaFilter') as DeltaFilter;
+  const vendorFilter = getFilterValue('vendorFilter') as VendorFilter;
 
   // Data source management with optimized hook
   const {
@@ -69,7 +78,7 @@ const ProductPage: React.FC = () => {
 
   // Product filtering and sorting
   const { applyFilters } = useProductFilters(data?.products || []);
-  const filteredProducts = useSortedProducts(applyFilters, searchTerm, statusFilter, deltaFilter);
+  const filteredProducts = useSortedProducts(applyFilters, searchTerm, statusFilter, deltaFilter, vendorFilter);
 
   // Stats calculation
   const stats = useProductStats(filteredProducts);
@@ -115,6 +124,19 @@ const ProductPage: React.FC = () => {
         { value: 'positive', label: 'Positive' },
         { value: 'negative', label: 'Negative' },
         { value: 'zero', label: 'Zero' }
+      ]
+    },
+    {
+      type: 'select',
+      key: 'vendorFilter',
+      value: vendorFilter,
+      onChange: (value) => updateFilter('vendorFilter', value),
+      options: [
+        { value: '', label: 'All Vendors' },
+        ...activeVendors.map(vendor => ({
+          value: vendor.id,
+          label: vendor.name
+        }))
       ]
     }
   ];
@@ -176,8 +198,12 @@ const ProductPage: React.FC = () => {
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={displayLoading} />
       
-      {/* Email Reminder Panel */}
-      {/* <EmailReminderPanel /> */}
+      {showAdminUtils && (
+        <DashboardSection>
+          <EmailReminderPanel />
+          <VendorAdminUtils />
+        </DashboardSection>
+      )}
 
       {/* Filter Controls */}
       <Toolbar

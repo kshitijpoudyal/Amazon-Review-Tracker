@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Product } from '../../types/Product';
 import { colors } from '../../utils/colors';
 import { Modal } from '../common';
+import { useVendors } from '../../hooks/useVendors';
 
 interface EditProductModalProps {
   product: Product;
@@ -16,6 +17,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   onSave,
   onCancel
 }) => {
+  const { activeVendors, DEFAULT_VENDOR_ID } = useVendors();
   const [editedProduct, setEditedProduct] = useState<Product>({ ...product });
 
   // Update editedProduct when product prop changes
@@ -112,6 +114,23 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
           placeholder="Enter order number for search purposes"
         />
+      </div>
+
+      {/* Vendor Selection */}
+      <div>
+        <label className={`block text-sm ${colors.form.label} mb-2`}>Vendor</label>
+        <select
+          value={editedProduct.vendorId || DEFAULT_VENDOR_ID}
+          onChange={(e) => handleInputChange('vendorId', e.target.value)}
+          className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
+        >
+          <option value="">Select a vendor...</option>
+          {activeVendors.map((vendor) => (
+            <option key={vendor.id} value={vendor.id}>
+              {vendor.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Status Checkboxes */}

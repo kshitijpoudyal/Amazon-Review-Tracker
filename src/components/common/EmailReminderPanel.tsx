@@ -21,7 +21,7 @@ export const EmailReminderPanel: React.FC = () => {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h3 className="text-lg font-medium text-gray-900 mb-3">Return Window Reminders</h3>
       
       <div className="space-y-3">
