@@ -119,3 +119,35 @@ export const getProductStatus = (product: Product) => {
     ...display
   };
 };
+
+export const isVoid = (product: Product): boolean => {
+  return getProductStatusType(product) === 'void';
+};
+
+export const isComplete = (product: Product): boolean => {
+  return getProductStatusType(product) === 'complete';
+};
+
+export const isRefundPending = (product: Product): boolean => {
+  return getProductStatusType(product) === 'refund-pending';
+};
+
+export const isSendScreenshot = (product: Product): boolean => {
+  return getProductStatusType(product) === 'send-screenshot';
+};
+
+export const isReviewPending = (product: Product): boolean => {
+  return getProductStatusType(product) === 'review-pending';
+};
+
+export const isAddReview = (product: Product): boolean => {
+  return getProductStatusType(product) === 'add-review';
+};
+
+export const isOrderPlaced = (product: Product): boolean => {
+  return getProductStatusType(product) === 'order-placed';
+};
+
+export const isUnknown = (product: Product): boolean => {
+  return getProductStatusType(product) === 'unknown';
+};

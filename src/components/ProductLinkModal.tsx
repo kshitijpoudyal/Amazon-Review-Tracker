@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Product } from '../types/Product';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Modal, Button } from './common';
-import { getProductStatus } from '../utils/productStatus';
+import { getProductStatus, isVoid, isRefundPending } from '../utils/productStatus';
+import { colors } from '../utils/colors';
 
 interface ProductLinkModalProps {
   products: Product[];
@@ -26,12 +27,51 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSelectedProductIds, setTempSelectedProductIds] = useState<string[]>(selectedProductIds);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Accordion state for Available Products section
+  const [availableAccordionState, setAvailableAccordionState] = useState({
+    'refundPending': true,   // Expanded by default
+    'void': false,            // Collapsed by default
+    'others': false           // Collapsed by default
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
+  };
+
+  // Toggle accordion section
+  const toggleAvailableAccordion = (section: keyof typeof availableAccordionState) => {
+    setAvailableAccordionState(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Categorize products by status for available products only
+  const categorizeAvailableProducts = (products: Product[]) => {
+    const refundPending: Product[] = [];
+    const others: Product[] = [];
+    const voidProducts: Product[] = [];
+
+    products.forEach(product => {
+      
+      if (isRefundPending(product)) {
+        refundPending.push(product);
+      } else if (isVoid(product)) {
+        voidProducts.push(product);
+      } else {
+        others.push(product);
+      }
+    });
+
+    return {
+      'refundPending': refundPending,
+      'void': voidProducts,
+      'others': others
+    };
   };
 
   // Memoized computations for better performance
@@ -95,6 +135,95 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
     setSearchTerm('');
     setTempSelectedProductIds(selectedProductIds);
     onClose();
+  };
+
+  // Accordion Section Component for Available Products
+  const AccordionSection = ({ 
+    title, 
+    count, 
+    isExpanded, 
+    onToggle, 
+    products, 
+    statusType = 'others',
+    description 
+  }: {
+    title: string;
+    count: number;
+    isExpanded: boolean;
+    onToggle: () => void;
+    products: Product[];
+    statusType?: 'refund-pending' | 'void' | 'others';
+    description?: string;
+  }) => {
+    // Map statusType to accordion color scheme using colors.ts
+    const getAccordionColors = (type: string) => {
+      switch (type) {
+        case 'refund-pending':
+          return {
+            bg: 'bg-blue-50',
+            text: 'text-blue-900', 
+            border: 'border-blue-200'
+          };
+        case 'void':
+          return {
+            bg: 'bg-gray-50',
+            text: 'text-gray-900',
+            border: 'border-gray-200'
+          };
+        case 'others':
+        default:
+          return {
+            bg: 'bg-green-50',
+            text: 'text-green-900',
+            border: 'border-green-200'
+          };
+      }
+    };
+
+    const colorClasses = getAccordionColors(statusType);
+
+    // if (count === 0) return null;
+
+    return (
+      <div className="border border-gray-200 rounded-lg overflow-hidden mb-3">
+        <button
+          onClick={onToggle}
+          className={`w-full px-4 py-3 ${colorClasses.bg} ${colorClasses.text} border-b ${colorClasses.border} hover:opacity-80 transition-opacity`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-left">
+                <h4 className="font-medium">
+                  {title} ({count})
+                </h4>
+                {description && (
+                  <p className="text-xs opacity-75 mt-0.5">
+                    {description}
+                  </p>
+                )}
+              </div>
+            </div>
+            <svg 
+              className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </button>
+        {isExpanded && (
+          <div className="bg-white">
+            <ul role="list" className="space-y-1 p-2">
+              {products.map((product) => (
+                <ProductItem key={product.id} product={product} isLinked={false} />
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Product item component
@@ -216,22 +345,51 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
       <div className="max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {(unlinkedProducts.length > 0 || linkedProducts.length > 0) ? (
           <div className="space-y-1">
-            {/* Available Products Section */}
-            {unlinkedProducts.length > 0 && (
-              <div>
-                <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <h4 className="font-medium text-gray-900">
-                      Available Products ({unlinkedProducts.length})
-                    </h4>
+            {/* Available Products Section with Accordion */}
+            {unlinkedProducts.length > 0 && (() => {
+              const categorizedProducts = categorizeAvailableProducts(unlinkedProducts);
+              return (
+                <div>
+                  <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <h4 className="font-medium text-gray-900">
+                        Available Products ({unlinkedProducts.length})
+                      </h4>
+                    </div>
+                  </div>
+                  <div className="px-4 py-2 space-y-3">
+                    <AccordionSection
+                      title="Refund Pending"
+                      count={categorizedProducts['refundPending'].length}
+                      isExpanded={availableAccordionState['refundPending']}
+                      onToggle={() => toggleAvailableAccordion('refundPending')}
+                      products={categorizedProducts['refundPending']}
+                      statusType="refund-pending"
+                      description="Items that may need return processing"
+                    />
+                    <AccordionSection
+                      title="Others"
+                      count={categorizedProducts['others'].length}
+                      isExpanded={availableAccordionState.others}
+                      onToggle={() => toggleAvailableAccordion('others')}
+                      products={categorizedProducts['others']}
+                      statusType="others"
+                      description="All other available products"
+                    />
+                    <AccordionSection
+                      title="Void"
+                      count={categorizedProducts['void'].length}
+                      isExpanded={availableAccordionState['void']}
+                      onToggle={() => toggleAvailableAccordion('void')}
+                      products={categorizedProducts['void']}
+                      statusType="void"
+                      description="Items that may need return processing"
+                    />
                   </div>
                 </div>
-                <ul role="list" className="space-y-1 pb-4">
-                  {unlinkedProducts.map((product) => <ProductItem key={product.id} product={product} isLinked={false} />)}
-                </ul>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Already Linked Products Section */}
             {linkedProducts.length > 0 && (
