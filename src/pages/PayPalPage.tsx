@@ -14,6 +14,7 @@ import {
   DashboardSection,
   FilterControlConfig
 } from '../components/common';
+import { formatCurrency } from '../utils/currency';
 import Toolbar from '../components/common/Toolbar';
 import { getStatsColor } from '../utils/colors';
 
@@ -157,17 +158,17 @@ export const PayPalPage: React.FC = () => {
   // Prepare stats data
   const statsData = data ? [
     {
-      value: `$${data.summary.totalIncome.toFixed(2)}`,
+      value: formatCurrency(data.summary.totalIncome),
       label: "Received",
       className: getStatsColor('income')
     },
     {
-      value: `$${data.summary.totalFees.toFixed(2)}`,
+      value: formatCurrency(data.summary.totalFees),
       label: "Fees",
       className: getStatsColor('fees')
     },
     {
-      value: `$${data.summary.netReceivedTotal.toFixed(2)}`,
+      value: formatCurrency(data.summary.netReceivedTotal),
       label: "Net Received",
       className: getStatsColor('netReceived')
     },
@@ -182,7 +183,7 @@ export const PayPalPage: React.FC = () => {
       className: getStatsColor('unlinkedCount')
     },
     {
-      value: `$${unlinkedTransactionsAmount.toFixed(2)}`,
+      value: formatCurrency(unlinkedTransactionsAmount),
       label: "Unlinked Amount",
       className: getStatsColor('unlinkedAmount')
     }

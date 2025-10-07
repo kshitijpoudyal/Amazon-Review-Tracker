@@ -3,6 +3,7 @@ import { Product } from '../../types/Product';
 import { colors } from '../../utils/colors';
 import { Modal } from '../common';
 import { useVendors } from '../../hooks/useVendors';
+import { formatCurrency } from '../../utils/currency';
 
 interface EditProductModalProps {
   product: Product;
@@ -220,7 +221,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             ? colors.financial.negative
             : colors.financial.neutral
           }`}>
-          ${editedProduct.delta?.toFixed(2) || '0.00'}
+          {formatCurrency(editedProduct.delta || 0)}
         </div>
       </div>
       {editedProduct.isVoid ? (

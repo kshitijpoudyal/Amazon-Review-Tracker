@@ -10,6 +10,7 @@ import {
   getActionButtonClasses,
   getRowBackgroundColor 
 } from '../../utils/colors';
+import { formatCurrency } from '../../utils/currency';
 
 interface PayPalTransactionTableProps {
   transactions: PayPalTransaction[];
@@ -68,12 +69,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     });
   }, [transactions]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+
 
   const formatDate = (dateString: string) => {
     try {
