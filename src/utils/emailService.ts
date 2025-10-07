@@ -130,12 +130,8 @@ export const sendEmailReminder = async (
 
 // Get Firebase Functions URL
 const getFunctionUrl = (): string => {
-  // Use the deployed Firebase Function URL directly
-  // This is the actual deployed function URL from your Firebase deploy
-  return 'https://sendreturnwindowreminder-bxwtawrqca-uc.a.run.app';
-  
-  // Alternative: Use the standard Firebase Functions URL format
-  // return 'https://us-central1-productreview-52e51.cloudfunctions.net/sendReturnWindowReminder';
+  // Use the correct deployed Firebase Function URL
+  return 'https://us-central1-productreview-52e51.cloudfunctions.net/sendReturnWindowReminder';
 };
 
 // Check and send reminders for all products that need them

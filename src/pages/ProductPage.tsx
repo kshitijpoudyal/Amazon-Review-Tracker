@@ -175,7 +175,9 @@ const ProductPage: React.FC = () => {
     <DashboardContainer>
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={displayLoading} />
-        {/* <EmailReminderPanel /> */}
+      
+      {/* Email Reminder Panel */}
+      {/* <EmailReminderPanel /> */}
 
       {/* Filter Controls */}
       <Toolbar
