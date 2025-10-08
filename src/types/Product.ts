@@ -9,6 +9,7 @@ export interface Product {
   id?: string; // Firebase document ID
   item: string;
   url?: string; // Product URL
+  imageUrl?: string; // Product image URL
   orderDate: string | null;
   orderNumber?: string; // Order number (not displayed in UI but searchable)
   orderPlaced: boolean;

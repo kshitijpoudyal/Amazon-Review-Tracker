@@ -10,3 +10,4 @@ export { default as Modal } from './Modal';
 export type { ModalProps } from './Modal';
 export { Button } from './Button';
 export type { ButtonVariant, ButtonSize } from './Button';
+export { default as ProductThumbnail } from './ProductThumbnail';

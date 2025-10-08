@@ -94,6 +94,18 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         />
       </div>
 
+      {/* Product Image URL */}
+      <div>
+        <label className={`block text-sm ${colors.form.label} mb-2`}>Product Image URL</label>
+        <input
+          type="url"
+          value={editedProduct.imageUrl || ''}
+          onChange={(e) => handleInputChange('imageUrl', e.target.value || null)}
+          className={`w-full px-3 py-2 ${colors.form.input.base} rounded-md`}
+          placeholder="https://example.com/image.jpg"
+        />
+      </div>
+
       {/* Order Date */}
       <div>
         <label className={`block text-sm ${colors.form.label} mb-2`}>Order Date</label>

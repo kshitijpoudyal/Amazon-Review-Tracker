@@ -17,6 +17,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
   const [newProduct, setNewProduct] = useState<Product>({
     item: "",
     url: "",
+    imageUrl: "",
     orderDate: null,
     orderNumber: "",
     orderPlaced: true,
@@ -159,6 +160,20 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
             onChange={(e) => handleInputChange("url", e.target.value || null)}
             className={`w-full px-4 py-3 ${colors.form.input.base} rounded-lg text-base`}
             placeholder="Enter product URL (e.g., Amazon product link)"
+          />
+        </div>
+
+        {/* Product Image URL */}
+        <div>
+          <label className={`block text-sm ${colors.form.label} mb-2`}>
+            Product Image URL
+          </label>
+          <input
+            type="url"
+            value={newProduct.imageUrl || ""}
+            onChange={(e) => handleInputChange("imageUrl", e.target.value || null)}
+            className={`w-full px-4 py-3 ${colors.form.input.base} rounded-lg text-base`}
+            placeholder="Enter product image URL"
           />
         </div>
 
