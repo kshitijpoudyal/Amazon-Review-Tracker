@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Product } from '../types/Product';
 import { PayPalTransaction } from '../types/PayPalTransaction';
-import { Modal, Button } from './common';
+import { Modal, Button, ProductThumbnail } from './common';
 import { getProductStatus, isVoid, isRefundPending } from '../utils/productStatus';
 import { formatCurrency } from '../utils/currency';
+import { colors } from '../utils/colors';
 
 interface ProductLinkModalProps {
   products: Product[];
@@ -176,10 +177,8 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
 
     const colorClasses = getAccordionColors(statusType);
 
-    // if (count === 0) return null;
-
     return (
-      <div className="border border-gray-200 rounded-lg overflow-hidden mb-3">
+      <div className="mb-2">
         <button
           onClick={onToggle}
           className={`w-full px-4 py-3 ${colorClasses.bg} ${colorClasses.text} border-b ${colorClasses.border} hover:opacity-80 transition-opacity`}
@@ -203,7 +202,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
           </div>
         </button>
         {isExpanded && (
-          <div className="bg-white">
+          <div className={`${colors.background.primary}`}>
             <ul role="list" className="space-y-1 p-2">
               {products.map((product) => (
                 <ProductItem key={product.id} product={product} isLinked={false} />
@@ -246,6 +245,13 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
             )}
           </div>
         </div>
+
+        {/* Thumbnail */}
+        <ProductThumbnail 
+          imageUrl={product.imageUrl}
+          productName={product.item}
+          size="sm"
+        />
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -347,7 +353,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                       </h4>
                     </div>
                   </div>
-                  <div className="px-4 py-2 space-y-3">
+                  <div className="px-4 py-2">
                     <AccordionSection
                       title="Refund Pending"
                       count={categorizedProducts['refundPending'].length}

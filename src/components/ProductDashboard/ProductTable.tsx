@@ -7,6 +7,7 @@ import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/T
 import { colors, getBadgeClasses } from '../../utils/colors';
 import { useVendors } from '../../hooks/useVendors';
 import { formatCurrency } from '../../utils/currency';
+import { ProductThumbnail } from '../common';
 
 interface ProductTableProps {
   products: Product[];
@@ -263,7 +264,12 @@ const ProductTable: React.FC<ProductTableProps> = ({
         item: (
           <div className='flex flex-col'>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center">
+              <div className="flex items-center gap-3">
+                <ProductThumbnail 
+                  imageUrl={product.imageUrl}
+                  productName={product.item}
+                  size="md"
+                />
                 {product.url ? (
                   <a
                     href={product.url}
@@ -376,20 +382,29 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
     const headerContent = (
       <>
-        {product.url ? (
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`font-semibold text-lg ${colors.text.link} hover:${colors.text.linkHover} underline mb-1 block`}
-          >
-            {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
-          </a>
-        ) : (
-          <h3 className={`font-semibold text-lg ${colors.text.primary} mb-1`}>
-            {product.item.length > 150 ? `${product.item.substring(0, 150)}...` : product.item}
-          </h3>
-        )}
+        <div className="flex items-start gap-3 mb-2">
+          <ProductThumbnail 
+            imageUrl={product.imageUrl}
+            productName={product.item}
+            size="lg"
+          />
+          <div className="flex-1 min-w-0">
+            {product.url ? (
+              <a
+                href={product.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`font-semibold text-lg ${colors.text.link} hover:${colors.text.linkHover} underline block`}
+              >
+                {product.item.length > 120 ? `${product.item.substring(0, 120)}...` : product.item}
+              </a>
+            ) : (
+              <h3 className={`font-semibold text-lg ${colors.text.primary}`}>
+                {product.item.length > 120 ? `${product.item.substring(0, 120)}...` : product.item}
+              </h3>
+            )}
+          </div>
+        </div>
         <p className={`text-sm ${colors.text.secondary}`}>Order Date: {formatDate(product.orderDate)}</p>
         <div className="flex flex-col items-end space-y-1 mt-2">
           <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
