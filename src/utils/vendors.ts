@@ -10,7 +10,7 @@ export const DEFAULT_VENDORS: Vendor[] = [
   },
   {
     id: 'V002',
-    name: 'Whatsapp Bro',
+    name: 'Snow Cloud',
     createdAt: new Date().toISOString(),
     isActive: true
   }
