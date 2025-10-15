@@ -226,14 +226,26 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
       {/* Delta Display */}
       <div>
-        <label className={`block text-sm ${colors.form.label} mb-2`}>Profit/Loss (Auto-calculated)</label>
+        <div className="flex items-center justify-between mb-2">
+          <label className={`text-sm ${colors.form.label}`}>Delta (Auto-calculated)</label>
+          {editedProduct.delta !== null && (
+            <button
+              type="button"
+              onClick={() => handleInputChange('delta', null)}
+              className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+              title="Reset delta to null"
+            >
+              Reset to null
+            </button>
+          )}
+        </div>
         <div className={`text-lg font-semibold px-3 py-2 rounded-md border ${editedProduct.delta !== null && editedProduct.delta >= 0
           ? colors.financial.positive
           : editedProduct.delta !== null
             ? colors.financial.negative
             : colors.financial.neutral
           }`}>
-          {formatCurrency(editedProduct.delta || 0)}
+          {editedProduct.delta !== null ? formatCurrency(editedProduct.delta) : 'Not calculated'}
         </div>
       </div>
       {editedProduct.isVoid ? (
