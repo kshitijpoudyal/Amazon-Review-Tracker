@@ -105,7 +105,7 @@ export const VendorAdminUtils: React.FC = () => {
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-semibold text-gray-900 mb-2">What these tools do:</h3>
           <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-            <li><strong>Initialize Vendors:</strong> Creates default vendors (MD Bro, Whatsapp Bro) in the database</li>
+            <li><strong>Initialize Vendors:</strong> Creates default vendors (MD Bro, Snow Cloud) in the database</li>
             <li><strong>Backfill Products:</strong> Adds vendor information to existing products (defaults to MD Bro)</li>
             <li><strong>Run Full Setup:</strong> Does both operations in sequence</li>
           </ul>
