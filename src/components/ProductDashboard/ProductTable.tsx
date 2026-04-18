@@ -5,7 +5,7 @@ import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { getProductStatus } from '../../utils/productStatus';
 import { useProductPayPalLinks } from '../../hooks/useProductPayPalLinks';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
-import { colors } from '../../utils/colors';
+import { colors, getFinancialColor } from '../../utils/colors';
 import { useVendors } from '../../hooks/useVendors';
 import { formatCurrency } from '../../utils/currency';
 import { ProductThumbnail } from '../common';
@@ -420,97 +420,92 @@ const ProductTable: React.FC<ProductTableProps> = ({
     const status = getProductStatus(product);
 
     const headerContent = (
-      <>
-        <div className="flex items-start gap-3 mb-2">
-          <ProductThumbnail 
-            imageUrl={product.imageUrl}
-            productName={product.item}
-            size="lg"
-          />
+      <div className="space-y-3">
+        {/* Status + Date */}
+        <div className="flex items-center justify-between">
+          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
+            {status.label}
+          </span>
+          <span className={`text-xs ${colors.text.muted}`}>{formatDate(product.orderDate) || '—'}</span>
+        </div>
+
+        {/* Title + Image */}
+        <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
             {product.url ? (
               <a
                 href={product.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`font-semibold text-base ${colors.text.link} hover:${colors.text.linkHover} underline block line-clamp-2`}
+                className={`block font-bold text-base leading-snug line-clamp-3 ${colors.text.link} hover:${colors.text.linkHover}`}
               >
                 {product.item}
               </a>
             ) : (
-              <h3 className={`font-semibold text-base ${colors.text.primary} line-clamp-2`}>
+              <h3 className={`font-bold text-base leading-snug line-clamp-3 ${colors.text.primary}`}>
                 {product.item}
               </h3>
             )}
-            {product.id && isProductLinked(product.id) && (
-              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-[#006a68]/10 text-[#006a68] text-xs font-label font-semibold">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                {(() => {
-                  const amt = getLinkedAmount(product.id!);
-                  return amt != null ? `PayPal ${formatCurrency(amt)}` : 'PayPal';
-                })()}
-              </span>
-            )}
+          </div>
+          <ProductThumbnail
+            imageUrl={product.imageUrl}
+            productName={product.item}
+            size="lg"
+          />
+        </div>
+
+        {/* Financials */}
+        <div className="flex items-end gap-5">
+          <div>
+            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Paid</p>
+            <p className={`text-sm font-semibold font-mono ${colors.financial.negative}`}>{formatCurrency(product.paid)}</p>
+          </div>
+          <div>
+            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Received</p>
+            <p className={`text-sm font-semibold font-mono ${getFinancialColor(product.received)}`}>{formatCurrency(product.received)}</p>
+          </div>
+          <div>
+            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Delta</p>
+            <p className={`text-sm font-semibold font-mono ${getDeltaClass(product.delta)}`}>{formatCurrency(product.delta)}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <p className={`text-sm ${colors.text.secondary}`}>{formatDate(product.orderDate) || '—'}</p>
-          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
-            {status.label}
-          </span>
-        </div>
-      </>
-    );
 
-    const financialContent = (
-      <div className="grid grid-cols-3 gap-3 text-sm">
-        <div className="text-center">
-          <p className={`${colors.text.muted} text-xs font-label uppercase tracking-wider mb-1`}>Paid</p>
-          <p className="font-label font-semibold">{formatCurrency(product.paid)}</p>
-        </div>
-        <div className="text-center">
-          <p className={`${colors.text.muted} text-xs font-label uppercase tracking-wider mb-1`}>Received</p>
-          <p className="font-label font-semibold">{formatCurrency(product.received)}</p>
-        </div>
-        <div className="text-center">
-          <p className={`${colors.text.muted} text-xs font-label uppercase tracking-wider mb-1`}>Delta</p>
-          <p className={`font-label font-semibold ${getDeltaClass(product.delta)}`}>
-            {formatCurrency(product.delta)}
-          </p>
+        {/* Footer: PayPal badge + dots menu */}
+        <div className="flex items-center justify-between pt-1">
+          {product.id && isProductLinked(product.id) ? (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#006a68]/10 text-[#006a68] text-xs font-semibold">
+              {(() => {
+                const amt = getLinkedAmount(product.id!);
+                return amt != null ? `PayPal ${formatCurrency(amt)}` : 'PayPal';
+              })()}
+            </span>
+          ) : <span />}
+          <div className="relative dropdown-container">
+            <button
+              onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+              className={`flex items-center justify-center w-8 h-8 ${colors.button.secondary} rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#022448]`}
+              title="More actions"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+              </svg>
+            </button>
+            {renderMobileDropdown(product, index)}
+          </div>
         </div>
       </div>
     );
 
-    const actionsContent = (
-      <div className="flex items-center justify-end gap-2 w-full">
-        {/* Dots menu for edit/delete */}
-        <button
-          onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-          className={`flex items-center justify-center w-8 h-8 ${colors.button.secondary} rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#022448]`}
-          title="More actions"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-          </svg>
-        </button>
-
-        {/* Dropdown Menu */}
-        {renderMobileDropdown(product, index)}
-      </div>
-    );
+    const financialContent = null;
+    const actionsContent = null;
 
     return {
       headerContent,
       financialContent,
       actionsContent,
       borderColor: colors.status[status.type].border,
-      className: product.id && isProductLinked(product.id) ? colors.background.linkedRow : ''
+      className: product.id && isProductLinked(product.id) ? colors.background.linkedRow : '',
+      noDividers: true,
     };
   });
 

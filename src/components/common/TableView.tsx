@@ -34,6 +34,7 @@ export interface MobileCardContent {
   actionsContent: React.ReactNode;
   borderColor?: string;
   className?: string;
+  noDividers?: boolean;
 }
 
 interface TableViewProps {
@@ -188,6 +189,7 @@ export const TableView: React.FC<TableViewProps> = ({
             actionsContent={card.actionsContent}
             borderColor={card.borderColor}
             className={card.className}
+            noDividers={card.noDividers}
           />
         ))}
       </div>

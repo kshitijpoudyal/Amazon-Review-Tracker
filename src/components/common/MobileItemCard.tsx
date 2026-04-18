@@ -8,6 +8,7 @@ interface MobileItemCardProps {
   actionsContent: React.ReactNode;
   borderColor?: string;
   className?: string;
+  noDividers?: boolean;
 }
 
 export const MobileItemCard: React.FC<MobileItemCardProps> = ({
@@ -15,8 +16,10 @@ export const MobileItemCard: React.FC<MobileItemCardProps> = ({
   financialContent,
   actionsContent,
   borderColor = 'border-l-[#022448]',
-  className = ''
+  className = '',
+  noDividers = false,
 }) => {
+  const divider = noDividers ? '' : 'border-t border-[#e4e2dd]';
   return (
     <div className={`
       bg-[#fbf9f3]
@@ -29,23 +32,27 @@ export const MobileItemCard: React.FC<MobileItemCardProps> = ({
       ${className}
     `}>
       {/* Header Section */}
-      <div className="px-4 pt-4 pb-3">
+      <div className="px-4 pt-5 pb-4">
         <div className="w-full">
           {headerContent}
         </div>
       </div>
 
-      {/* Financial Section */}
-      <div className="px-4 py-3 border-t border-[#e4e2dd]">
-        {financialContent}
-      </div>
-
-      {/* Actions Section */}
-      <div className="px-4 py-3 border-t border-[#e4e2dd] rounded-b-2xl">
-        <div className="flex justify-end items-center relative dropdown-container">
-          {actionsContent}
+      {/* Financial Section — only rendered if content provided */}
+      {financialContent && (
+        <div className={`px-4 py-3 ${divider}`}>
+          {financialContent}
         </div>
-      </div>
+      )}
+
+      {/* Actions Section — only rendered if content provided */}
+      {actionsContent && (
+        <div className={`px-4 py-3 ${divider} rounded-b-2xl`}>
+          <div className="flex justify-end items-center relative dropdown-container">
+            {actionsContent}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

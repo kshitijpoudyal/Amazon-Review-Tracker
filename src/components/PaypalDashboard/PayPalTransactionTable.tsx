@@ -217,10 +217,10 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                     : 'text-[#9e9e9e] hover:text-[#74777f]'
                 }`}
               >
-                {/* Icon */}
-                <span className="flex-shrink-0 text-base leading-none">
-                  {transaction.linkedProductIds?.length ? '🔗' : '○'}
-                </span>
+                {/* Unlinked indicator */}
+                {!transaction.linkedProductIds?.length && (
+                  <span className="flex-shrink-0 text-base leading-none">○</span>
+                )}
                 {/* Label */}
                 <span className="truncate">
                   {(() => {
@@ -272,71 +272,54 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     const isLinked = !!(transaction.linkedProductIds && transaction.linkedProductIds.length > 0);
 
     const headerContent = (
-      <>
-        <h3 className={`font-semibold text-lg ${colors.text.primary} mb-1`}>{transaction.transactionId}</h3>
-        <p className={`text-sm ${colors.text.secondary}`}>
-          {transaction.name} | {formatDate(transaction.date)} • {transaction.time}
-        </p>
-        {transaction.itemTitle && (
-          <p className={`text-sm ${colors.text.muted} truncate`}>{transaction.itemTitle}</p>
-        )}
-        <div className="flex flex-col items-end space-y-1 mt-2">
+      <div className="space-y-3">
+        {/* Status + Date */}
+        <div className="flex items-center justify-between">
           {isLinked ? (
             <span className={getBadgeClasses('linked')}>
               {transaction.linkedProductIds!.length === 1 ? 'Linked' : `${transaction.linkedProductIds!.length} Linked`}
             </span>
           ) : (
-            <span className={getBadgeClasses('unlinked')}>
-              Unlinked
-            </span>
+            <span className={getBadgeClasses('unlinked')}>Unlinked</span>
           )}
+          <span className={`text-xs ${colors.text.muted}`}>{formatDate(transaction.date)}</span>
         </div>
-      </>
-    );
 
-    const financialContent = (
-      <>
-        <div className="grid grid-cols-3 gap-3 text-sm mb-3">
-          <div className="text-center">
-            <p className={`${colors.text.secondary} mb-1`}>Amount</p>
-            <p className={`font-mono font-semibold ${getFinancialColor(transaction.amount)}`}>
-              {formatCurrency(transaction.amount)}
-            </p>
+        {/* Amount + Name + Transaction ID */}
+        <div>
+          <p className={`text-sm ${colors.text.secondary} mt-0.5`}>{transaction.name}</p>
+          <p className={`text-xs font-mono ${colors.text.muted} mt-0.5`}>{transaction.transactionId}</p>
+        </div>
+
+        {/* All prices on one line */}
+        <div className="flex items-end gap-5">
+          <div>
+            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Amount</p>
+            <p className={`text-sm font-bold font-mono ${getFinancialColor(transaction.amount)}`}>{formatCurrency(transaction.amount)}</p>
           </div>
-          <div className="text-center">
-            <p className={`${colors.text.secondary} mb-1`}>Fees</p>
-            <p className={`font-mono font-semibold ${colors.financial.negative}`}>{formatCurrency(transaction.fees)}</p>
+          <div>
+            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Fees</p>
+            <p className={`text-sm font-semibold ${colors.financial.negative}`}>{formatCurrency(transaction.fees)}</p>
           </div>
-          <div className="text-center">
-            <p className={`${colors.text.secondary} mb-1`}>Net Received</p>
-            <p className={`font-mono font-semibold ${getFinancialColor(transaction.total)}`}>
-              {formatCurrency(transaction.total)}
-            </p>
+          <div>
+            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Net</p>
+            <p className={`text-sm font-semibold ${getFinancialColor(transaction.total)}`}>{formatCurrency(transaction.total)}</p>
           </div>
         </div>
-        
-        {/* Product Link */}
-        <div className="border-t border-[#e4e2dd] pt-3 mt-1">
+
+        {/* Footer: product link + dots menu */}
+        <div className="flex items-center justify-between pt-1">
           {onUpdateProductLink ? (
             <button
               type="button"
-              onClick={() => {
-                setIsModalActive(true);
-                setActiveTransactionId(transaction.id || '');
-              }}
+              onClick={() => { setIsModalActive(true); setActiveTransactionId(transaction.id || ''); }}
               disabled={loading}
-              className={`group w-full flex items-center gap-2.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-150 ${
+              className={`flex items-center gap-1.5 text-sm font-medium transition-colors truncate max-w-[75%] ${
                 loading ? 'opacity-50 cursor-not-allowed' : ''
-              } ${
-                transaction.linkedProductIds?.length
-                  ? 'text-[#43474e] hover:text-[#1b1c19]'
-                  : 'text-[#9e9e9e] hover:text-[#74777f]'
-              }`}
+              } ${transaction.linkedProductIds?.length ? 'text-[#43474e]' : 'text-[#9e9e9e] hover:text-[#74777f]'}`}
             >
-              <span className="text-base leading-none flex-shrink-0">
-                {transaction.linkedProductIds?.length ? '🔗' : '○'}
-              </span>
-              <span className="flex-1 text-left truncate">
+              {!transaction.linkedProductIds?.length && <span>○</span>}
+              <span className="truncate">
                 {(() => {
                   if (!transaction.linkedProductIds?.length) return 'Link product…';
                   if (transaction.linkedProductIds.length === 1) {
@@ -346,57 +329,50 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   return `${transaction.linkedProductIds.length} products linked`;
                 })()}
               </span>
-              {transaction.linkedProductIds?.length ? (
-                <svg className="w-4 h-4 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 flex-shrink-0 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              )}
+              <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={transaction.linkedProductIds?.length
+                  ? "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  : "M12 4v16m8-8H4"} />
+              </svg>
             </button>
-          ) : (
-            <span className={`${colors.text.disabled} text-xs`}>No mapping available</span>
+          ) : <span />}
+
+          {onDeleteTransaction && (
+            <div className="relative dropdown-container flex-shrink-0">
+              <button
+                onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+                className={`flex items-center justify-center w-8 h-8 ${colors.button.secondary} rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#022448]`}
+                title="More actions"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                </svg>
+              </button>
+              {showDropdown === index && (
+                <div className="absolute right-0 top-full mt-2 bg-[#fbf9f3] border border-[rgba(196,198,207,0.15)] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-50 min-w-[160px] py-2">
+                  <button
+                    onClick={() => { setDeleteTarget(transaction); setShowDropdown(null); }}
+                    className={`block w-full text-left px-4 py-2.5 text-sm ${colors.modal.danger} transition-colors`}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
-      </>
+      </div>
     );
 
-    const actionsContent = onDeleteTransaction ? (
-      <>
-        <button
-          onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-          className={`flex items-center justify-center w-8 h-8 ${colors.button.secondary} rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#022448]`}
-          title="More actions"
-        >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
-        </button>
-
-        {/* Dropdown Menu */}
-        {showDropdown === index && (
-          <div className="absolute right-0 top-full mt-2 bg-[#fbf9f3] border border-[rgba(196,198,207,0.15)] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-50 min-w-[160px] py-2">
-            <button
-              onClick={async () => {
-                setDeleteTarget(transaction);
-                setShowDropdown(null);
-              }}
-              className={`block w-full text-left px-4 py-2.5 text-sm ${colors.modal.danger} transition-colors`}
-            >
-              Delete
-            </button>
-          </div>
-        )}
-      </>
-    ) : null;
+    const financialContent = null;
+    const actionsContent = null;
 
     return {
       headerContent,
       financialContent,
       actionsContent,
       borderColor: isLinked ? 'border-l-[#006a68]' : 'border-l-amber-500',
+      noDividers: true,
       className: ''
     };
   });

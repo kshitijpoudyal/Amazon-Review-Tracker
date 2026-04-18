@@ -233,8 +233,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
             </div>
           </div>
 
-          {/* Bookmarklet setup toggle */}
-          <div>
+          {/* Bookmarklet setup toggle — desktop only */}
+          <div className="hidden sm:block">
             <button
               type="button"
               onClick={() => setShowBookmarklet(v => !v)}

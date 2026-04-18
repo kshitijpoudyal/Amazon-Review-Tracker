@@ -65,7 +65,7 @@ const Modal: React.FC<ModalProps> = ({
 
     return (
         <div
-            className={`fixed inset-0 ${colors.modal.overlay} flex items-start justify-center p-4 pt-8 z-50`}
+            className={`fixed inset-0 ${colors.modal.overlay} flex items-start justify-center p-2 pt-4 sm:p-4 sm:pt-8 z-50`}
             onClick={handleBackdropClick}
             onKeyDown={handleKeyDown}
             tabIndex={-1}
@@ -79,7 +79,7 @@ const Modal: React.FC<ModalProps> = ({
                 ${colors.modal.shadow} 
                 ${sizeClasses[size]} 
                 w-full 
-                max-h-[90vh] 
+                max-h-[90svh]
                 overflow-hidden 
                 relative 
                 flex 
@@ -134,7 +134,7 @@ const Modal: React.FC<ModalProps> = ({
 
                 {/* Footer */}
                 {footer && (
-                    <div className={`flex-shrink-0 bg-[#fbf9f3] border-t ${colors.border.default} p-4 sm:p-6 justify-between`}>
+                    <div className={`flex-shrink-0 bg-[#fbf9f3] border-t ${colors.border.default} p-4 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-6 justify-between`}>
                         {footer}
                     </div>
                 )}

@@ -37,3 +37,4 @@ firebase-service-account.json
 # Backup files
 backups/
 *.backup
+amazon-sample/

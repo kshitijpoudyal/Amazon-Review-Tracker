@@ -1,8 +1,7 @@
-import { PlusIcon, ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
-import React from 'react';
+import React, { useState } from 'react';
 import { colors } from '../../utils/colors';
-import { Button } from './Button';
 
 export interface FilterOption {
   value: string;
@@ -45,6 +44,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   loading = false,
 }) => {
   const hasActiveFilters = filters.some(filter => filter.value && filter.value !== '');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const getButtonClasses = (variant: ActionButton['variant'] = 'primary') => {
     const baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
@@ -198,14 +198,28 @@ const Toolbar: React.FC<ToolbarProps> = ({
     <div className="bg-[#fbf9f3]" style={{ marginTop: '0px' }}>
       <div className="px-3 sm:px-2 lg:px-4 py-4">
         {/* Mobile Layout */}
-        <div className="block lg:hidden space-y-4">
-          {/* Search and Clear */}
+        <div className="block lg:hidden space-y-3">
+          {/* Search + filter toggle + clear */}
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0">
               {filters
                 .filter(f => f.type === 'search')
                 .map(renderFilter)}
             </div>
+            <button
+              onClick={() => setShowMobileFilters(v => !v)}
+              className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-colors flex-shrink-0 ${
+                showMobileFilters || hasActiveFilters
+                  ? 'bg-[#022448] text-white border-[#022448]'
+                  : `${colors.background.secondary} ${colors.text.secondary} border-transparent`
+              }`}
+              title="Toggle filters"
+            >
+              <AdjustmentsHorizontalIcon className="h-4 w-4" />
+              {hasActiveFilters && !showMobileFilters && (
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#006a68]" />
+              )}
+            </button>
             {showClearButton && hasActiveFilters && onClearFilters && (
               <button
                 onClick={onClearFilters}
@@ -217,15 +231,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
             )}
           </div>
 
-          {/* Filters and Actions */}
-          <div className="flex flex-wrap items-center gap-2">
-            {filters
-              .filter(f => f.type === 'select')
-              .map(renderFilter)}
-            <div className="ml-auto">
-              {renderActions(actions.filter(a => !a.mobileHidden))}
+          {/* Collapsible select filters */}
+          {showMobileFilters && (
+            <div className="flex flex-wrap items-center gap-2">
+              {filters
+                .filter(f => f.type === 'select')
+                .map(renderFilter)}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Desktop Layout */}
@@ -238,13 +251,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {/* Actions */}
           <div className="flex items-center gap-2">
             {showClearButton && hasActiveFilters && onClearFilters && (
-              <Button
-                variant="secondary"
-                label="Clear"
+              <button
                 onClick={onClearFilters}
-                icon={<XMarkIcon className="h-4 w-4" />}
                 title="Clear all filters"
-              />
+                className="inline-flex items-center justify-center px-3 py-4 rounded-full bg-[#e4e2dd] text-[#1b1c19] hover:bg-[#eae8e2] shadow-[0_2px_8px_rgba(2,36,72,0.04)] hover:shadow-[0_4px_16px_rgba(2,36,72,0.08)] focus:outline-none focus:ring-2 focus:ring-[#022448] transition-all duration-200"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
             )}
             {renderActions(actions)}
           </div>
