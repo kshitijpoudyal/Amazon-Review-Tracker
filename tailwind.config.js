@@ -7,20 +7,56 @@ export default {
   theme: {
     extend: {
       colors: {
+        // HustleBooks "Synthetic Naturalist" palette
         primary: {
-          50: '#f0f4ff',
-          500: '#667eea',
-          600: '#5a67d8',
-          700: '#4c51bf',
+          DEFAULT: '#022448',
+          container: '#1e3a5f',
+          foreground: '#ffffff',
         },
         secondary: {
-          500: '#764ba2',
-          600: '#6b46c1',
-        }
+          DEFAULT: '#006a68',
+          container: '#86f4f1',
+          foreground: '#ffffff',
+        },
+        surface: {
+          DEFAULT: '#fbf9f3',
+          dim: '#dcdad4',
+          variant: '#e4e2dd',
+          'container-lowest': '#ffffff',
+          'container-low': '#f5f3ee',
+          'container': '#f0eee8',
+          'container-high': '#eae8e2',
+          'container-highest': '#e4e2dd',
+        },
+        'on-surface': '#1b1c19',
+        'on-surface-variant': '#43474e',
+        outline: {
+          DEFAULT: '#74777f',
+          variant: '#c4c6cf',
+        },
+        destructive: {
+          DEFAULT: '#ba1a1a',
+          container: '#ffdad6',
+        },
+        tertiary: {
+          DEFAULT: '#341f00',
+          container: '#503300',
+        },
       },
       fontFamily: {
-        sans: ['Roboto', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        mono: ['Roboto Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'JetBrains Mono', 'Source Code Pro', 'Menlo', 'Consolas', 'monospace'],
+        sans: ['Public Sans', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        label: ['Work Sans', 'system-ui', 'sans-serif'],
+        mono: ['Work Sans', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        squircle: '1.25rem',
+        'squircle-lg': '2rem',
+      },
+      boxShadow: {
+        navy: '0 12px 32px rgba(2, 36, 72, 0.06)',
+        'navy-md': '0 12px 32px rgba(2, 36, 72, 0.10)',
+        'navy-lg': '0 24px 64px rgba(2, 36, 72, 0.12)',
+        card: '0 20px 40px rgba(2, 36, 72, 0.08)',
       },
       animation: {
         shimmer: 'shimmer 2s infinite linear',

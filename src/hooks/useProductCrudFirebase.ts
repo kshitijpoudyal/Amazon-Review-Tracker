@@ -13,6 +13,7 @@ export const useProductCrudFirebase = (userId?: string) => {
     addProduct: addToFirebase,
     deleteProduct: deleteFromFirebase,
     updateSummary: updateSummaryFirebase,
+    mutateLocal,
     refetch
   } = useFirebaseData(userId);
   
@@ -55,32 +56,32 @@ export const useProductCrudFirebase = (userId?: string) => {
   }, [data?.products, user?.email]);
 
   const updateProduct = useCallback(async (index: number, updatedProduct: Product) => {
+    // Instant optimistic update — user sees change immediately
+    mutateLocal(products => products.map((p, i) => i === index ? updatedProduct : p));
+
     setIsSaving(true);
     try {
-      // Save directly to Firebase
       const success = await saveToFirebase(updatedProduct);
-      
-      if (success && data) {
-        // Recalculate and update summary
-        const updatedProducts = [...data.products];
-        updatedProducts[index] = updatedProduct;
-        const summary = calculateSummary(updatedProducts);
-        await updateSummaryFirebase(summary);
-        
-        // Refresh data from Firebase
-        console.log('🔄 Refreshing data after update...');
+      if (!success) {
+        // Revert on failure
+        console.error('❌ Save failed, reverting...');
         await refetch();
-        console.log('✅ Data refreshed after update');
+      } else {
+        // Fire-and-forget summary update (derived data, non-blocking)
+        if (firebaseData) {
+          const updated = firebaseData.products.map((p, i) => i === index ? updatedProduct : p);
+          updateSummaryFirebase(calculateSummary(updated)).catch(() => {});
+        }
       }
-      
       return success;
     } catch (error) {
       console.error('❌ Error updating product:', error);
+      await refetch(); // Revert optimistic update
       return false;
     } finally {
       setIsSaving(false);
     }
-  }, [data, saveToFirebase, updateSummaryFirebase, refetch]);
+  }, [firebaseData, saveToFirebase, mutateLocal, updateSummaryFirebase, refetch]);
 
   const addProduct = useCallback(async (newProduct: Product) => {
     setIsSaving(true);
@@ -108,24 +109,22 @@ export const useProductCrudFirebase = (userId?: string) => {
   }, [addToFirebase, refetch]);
 
   const deleteProduct = useCallback(async (productId: string): Promise<boolean> => {
-    setIsSaving(true);
+    // Instant optimistic removal
+    mutateLocal(products => products.filter(p => p.id !== productId));
+
     try {
-      // Delete from Firebase
       const success = await deleteFromFirebase(productId);
-      
-      if (success && data) {
-        // Refresh data from Firebase after deletion
+      if (!success) {
+        // Revert on failure
         await refetch();
       }
-      
       return success;
     } catch (error) {
       console.error('Error deleting product:', error);
+      await refetch();
       return false;
-    } finally {
-      setIsSaving(false);
     }
-  }, [deleteFromFirebase, refetch, data]);
+  }, [deleteFromFirebase, mutateLocal, refetch]);
 
   const resetToFirebase = useCallback(async () => {
     await refetch();

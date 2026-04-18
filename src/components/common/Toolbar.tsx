@@ -26,6 +26,7 @@ interface ActionButton {
   variant?: 'primary' | 'secondary' | 'danger';
   icon?: string | React.ReactElement;
   disabled?: boolean;
+  mobileHidden?: boolean;
 }
 
 interface ToolbarProps {
@@ -47,16 +48,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   const getButtonClasses = (variant: ActionButton['variant'] = 'primary') => {
     const baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-    const sizeClasses = 'px-4 py-3 text-sm rounded-xl shadow-sm hover:shadow-md';
+    const sizeClasses = 'px-4 py-4 text-sm rounded-full shadow-[0_2px_8px_rgba(2,36,72,0.06)] hover:shadow-[0_4px_16px_rgba(2,36,72,0.10)]';
 
     switch (variant) {
       case 'secondary':
-        return `${baseClasses} ${sizeClasses} ${colors.button.secondary} py-4`;
+        return `${baseClasses} ${sizeClasses} ${colors.button.secondary}`;
       case 'danger':
-        return `${baseClasses} ${sizeClasses} ${colors.button.danger} py-4`;
+        return `${baseClasses} ${sizeClasses} ${colors.button.danger}`;
       case 'primary':
       default:
-        return `${baseClasses} ${sizeClasses} ${colors.button.primary} py-4`;
+        return `${baseClasses} ${sizeClasses} ${colors.button.primary}`;
     }
   };
 
@@ -74,7 +75,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 placeholder={filter.placeholder || 'Search...'}
                 value={filter.value}
                 onChange={(e) => filter.onChange(e.target.value)}
-                className="block w-full pl-10 pr-4 py-4 text-sm border border-gray-300 rounded-xl bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                className="block w-full pl-10 pr-4 py-4 text-sm rounded-full bg-[#e4e2dd] border-0 placeholder-[#74777f] text-[#1b1c19] focus:outline-none focus:ring-2 focus:ring-[#022448] transition-all duration-200 shadow-[0_2px_8px_rgba(2,36,72,0.04)]"
               />
               {filter.value && (
                 <button
@@ -94,14 +95,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
         return (
           <div key={filter.key} className="flex-shrink-0">
             <Menu as="div" className="relative">
-              <MenuButton className="inline-flex items-center justify-center gap-x-2 px-4 py-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 min-w-[140px]">
+              <MenuButton className="inline-flex items-center justify-center gap-x-2 px-4 py-4 text-sm font-medium text-[#1b1c19] bg-[#e4e2dd] border-0 rounded-full shadow-[0_2px_8px_rgba(2,36,72,0.04)] hover:bg-[#eae8e2] hover:shadow-[0_4px_16px_rgba(2,36,72,0.08)] focus:outline-none focus:ring-2 focus:ring-[#022448] focus:ring-offset-2 transition-all duration-200 min-w-[140px]">
                 <span className="truncate">
                   {selectedOption?.label || filter.label || 'Select...'}
                 </span>
                 <ChevronDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
               </MenuButton>
 
-              <MenuItems className="absolute left-0 sm:right-0 z-20 mt-2 w-48 origin-top-left sm:origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transform transition-all duration-200 data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75">
+              <MenuItems className="absolute left-0 sm:right-0 z-20 mt-2 w-48 origin-top-left sm:origin-top-right rounded-2xl bg-[#fbf9f3] shadow-[0_12px_32px_rgba(2,36,72,0.08)] ring-1 ring-[rgba(196,198,207,0.2)] focus:outline-none transform transition-all duration-200 data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75">
                 <div className="py-2">
                   {filter.options?.map((option, index) => (
                     <MenuItem key={option.value}>
@@ -157,43 +158,32 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const ToolbarShimmer = () => (
-    <div className="bg-white border-b border-gray-200">
+    <div className="bg-[#fbf9f3]">
       <div className="px-3 sm:px-4 lg:px-6 py-4">
-        {/* Mobile Layout Shimmer */}
         <div className="block lg:hidden space-y-4">
-          {/* Search and Clear Shimmer */}
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0">
-              <div className="relative">
-                <div className="h-11 bg-gray-200 rounded-xl animate-pulse"></div>
-              </div>
+              <div className="h-11 bg-[#e4e2dd] rounded-full animate-pulse"></div>
             </div>
-            <div className="h-11 w-11 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-11 w-11 bg-[#e4e2dd] rounded-full animate-pulse"></div>
           </div>
-
-          {/* Filters and Actions Shimmer */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="h-11 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-            <div className="h-11 w-28 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-11 w-32 bg-[#e4e2dd] rounded-full animate-pulse"></div>
+            <div className="h-11 w-28 bg-[#e4e2dd] rounded-full animate-pulse"></div>
             <div className="ml-auto">
-              <div className="h-11 w-11 bg-gray-200 rounded-xl animate-pulse"></div>
+              <div className="h-11 w-11 bg-[#e4e2dd] rounded-full animate-pulse"></div>
             </div>
           </div>
         </div>
-
-        {/* Desktop Layout Shimmer */}
         <div className="hidden lg:flex lg:items-center lg:gap-4">
-          {/* Filters Shimmer */}
           <div className="flex items-center gap-3 flex-1">
-            <div className="flex-1 max-w-md h-11 bg-gray-200 rounded-xl animate-pulse"></div>
-            <div className="h-11 w-36 bg-gray-200 rounded-xl animate-pulse"></div>
-            <div className="h-11 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="flex-1 max-w-md h-11 bg-[#e4e2dd] rounded-full animate-pulse"></div>
+            <div className="h-11 w-36 bg-[#e4e2dd] rounded-full animate-pulse"></div>
+            <div className="h-11 w-32 bg-[#e4e2dd] rounded-full animate-pulse"></div>
           </div>
-
-          {/* Actions Shimmer */}
           <div className="flex items-center gap-2">
-            <div className="h-11 w-20 bg-gray-200 rounded-xl animate-pulse"></div>
-            <div className="h-11 w-28 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-11 w-20 bg-[#e4e2dd] rounded-full animate-pulse"></div>
+            <div className="h-11 w-28 bg-[#e4e2dd] rounded-full animate-pulse"></div>
           </div>
         </div>
       </div>
@@ -205,7 +195,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   }
 
   return (
-    <div className={`${colors.background.secondary}`} style={{ marginTop: '0px' }}>
+    <div className="bg-[#fbf9f3]" style={{ marginTop: '0px' }}>
       <div className="px-3 sm:px-2 lg:px-4 py-4">
         {/* Mobile Layout */}
         <div className="block lg:hidden space-y-4">
@@ -233,7 +223,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               .filter(f => f.type === 'select')
               .map(renderFilter)}
             <div className="ml-auto">
-              {renderActions(actions)}
+              {renderActions(actions.filter(a => !a.mobileHidden))}
             </div>
           </div>
         </div>

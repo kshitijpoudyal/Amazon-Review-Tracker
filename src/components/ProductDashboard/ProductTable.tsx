@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../../types/Product';
 import EditProductModal from './EditProductModal';
+import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { getProductStatus } from '../../utils/productStatus';
 import { useProductPayPalLinks } from '../../hooks/useProductPayPalLinks';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
-import { colors, getBadgeClasses } from '../../utils/colors';
+import { colors } from '../../utils/colors';
 import { useVendors } from '../../hooks/useVendors';
 import { formatCurrency } from '../../utils/currency';
 import { ProductThumbnail } from '../common';
@@ -13,15 +14,17 @@ interface ProductTableProps {
   products: Product[];
   onUpdateProduct?: (index: number, updatedProduct: Product) => void;
   onDeleteProduct?: (productId: string) => void;
+  onClearFilters?: () => void;
   readOnly?: boolean;
   loading?: boolean;
-  userId?: string; // Add userId to check for linked PayPal transactions
+  userId?: string;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
   onUpdateProduct,
   onDeleteProduct,
+  onClearFilters,
   readOnly = false,
   loading = false,
   userId,
@@ -29,10 +32,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const [showDropdown, setShowDropdown] = useState<string | number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
 
   // Get product IDs for checking PayPal links
   const productIds = products.map(p => p.id).filter(Boolean) as string[];
-  const { isProductLinked } = useProductPayPalLinks(userId, productIds);
+  const { isProductLinked, getLinkedAmount } = useProductPayPalLinks(userId, productIds);
   
   // Get vendor information
   const { getVendorName } = useVendors();
@@ -96,8 +100,20 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
   // Shared function to get next status action for a product
   const getNextStatusAction = (product: Product) => {
-    if (product.isVoid) return null; // No actions for void products
-    
+    // Void product: offer Un-Void as the primary quick action
+    if (product.isVoid) {
+      return {
+        type: 'unvoid',
+        label: 'Un-Void',
+        icon: (
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        ),
+        updateFn: () => ({ ...product, isVoid: false })
+      };
+    }
+
     // Order Placed -> Mark as Order Delivered
     if (product.orderPlaced && !product.orderDelivered) {
       return {
@@ -175,12 +191,12 @@ const ProductTable: React.FC<ProductTableProps> = ({
     const nextAction = getNextStatusAction(product);
     
     return (
-      <div className="absolute right-0 bottom-full mb-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[180px]">
-        {/* Dynamic status update button */}
+      <div className="absolute right-0 top-full mt-2 bg-[#fbf9f3] border border-[rgba(196,198,207,0.15)] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-50 min-w-[180px] py-2">
+        {/* Dynamic status update button (Un-Void for void products, next step otherwise) */}
         {nextAction && (
           <button
             onClick={() => handleStatusUpdate(product, nextAction.updateFn)}
-            className="block w-full text-left px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors font-medium"
+            className="block w-full text-left px-4 py-2.5 text-sm text-[#022448] hover:bg-[#006a68]/10 transition-colors font-medium"
           >
             {nextAction.label}
           </button>
@@ -188,18 +204,27 @@ const ProductTable: React.FC<ProductTableProps> = ({
         
         <button
           onClick={() => handleEditProduct(product)}
-          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+          className="block w-full text-left px-4 py-2.5 text-sm text-[#1b1c19] hover:bg-[#eae8e2] transition-colors"
         >
           Edit
         </button>
+
+        {/* Mark as Void (only for non-void products) */}
+        {!product.isVoid && (
+          <button
+            onClick={() => handleStatusUpdate(product, () => ({ ...product, isVoid: true }))}
+            className="block w-full text-left px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors"
+          >
+            Mark as Void
+          </button>
+        )}
+
         <button
           onClick={() => {
-            if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-              onDeleteProduct?.(product.id);
-            }
+            setDeleteTarget(product);
             setShowDropdown(null);
           }}
-          className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger} transition-colors`}
+          className={`block w-full text-left px-4 py-2.5 text-sm ${colors.modal.danger} transition-colors`}
         >
           Delete
         </button>
@@ -256,6 +281,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const rows: TableRow[] = products.map((product, index) => {
     const status = getProductStatus(product);
     const isLinked = product.id && isProductLinked(product.id);
+    const linkedAmount = product.id ? getLinkedAmount(product.id) : null;
 
     return {
       id: product.id || index,
@@ -264,7 +290,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         item: (
           <div className='flex flex-col'>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
                 <ProductThumbnail 
                   imageUrl={product.imageUrl}
                   productName={product.item}
@@ -275,20 +301,23 @@ const ProductTable: React.FC<ProductTableProps> = ({
                     href={product.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate"
+                    className={`font-medium ${colors.text.primary} hover:${colors.text.link} transition-colors truncate`}
                     title={product.item}
                   >
                     {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
                   </a>
                 ) : (
-                  <span className="font-medium text-gray-900 truncate" title={product.item}>
+                  <span className={`font-medium ${colors.text.primary} truncate`} title={product.item}>
                     {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
                   </span>
                 )}
                 {isLinked && (
-                  <svg className="w-5 h-5 text-green-500 ml-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
-                  </svg>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#006a68]/10 text-[#006a68] text-xs font-label font-semibold flex-shrink-0">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    {linkedAmount != null ? `PayPal ${formatCurrency(linkedAmount)}` : 'PayPal'}
+                  </span>
                 )}
               </div>
             </div>
@@ -296,14 +325,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
         ),
         vendor: (
           <div className='flex flex-col'>
-            <span className="text-sm text-gray-600 font-medium">
+            <span className={`text-sm ${colors.text.secondary} font-medium`}>
               {getVendorName(product.vendorId)}
             </span>
           </div>
         ),
         date: (
           <div className='flex flex-col'>
-            <span className="text-sm text-gray-600 font-medium">
+            <span className={`text-sm ${colors.text.secondary} font-medium`}>
               {formatDate(product.orderDate)}
             </span>
           </div>
@@ -317,14 +346,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
         ),
         paid: (
           <div className='flex flex-col'>
-            <span className="font-mono text-sm font-semibold text-gray-900">
+            <span className={`font-label text-sm font-semibold ${colors.text.primary}`}>
               {formatCurrency(product.paid)}
             </span>
           </div>
         ),
         received: (
           <div className='flex flex-col'>
-            <span className="font-mono text-sm font-semibold text-gray-900">
+            <span className={`font-label text-sm font-semibold ${colors.text.primary}`}>
               {formatCurrency(product.received)}
             </span>
           </div>
@@ -358,6 +387,18 @@ const ProductTable: React.FC<ProductTableProps> = ({
           ),
           onClick: () => handleEditProduct(product)
         },
+        // Mark as Void (only for non-void products)
+        ...(!product.isVoid ? [{
+          label: 'Mark as Void',
+          variant: 'warn' as const,
+          icon: (
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+          ),
+          onClick: () => handleStatusUpdate(product, () => ({ ...product, isVoid: true })),
+          className: 'text-amber-700 hover:bg-amber-50'
+        }] : []),
         {
           label: 'Delete Product',
           variant: 'danger' as const,
@@ -367,9 +408,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             </svg>
           ),
           onClick: () => {
-            if (product.id && window.confirm('Are you sure you want to delete this product?')) {
-              onDeleteProduct?.(product.id);
-            }
+            setDeleteTarget(product);
           }
         }
       ]
@@ -394,27 +433,33 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 href={product.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`font-semibold text-lg ${colors.text.link} hover:${colors.text.linkHover} underline block`}
+                className={`font-semibold text-base ${colors.text.link} hover:${colors.text.linkHover} underline block line-clamp-2`}
               >
-                {product.item.length > 120 ? `${product.item.substring(0, 120)}...` : product.item}
+                {product.item}
               </a>
             ) : (
-              <h3 className={`font-semibold text-lg ${colors.text.primary}`}>
-                {product.item.length > 120 ? `${product.item.substring(0, 120)}...` : product.item}
+              <h3 className={`font-semibold text-base ${colors.text.primary} line-clamp-2`}>
+                {product.item}
               </h3>
+            )}
+            {product.id && isProductLinked(product.id) && (
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-[#006a68]/10 text-[#006a68] text-xs font-label font-semibold">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                {(() => {
+                  const amt = getLinkedAmount(product.id!);
+                  return amt != null ? `PayPal ${formatCurrency(amt)}` : 'PayPal';
+                })()}
+              </span>
             )}
           </div>
         </div>
-        <p className={`text-sm ${colors.text.secondary}`}>Order Date: {formatDate(product.orderDate)}</p>
-        <div className="flex flex-col items-end space-y-1 mt-2">
+        <div className="flex items-center justify-between">
+          <p className={`text-sm ${colors.text.secondary}`}>{formatDate(product.orderDate) || '—'}</p>
           <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
             {status.label}
           </span>
-          {product.id && isProductLinked(product.id) && (
-            <span className={getBadgeClasses('linked')}>
-              Linked
-            </span>
-          )}
         </div>
       </>
     );
@@ -422,16 +467,16 @@ const ProductTable: React.FC<ProductTableProps> = ({
     const financialContent = (
       <div className="grid grid-cols-3 gap-3 text-sm">
         <div className="text-center">
-          <p className={`${colors.text.secondary} mb-1`}>Paid</p>
-          <p className="font-mono font-semibold">{formatCurrency(product.paid)}</p>
+          <p className={`${colors.text.muted} text-xs font-label uppercase tracking-wider mb-1`}>Paid</p>
+          <p className="font-label font-semibold">{formatCurrency(product.paid)}</p>
         </div>
         <div className="text-center">
-          <p className={`${colors.text.secondary} mb-1`}>Received</p>
-          <p className="font-mono font-semibold">{formatCurrency(product.received)}</p>
+          <p className={`${colors.text.muted} text-xs font-label uppercase tracking-wider mb-1`}>Received</p>
+          <p className="font-label font-semibold">{formatCurrency(product.received)}</p>
         </div>
         <div className="text-center">
-          <p className={`${colors.text.secondary} mb-1`}>Delta</p>
-          <p className={`font-mono font-semibold ${getDeltaClass(product.delta)}`}>
+          <p className={`${colors.text.muted} text-xs font-label uppercase tracking-wider mb-1`}>Delta</p>
+          <p className={`font-label font-semibold ${getDeltaClass(product.delta)}`}>
             {formatCurrency(product.delta)}
           </p>
         </div>
@@ -439,17 +484,17 @@ const ProductTable: React.FC<ProductTableProps> = ({
     );
 
     const actionsContent = (
-      <>
+      <div className="flex items-center justify-end gap-2 w-full">
+        {/* Dots menu for edit/delete */}
         <button
           onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-          className={`flex items-center justify-center w-8 h-8 ${colors.button.primary} rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400`}
+          className={`flex items-center justify-center w-8 h-8 ${colors.button.secondary} rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#022448]`}
           title="More actions"
         >
           <svg
             className="w-4 h-4"
             fill="currentColor"
             viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
           >
             <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
           </svg>
@@ -457,7 +502,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
         {/* Dropdown Menu */}
         {renderMobileDropdown(product, index)}
-      </>
+      </div>
     );
 
     return {
@@ -465,7 +510,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       financialContent,
       actionsContent,
       borderColor: colors.status[status.type].border,
-      className: product.id && isProductLinked(product.id) ? 'bg-green-50' : ''
+      className: product.id && isProductLinked(product.id) ? colors.background.linkedRow : ''
     };
   });
 
@@ -476,6 +521,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         rows={rows}
         mobileCards={mobileCards}
         emptyMessage="No products found matching your criteria."
+        onClearFilters={onClearFilters}
         activeDropdown={showDropdown}
         loading={loading}
         onDropdownToggle={(rowId) => setShowDropdown(prev => prev === rowId ? null : rowId)}
@@ -490,6 +536,17 @@ const ProductTable: React.FC<ProductTableProps> = ({
           onCancel={handleCancelEdit}
         />
       )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${deleteTarget?.item}"? This action cannot be undone.`}
+        onConfirm={() => {
+          if (deleteTarget?.id) onDeleteProduct?.(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </>
   );
 };

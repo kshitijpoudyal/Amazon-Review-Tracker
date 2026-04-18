@@ -16,7 +16,7 @@ export interface TableAction {
   icon?: React.ReactNode;
   onClick: () => void;
   className?: string;
-  variant?: 'default' | 'danger';
+  variant?: 'default' | 'danger' | 'warn';
 }
 
 export interface TableRow {
@@ -41,6 +41,7 @@ interface TableViewProps {
   columns: TableColumn[];
   rows: TableRow[];
   emptyMessage?: string;
+  onClearFilters?: () => void;
   
   // Mobile card props
   mobileCards?: MobileCardContent[];
@@ -57,7 +58,7 @@ interface TableViewProps {
 
 // Desktop Table Shimmer Loading Components
 const TableRowSkeleton: React.FC<{ columns: TableColumn[] }> = ({ columns }) => (
-  <tr className="group hover:bg-gray-50/50 transition-colors duration-150">
+  <tr className="group hover:bg-[#eae8e2]/60 transition-colors duration-150">
     {columns.map((column, index) => (
       <td 
         key={`skeleton-${index}`}
@@ -67,22 +68,19 @@ const TableRowSkeleton: React.FC<{ columns: TableColumn[] }> = ({ columns }) => 
         }`}
       >
         {index === 0 ? (
-          // First column with status indicator
           <div className="flex items-start space-x-3">
             <div className={`w-1 h-12 rounded-full flex-shrink-0 ${colors.loading.skeleton}`}></div>
             <div className="flex-1 min-w-0">
-              <div className={`h-5 ${colors.loading.skeleton} rounded w-3/4 mb-1`}></div>
-              <div className={`h-3 ${colors.loading.skeleton} rounded w-1/2`}></div>
+              <div className={`h-5 ${colors.loading.skeleton} rounded-full w-3/4 mb-1`}></div>
+              <div className={`h-3 ${colors.loading.skeleton} rounded-full w-1/2`}></div>
             </div>
           </div>
         ) : column.key === 'actions' ? (
-          // Actions column
           <div className="flex justify-center">
-            <div className={`w-8 h-8 ${colors.loading.skeleton} rounded-lg`}></div>
+            <div className={`w-8 h-8 ${colors.loading.skeleton} rounded-full`}></div>
           </div>
         ) : (
-          // Regular columns
-          <div className={`h-5 ${colors.loading.skeleton} rounded ${
+          <div className={`h-5 ${colors.loading.skeleton} rounded-full ${
             column.align === 'right' ? 'w-16 ml-auto' : 'w-3/4'
           }`}></div>
         )}
@@ -105,21 +103,21 @@ const TableLoadingView: React.FC<{ columns: TableColumn[]; loadingRows?: number 
 
     {/* Desktop Loading Layout */}
     <div className="hidden md:block">
-      <div className="overflow-hidden border border-gray-200/50 bg-white shadow-sm">
+      <div className="overflow-hidden border border-[rgba(196,198,207,0.15)] bg-[#fbf9f3] shadow-navy rounded-2xl">
         <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden">
           <table className="w-full">
             {/* Table Header */}
-            <thead className={`${colors.background.gradient} border-b border-gray-200/50 sticky top-0 z-10`}>
+            <thead className={`${colors.background.gradient} border-b border-[rgba(196,198,207,0.1)] sticky top-0 z-10`}>
               <tr>
                 {columns.map((column) => (
                   <th
                     key={`header-${column.key}`}
-                    className={`px-6 py-4 text-white font-medium text-sm tracking-wide ${
+                    className={`px-6 py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
                       column.align === 'right' ? 'text-right' : 
                       column.align === 'center' ? 'text-center' : 'text-left'
                     } ${column.width || ''} ${column.className || ''}`}
                   >
-                    <div className={`h-4 ${colors.loading.skeleton} rounded w-3/4 ${
+                    <div className={`h-4 ${colors.loading.skeleton} rounded-full w-3/4 ${
                       column.align === 'right' ? 'ml-auto' : 
                       column.align === 'center' ? 'mx-auto' : ''
                     }`}></div>
@@ -129,7 +127,7 @@ const TableLoadingView: React.FC<{ columns: TableColumn[]; loadingRows?: number 
             </thead>
 
             {/* Table Body */}
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[rgba(196,198,207,0.1)]">
               {Array.from({ length: loadingRows }).map((_, index) => (
                 <TableRowSkeleton key={`row-skeleton-${index}`} columns={columns} />
               ))}
@@ -146,6 +144,7 @@ export const TableView: React.FC<TableViewProps> = ({
   rows,
   mobileCards,
   emptyMessage = "No data found matching your criteria.",
+  onClearFilters,
   loading = false,
   loadingRows = 6,
   activeDropdown,
@@ -157,8 +156,22 @@ export const TableView: React.FC<TableViewProps> = ({
 
   if (rows.length === 0 && (!mobileCards || mobileCards.length === 0)) {
     return (
-      <div className="text-center py-16 text-gray-500">
-        <p className="text-lg">{emptyMessage}</p>
+      <div className="text-center py-16">
+        <svg className="mx-auto mb-4 w-12 h-12 text-[#c4c6cf]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+        <p className="text-[#74777f] text-base">{emptyMessage}</p>
+        {onClearFilters && (
+          <button
+            onClick={onClearFilters}
+            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-full bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white shadow-[0_4px_12px_rgba(2,36,72,0.15)] hover:shadow-[0_6px_16px_rgba(2,36,72,0.22)] active:scale-95 transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear filters
+          </button>
+        )}
       </div>
     );
   }
@@ -181,16 +194,16 @@ export const TableView: React.FC<TableViewProps> = ({
 
       {/* Desktop Table Layout */}
       <div className="hidden md:block">
-        <div className={`overflow-hidden border border-gray-200/50 ${colors.background.primary} shadow-sm`}>
+        <div className={`overflow-hidden border border-[rgba(196,198,207,0.15)] ${colors.background.primary} shadow-navy rounded-2xl`}>
           <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden">
             <table className="w-full">
               {/* Table Header */}
-              <thead className={`${colors.background.gradient} border-b border-gray-200/50 sticky top-0 z-10`}>
+              <thead className={`${colors.background.gradient} border-b border-[rgba(196,198,207,0.1)] sticky top-0 z-10`}>
                 <tr>
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`px-6 py-4 text-white font-medium text-sm tracking-wide ${
+                      className={`px-6 py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
                         column.align === 'right' ? 'text-right' : 
                         column.align === 'center' ? 'text-center' : 'text-left'
                       } ${column.width || ''} ${column.className || ''}`}
@@ -202,11 +215,11 @@ export const TableView: React.FC<TableViewProps> = ({
               </thead>
 
               {/* Table Body */}
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(196,198,207,0.1)]">
                 {rows.map((row) => (
                   <tr
                     key={row.id}
-                    className={`group hover:bg-gray-50/50 transition-colors duration-150 ${row.className || ''}`}
+                    className={`group hover:bg-[#eae8e2]/60 transition-colors duration-150 ${row.className || ''}`}
                   >
                     {columns.map((column, colIndex) => (
                       <td
@@ -245,7 +258,7 @@ export const TableView: React.FC<TableViewProps> = ({
                             />
 
                             {activeDropdown === row.id && (
-                              <div className="absolute right-0 top-10 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
+                              <div className="absolute right-0 top-10 w-52 bg-[#fbf9f3] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-20 py-2 border border-[rgba(196,198,207,0.15)]">
                                 {row.actions.map((action, actionIndex) => (
                                   <button
                                     key={actionIndex}
@@ -253,14 +266,16 @@ export const TableView: React.FC<TableViewProps> = ({
                                       action.onClick();
                                       onDropdownToggle?.(null);
                                     }}
-                                    className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${
+                                    className={`flex items-center w-full px-4 py-2.5 text-sm transition-colors ${
                                       action.variant === 'danger'
-                                        ? 'text-red-600 hover:bg-red-50'
-                                        : 'text-gray-700 hover:bg-gray-50'
+                                        ? 'text-[#ba1a1a] hover:bg-[#ffdad6]'
+                                        : action.variant === 'warn'
+                                          ? 'text-amber-700 hover:bg-amber-50'
+                                          : 'text-[#1b1c19] hover:bg-[#eae8e2]'
                                     } ${action.className || ''}`}
                                   >
                                     {action.icon && (
-                                      <span className={`w-4 h-4 mr-3 ${action.variant === 'danger' ? 'text-red-400' : 'text-gray-400'}`}>
+                                      <span className={`w-4 h-4 mr-3 ${action.variant === 'danger' ? 'text-[#ba1a1a]' : action.variant === 'warn' ? 'text-amber-600' : 'text-[#74777f]'}`}>
                                         {action.icon}
                                       </span>
                                     )}

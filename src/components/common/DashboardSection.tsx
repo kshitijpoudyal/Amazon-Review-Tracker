@@ -1,5 +1,4 @@
 import React from 'react';
-import { colors } from '../../utils/colors';
 
 interface DashboardSectionProps {
   children: React.ReactNode;
@@ -11,9 +10,9 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   title
 }) => {
   return (
-    <div className={`px-2 md:px-4 ${colors.background.primary}`} style={{ marginTop: '0px' }}>
+    <div className={`px-2 md:px-4 bg-[#fbf9f3]`} style={{ marginTop: '0px' }}>
       {title && (
-        <h2 className={`text-xl font-semibold ${colors.text.primary} mb-0`}>{title}</h2>
+        <h2 className={`text-xl font-semibold text-[#1b1c19] mb-0`}>{title}</h2>
       )}
       {children}
     </div>

@@ -2,13 +2,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { PayPalTransaction } from '../../types/PayPalTransaction';
 import { Product } from '../../types/Product';
 import ProductLinkModal from '../ProductLinkModal';
+import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
 import { 
   colors, 
   getFinancialColor, 
-  getBadgeClasses, 
-  getActionButtonClasses,
-  getRowBackgroundColor 
+  getBadgeClasses
 } from '../../utils/colors';
 import { formatCurrency } from '../../utils/currency';
 
@@ -39,6 +38,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   const [showDropdown, setShowDropdown] = useState<string | number | null>(null);
   const [isModalActive, setIsModalActive] = useState<boolean>(false);
   const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PayPalTransaction | null>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -141,8 +141,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
     return {
       id: transaction.id || index,
-      borderColor: isLinked ? 'border-l-green-500' : 'border-l-yellow-500',
-      className: getRowBackgroundColor(isLinked),
+      borderColor: isLinked ? 'border-l-[#006a68]' : 'border-l-amber-500',
+      className: '',
       data: {
         datetime: (
           <div className='flex flex-col'>
@@ -209,40 +209,42 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                   setActiveTransactionId(transaction.id || '');
                 }}
                 disabled={loading}
-                className={`
-                  flex items-center justify-between px-3 py-2 text-sm border rounded-md transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400
-                  
-                  ${transaction.linkedProductIds?.length 
-                    ? 'border-green-300 bg-green-50' 
-                    : 'border-gray-300'
-                  }
-                `}
+                className={`group flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
+                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                } ${
+                  transaction.linkedProductIds?.length
+                    ? 'text-[#43474e] hover:text-[#1b1c19]'
+                    : 'text-[#9e9e9e] hover:text-[#74777f]'
+                }`}
               >
-                <div className={`flex-1 text-left truncate pr-2 ${transaction.linkedProductIds?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                {/* Icon */}
+                <span className="flex-shrink-0 text-base leading-none">
+                  {transaction.linkedProductIds?.length ? '🔗' : '○'}
+                </span>
+                {/* Label */}
+                <span className="truncate">
                   {(() => {
-                    if (!transaction.linkedProductIds?.length) {
-                      return 'Link Product(s)';
-                    }
-                    
+                    if (!transaction.linkedProductIds?.length) return 'Link product…';
                     if (transaction.linkedProductIds.length === 1) {
-                      const linkedProduct = products.find(p => p.id === transaction.linkedProductIds![0]);
-                      return linkedProduct?.item || 'Product linked';
+                      const p = products.find(p => p.id === transaction.linkedProductIds![0]);
+                      return p?.item || 'Product linked';
                     }
-                    
-                    return `${transaction.linkedProductIds.length} Products linked`;
+                    return `${transaction.linkedProductIds.length} products linked`;
                   })()}
-                </div>
-                <svg
-                  className={`w-5 h-5 transition-transform duration-200 ${loading ? 'text-gray-400' : 'text-gray-500'}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                </span>
+                {/* Edit chevron when linked */}
+                {transaction.linkedProductIds?.length ? (
+                  <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-40 group-hover:opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                )}
               </button>
             ) : (
-              <span className="text-sm text-gray-500">No link action available</span>
+              <span className="text-sm text-[#74777f]">No link action available</span>
             )}
           </div>
         ),
@@ -258,9 +260,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
             </svg>
           ),
           onClick: async () => {
-            if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
-              await onDeleteTransaction(transaction.id);
-            }
+            setDeleteTarget(transaction);
           }
         }
       ] : []
@@ -316,8 +316,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         </div>
         
         {/* Product Link */}
-        <div className="border-t pt-3">
-          <p className={`text-sm ${colors.text.secondary} mb-2`}>Product Link:</p>
+        <div className="border-t border-[#e4e2dd] pt-3 mt-1">
           {onUpdateProductLink ? (
             <button
               type="button"
@@ -326,40 +325,36 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 setActiveTransactionId(transaction.id || '');
               }}
               disabled={loading}
-              className={`
-                w-full flex items-center justify-between px-3 py-2 text-sm border rounded-md transition-colors
-                ${loading 
-                  ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed' 
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                }
-                ${transaction.linkedProductIds?.length 
-                  ? 'border-green-300 bg-green-50' 
-                  : 'border-gray-300'
-                }
-              `}
+              className={`group w-full flex items-center gap-2.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-150 ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              } ${
+                transaction.linkedProductIds?.length
+                  ? 'text-[#43474e] hover:text-[#1b1c19]'
+                  : 'text-[#9e9e9e] hover:text-[#74777f]'
+              }`}
             >
-              <div className={`flex-1 text-left ${transaction.linkedProductIds?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+              <span className="text-base leading-none flex-shrink-0">
+                {transaction.linkedProductIds?.length ? '🔗' : '○'}
+              </span>
+              <span className="flex-1 text-left truncate">
                 {(() => {
-                  if (!transaction.linkedProductIds?.length) {
-                    return 'Link Product(s)';
-                  }
-                  
+                  if (!transaction.linkedProductIds?.length) return 'Link product…';
                   if (transaction.linkedProductIds.length === 1) {
-                    const linkedProduct = products.find(p => p.id === transaction.linkedProductIds![0]);
-                    return linkedProduct?.item || 'Product linked';
+                    const p = products.find(p => p.id === transaction.linkedProductIds![0]);
+                    return p?.item || 'Product linked';
                   }
-                  
-                  return `${transaction.linkedProductIds.length} Products linked`;
+                  return `${transaction.linkedProductIds.length} products linked`;
                 })()}
-              </div>
-              <svg
-                className={`w-5 h-5 transition-transform duration-200 ${loading ? 'text-gray-400' : 'text-gray-500'}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              </span>
+              {transaction.linkedProductIds?.length ? (
+                <svg className="w-4 h-4 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 flex-shrink-0 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              )}
             </button>
           ) : (
             <span className={`${colors.text.disabled} text-xs`}>No mapping available</span>
@@ -372,7 +367,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
       <>
         <button
           onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-          className={getActionButtonClasses()}
+          className={`flex items-center justify-center w-8 h-8 ${colors.button.secondary} rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#022448]`}
+          title="More actions"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -381,15 +377,13 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
         {/* Dropdown Menu */}
         {showDropdown === index && (
-          <div className={`absolute right-0 top-10 ${colors.background.primary} ${colors.border.default} rounded-md shadow-lg z-10`}>
+          <div className="absolute right-0 top-full mt-2 bg-[#fbf9f3] border border-[rgba(196,198,207,0.15)] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-50 min-w-[160px] py-2">
             <button
               onClick={async () => {
-                if (transaction.id && window.confirm('Are you sure you want to delete this transaction?')) {
-                  await onDeleteTransaction(transaction.id);
-                }
+                setDeleteTarget(transaction);
                 setShowDropdown(null);
               }}
-              className={`block w-full text-left px-4 py-2 text-sm ${colors.modal.danger}`}
+              className={`block w-full text-left px-4 py-2.5 text-sm ${colors.modal.danger} transition-colors`}
             >
               Delete
             </button>
@@ -402,8 +396,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
       headerContent,
       financialContent,
       actionsContent,
-      borderColor: isLinked ? 'border-l-green-500' : 'border-l-yellow-500',
-      className: isLinked ? 'bg-green-50' : 'bg-orange-50'
+      borderColor: isLinked ? 'border-l-[#006a68]' : 'border-l-amber-500',
+      className: ''
     };
   });
 
@@ -442,6 +436,18 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           }}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Transaction"
+        message={`Are you sure you want to delete this PayPal transaction${deleteTarget ? ` of $${deleteTarget.amount}` : ''}? This action cannot be undone.`}
+        onConfirm={async () => {
+          if (deleteTarget?.id && onDeleteTransaction) await onDeleteTransaction(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </>
   );
 };

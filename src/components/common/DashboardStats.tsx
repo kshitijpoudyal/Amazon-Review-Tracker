@@ -16,29 +16,33 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   loading = false 
 }) => {
   const StatCardSkeleton = () => (
-    <div className="bg-white rounded-xl p-5 border border-gray-200/60 shadow-md shadow-gray-200/50">
-      <div className="animate-pulse space-y-2">
-        <div className="h-7 bg-gray-300 rounded-md"></div>
-        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+    <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(2,36,72,0.07)]">
+      <div className="h-0.5 bg-[#e4e2dd]" />
+      <div className="p-4 animate-pulse space-y-3">
+        <div className="h-3 bg-[#e4e2dd] rounded-full w-2/3"></div>
+        <div className="h-7 bg-[#eae8e2] rounded-full w-3/4"></div>
       </div>
     </div>
   );
 
   const StatCard = ({ value, label, className = '' }: StatItem) => (
-    <div className="bg-white rounded-xl p-5 border border-gray-200/60 shadow-md shadow-gray-200/50 hover:shadow-xl hover:shadow-gray-300/30 hover:-translate-y-1 transition-all duration-300 group">
-      <div className={`text-2xl font-bold text-gray-900 mb-1.5 group-hover:scale-105 transition-transform duration-200 ${className}`}>
-        {value}
-      </div>
-      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-        {label}
+    <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(2,36,72,0.07)] hover:shadow-[0_6px_20px_rgba(2,36,72,0.11)] hover:-translate-y-0.5 transition-all duration-200">
+      <div className="h-0.5 bg-[#e4e2dd]" />
+      <div className="p-4">
+        <div className="text-[10px] font-semibold text-[#74777f] uppercase tracking-widest font-label mb-2.5">
+          {label}
+        </div>
+        <div className={`text-xl font-bold leading-tight ${className || 'text-[#1b1c19]'}`}>
+          {value}
+        </div>
       </div>
     </div>
   );
 
   if (loading) {
     return (
-      <div className="bg-gray-100 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
+      <div className="px-4 sm:px-6 lg:px-8 py-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <StatCardSkeleton key={i} />
           ))}
@@ -48,8 +52,8 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   }
 
   return (
-    <div className="bg-gray-100 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
+    <div className="px-4 sm:px-6 lg:px-8 py-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {stats.map((stat, index) => (
           <StatCard
             key={index}

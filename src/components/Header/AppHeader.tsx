@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { User } from 'firebase/auth';
@@ -10,9 +11,10 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({ user, onLogout }: AppHeaderProps) {
+    const location = useLocation();
     const navigation = [
-        { name: 'Product', href: '/' },
-        { name: 'PaypalTransactions', href: '/paypal' }
+        { name: 'Products', href: '/' },
+        { name: 'PayPal', href: '/paypal' }
     ]
 
     // Safety check - should never be null due to ProtectedRoute, but defensive programming
@@ -25,14 +27,31 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
 
     return (
         <header className={`${colors.header.background}`}>
-            <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-2 lg:px-8">
-                <div className="flex items-center gap-x-12">
-                    <div className="hidden lg:flex lg:gap-x-12">
-                        {navigation.map((item) => (
-                            <a key={item.name} href={item.href} className={`text-sm/6 font-semibold ${colors.header.navigation.link}`}>
-                                {item.name}
-                            </a>
-                        ))}
+            <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8">
+                {/* Brand + Nav */}
+                <div className="flex items-center gap-x-6">
+                    <span className="text-white font-bold text-sm tracking-tight select-none">
+                        📦 Review Tracker
+                    </span>
+                    <div className="hidden lg:flex lg:gap-x-1">
+                        {navigation.map((item) => {
+                            const isActive = item.href === '/' 
+                                ? location.pathname === '/' 
+                                : location.pathname.startsWith(item.href);
+                            return (
+                                <a
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-all ${
+                                        isActive 
+                                            ? 'text-white bg-white/20' 
+                                            : 'text-white/70 hover:text-white hover:bg-white/10'
+                                    }`}
+                                >
+                                    {item.name}
+                                </a>
+                            );
+                        })}
                     </div>
                 </div>
                 <div className="flex lg:hidden">
@@ -45,11 +64,11 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                         <Bars3Icon aria-hidden="true" className="size-6" />
                     </button>
                 </div>
-                <div className="hidden lg:flex">
-                  <p className={`text-sm/6 font-semibold ${colors.header.navigation.link} p-4`}>Welcome {displayName}!</p>
-                    <a href="#" onClick={onLogout} className={`text-sm/6 font-semibold ${colors.header.navigation.link} p-4`}>
-                       Log out <span aria-hidden="true">&rarr;</span>
-                    </a>
+                <div className="hidden lg:flex items-center gap-3">
+                  <span className={`text-sm ${colors.header.navigation.link}`}>{displayName}</span>
+                  <a href="#" onClick={onLogout} className="text-sm font-semibold text-white/70 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-all">
+                    Log out →
+                  </a>
                 </div>
             </nav>
             <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
@@ -69,15 +88,24 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                     <div className="mt-6 flow-root">
                         <div className={`-my-6 divide-y ${colors.header.mobile.divider}`}>
                             <div className="space-y-2 py-6">
-                                {navigation.map((item) => (
-                                    <a
-                                        key={item.name}
-                                        href={item.href}
-                                        className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${colors.header.mobile.menuLink}`}
-                                    >
-                                        {item.name}
-                                    </a>
-                                ))}
+                                {navigation.map((item) => {
+                                    const isActive = item.href === '/' 
+                                        ? location.pathname === '/' 
+                                        : location.pathname.startsWith(item.href);
+                                    return (
+                                        <a
+                                            key={item.name}
+                                            href={item.href}
+                                            className={`-mx-3 block rounded-xl px-3 py-2 text-base/7 font-semibold ${
+                                                isActive
+                                                    ? 'text-white bg-white/20'
+                                                    : `${colors.header.mobile.menuLink}`
+                                            }`}
+                                        >
+                                            {item.name}
+                                        </a>
+                                    );
+                                })}
                             </div>
                             <div className="py-6">
                                 <a

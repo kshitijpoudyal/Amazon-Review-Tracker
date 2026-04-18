@@ -28,7 +28,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   // Build CSS classes
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed';
   
   const sizeClasses = {
     sm: 'px-3 py-1.5 text-sm gap-1.5',
@@ -38,10 +38,10 @@ export const Button: React.FC<ButtonProps> = ({
   }[size];
 
   const variantClasses = {
-    primary: `${colors.button.primary} focus:ring-indigo-500 shadow-sm hover:shadow-md`,
-    secondary: `${colors.button.secondary} focus:ring-gray-500 shadow-sm hover:shadow-md`,
-    danger: `${colors.button.dangerSolid} focus:ring-red-500 shadow-sm hover:shadow-md`,
-    ghost: `text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:ring-gray-300 transition-colors duration-150`
+    primary: `${colors.button.primary} focus:ring-[#022448] shadow-[0_4px_12px_rgba(2,36,72,0.15)] hover:shadow-[0_8px_24px_rgba(2,36,72,0.2)]`,
+    secondary: `${colors.button.secondary} focus:ring-[#022448] shadow-[0_2px_8px_rgba(2,36,72,0.06)]`,
+    danger: `${colors.button.dangerSolid} focus:ring-[#ba1a1a] shadow-sm hover:shadow-md`,
+    ghost: `text-[#74777f] hover:text-[#1b1c19] hover:bg-[#eae8e2] focus:ring-[#022448] transition-colors duration-150`
   }[variant];
 
   const buttonClasses = [

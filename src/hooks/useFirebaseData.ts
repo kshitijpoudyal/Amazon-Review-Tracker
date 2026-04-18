@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   collection, 
   getDocs, 
@@ -12,48 +12,89 @@ import {
 import { db } from '../firebase/config';
 import { Product, ProductData } from '../types/Product';
 
+// ─── Cache helpers ──────────────────────────────────────────────────────────
+const CACHE_VERSION = 'v1';
+const cacheKey = (uid: string) => `art_products_${CACHE_VERSION}_${uid}`;
+
+function readProductCache(uid: string): Product[] | null {
+  try {
+    const raw = localStorage.getItem(cacheKey(uid));
+    if (!raw) return null;
+    const { products } = JSON.parse(raw);
+    return Array.isArray(products) ? products : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeProductCache(uid: string, products: Product[]): void {
+  try {
+    localStorage.setItem(cacheKey(uid), JSON.stringify({ products, ts: Date.now() }));
+  } catch {
+    // Ignore quota errors
+  }
+}
+
+function buildProductData(products: Product[]): ProductData {
+  return {
+    products,
+    summary: {
+      totalPaid: products.reduce((s, p) => s + (p.paid || 0), 0),
+      totalReceived: products.reduce((s, p) => s + (p.received || 0), 0),
+      netDelta: products.reduce((s, p) => s + (p.delta || 0), 0),
+    }
+  };
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 export const useFirebaseData = (userId?: string) => {
-  const [data, setData] = useState<ProductData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Read cache synchronously before first render so loading=false when data exists
+  const initRef = useRef<{ data: ProductData | null; hasCache: boolean } | null>(null);
+  if (!initRef.current) {
+    const cached = userId ? readProductCache(userId) : null;
+    initRef.current = { data: cached ? buildProductData(cached) : null, hasCache: !!cached };
+  }
+
+  const [data, setData] = useState<ProductData | null>(initRef.current.data);
+  const [loading, setLoading] = useState(!initRef.current.hasCache);
   const [error, setError] = useState<string | null>(null);
 
-    const fetchData = useCallback(async () => {
+  /** Optimistically update products in-memory and in cache without a Firebase round-trip. */
+  const mutateLocal = useCallback((updater: (products: Product[]) => Product[]) => {
+    setData(prev => {
+      if (!prev) return prev;
+      const next = updater(prev.products);
+      if (userId) writeProductCache(userId, next);
+      return buildProductData(next);
+    });
+  }, [userId]);
+
+  const fetchData = useCallback(async () => {
     if (!userId) {
       setLoading(false);
       setData(null);
       return;
     }
 
-    setLoading(true);
+    // Only block UI with a spinner on the very first load (no cached data)
+    if (!initRef.current?.hasCache) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
       const productsSnap = await getDocs(collection(db, 'users', userId, 'products'));
 
-      const products: Product[] = productsSnap.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data
-        } as Product;
-      });
+      const products: Product[] = productsSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Product));
 
-      // Calculate summary from products
-      const summary = {
-        totalPaid: products.reduce((sum, product) => sum + (product.paid || 0), 0),
-        totalReceived: products.reduce((sum, product) => sum + (product.received || 0), 0),
-        netDelta: products.reduce((sum, product) => sum + (product.delta || 0), 0)
-      };
-
-      const productData: ProductData = {
-        products,
-        summary
-      };
-
-      setData(productData);
-    } catch (error) {
-      console.error('❌ Error fetching data:', error);
-      setError(error instanceof Error ? error.message : 'Unknown error');
+      writeProductCache(userId, products);
+      setData(buildProductData(products));
+    } catch (err) {
+      console.error('❌ Error fetching data:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -152,6 +193,7 @@ export const useFirebaseData = (userId?: string) => {
     loading,
     error,
     refetch: fetchData,
+    mutateLocal,
     saveProduct: saveProductToFirebase,
     addProduct: addProductToFirebase,
     deleteProduct: deleteProductFromFirebase,

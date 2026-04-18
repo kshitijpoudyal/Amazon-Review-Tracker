@@ -12,7 +12,8 @@ import {
   DashboardStats,
   DashboardError,
   DashboardSection,
-  FilterControlConfig
+  FilterControlConfig,
+  useToast
 } from '../components/common';
 import { formatCurrency } from '../utils/currency';
 import Toolbar from '../components/common/Toolbar';
@@ -31,6 +32,7 @@ import { getStatsColor } from '../utils/colors';
  */
 export const PayPalPage: React.FC = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
 
   // Filter state management
@@ -125,6 +127,7 @@ export const PayPalPage: React.FC = () => {
     if (success) {
       await refetch();
       handleHideAddForm();
+      showToast('Transaction added');
     }
     return success;
   };
@@ -133,6 +136,7 @@ export const PayPalPage: React.FC = () => {
     const success = await updateProductLink(transactionId, productIds);
     if (success) {
       await refetch();
+      showToast(productIds.length > 0 ? `Linked ${productIds.length} product${productIds.length !== 1 ? 's' : ''}` : 'Links cleared');
     }
     return success;
   };
@@ -141,6 +145,7 @@ export const PayPalPage: React.FC = () => {
     const success = await deleteTransaction(transactionId);
     if (success) {
       await refetch();
+      showToast('Transaction deleted', 'error');
     }
     return success;
   };
@@ -174,17 +179,17 @@ export const PayPalPage: React.FC = () => {
     },
     {
       value: filteredTransactions.length,
-      label: "Transactions Count",
+      label: "Transactions",
       className: getStatsColor('transactionCount')
     },
     {
       value: unlinkedTransactionsCount,
-      label: "Unlinked Count",
+      label: "Unlinked",
       className: getStatsColor('unlinkedCount')
     },
     {
       value: formatCurrency(unlinkedTransactionsAmount),
-      label: "Unlinked Amount",
+      label: "Unlinked $",
       className: getStatsColor('unlinkedAmount')
     }
   ] : [];
@@ -212,14 +217,16 @@ export const PayPalPage: React.FC = () => {
       {/* Summary Cards */}
       <DashboardStats stats={statsData} loading={displayLoading} />
 
-      {/* Filter Controls */}
-      <Toolbar
-        actions={actions}
-        filters={filterConfigs}
-        onClearFilters={clearAllFilters}
-        loading={displayLoading}
-        showClearButton={true}
-      />
+      {/* Filter Controls — sticky */}
+      <div className="sticky top-0 z-30 bg-[#fbf9f3] pb-2 pt-1">
+        <Toolbar
+          actions={actions}
+          filters={filterConfigs}
+          onClearFilters={clearAllFilters}
+          loading={displayLoading}
+          showClearButton={true}
+        />
+      </div>
 
       {/* Transactions Table */}
       <DashboardSection>

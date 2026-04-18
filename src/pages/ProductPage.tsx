@@ -18,7 +18,8 @@ import {
   DashboardError,
   DashboardSection,
   FilterControlConfig,
-  EmailReminderPanel
+  EmailReminderPanel,
+  useToast
 } from '../components/common';
 import Toolbar from '../components/common/Toolbar';
 import { getStatsColor } from '../utils/colors';
@@ -37,6 +38,7 @@ import { formatCurrency } from '../utils/currency';
 const ProductPage: React.FC = () => {
   const { user } = useAuth();
   const { activeVendors } = useVendors();
+  const { showToast } = useToast();
   
   // Show admin utils when URL contains ?admin=true
   const showAdminUtils = new URLSearchParams(window.location.search).get('admin') === 'true';
@@ -88,7 +90,18 @@ const ProductPage: React.FC = () => {
   const handleAddProduct = useCallback((product: Product) => {
     addProduct(product);
     handleHideAddForm();
-  }, [addProduct, handleHideAddForm]);
+    showToast('Product added');
+  }, [addProduct, handleHideAddForm, showToast]);
+
+  const handleUpdateProduct = useCallback((index: number, product: Product) => {
+    updateProduct(index, product);
+    showToast('Product updated');
+  }, [updateProduct, showToast]);
+
+  const handleDeleteProduct = useCallback((productId: string) => {
+    deleteProduct(productId);
+    showToast('Product deleted', 'error');
+  }, [deleteProduct, showToast]);
 
   // Configure filter controls
   const filterConfigs: FilterControlConfig[] = [
@@ -148,7 +161,8 @@ const ProductPage: React.FC = () => {
       label: "Add Product",
       onClick: handleShowAddForm,
       variant: 'primary' as const,
-      disabled: displayLoading
+      disabled: displayLoading,
+      mobileHidden: true
     }
   ];
 
@@ -169,7 +183,7 @@ const ProductPage: React.FC = () => {
     },
     {
       value: stats.completedOrders || '-',
-      label: "Completed Orders",
+      label: "Completed",
       className: getStatsColor('completed')
     },
     {
@@ -179,17 +193,17 @@ const ProductPage: React.FC = () => {
     },
     {
       value: formatCurrency(stats.totalReceived),
-      label: "Total Received",
+      label: "Received",
       className: getStatsColor('received')
     },
     {
       value: formatCurrency(stats.remainingRefund),
-      label: "Remaining Refund",
+      label: "Remaining",
       className: getStatsColor('remaining')
     },
     {
       value: formatCurrency(stats.netDelta),
-      label: "Net Profit/Loss",
+      label: "Net P&L",
       className: getStatsColor('netDelta', stats.netDelta)
     }
   ] : [];
@@ -206,20 +220,23 @@ const ProductPage: React.FC = () => {
         </DashboardSection>
       )}
 
-      {/* Filter Controls */}
-      <Toolbar
-        actions={actions}
-        filters={filterConfigs}
-        onClearFilters={clearAllFilters}
-        loading={displayLoading}
-      />
+      {/* Filter Controls — sticky so it stays visible while scrolling */}
+      <div className="sticky top-0 z-30 bg-[#fbf9f3] pb-2 pt-1">
+        <Toolbar
+          actions={actions}
+          filters={filterConfigs}
+          onClearFilters={clearAllFilters}
+          loading={displayLoading}
+        />
+      </div>
 
       {/* Product Table */}
       <DashboardSection>
         <ProductTable
           products={filteredProducts}
-          onUpdateProduct={updateProduct}
-          onDeleteProduct={deleteProduct}
+          onUpdateProduct={handleUpdateProduct}
+          onDeleteProduct={handleDeleteProduct}
+          onClearFilters={clearAllFilters}
           loading={displayLoading}
           userId={user?.uid}
         />
@@ -231,6 +248,19 @@ const ProductPage: React.FC = () => {
         onAdd={handleAddProduct}
         onCancel={handleHideAddForm}
       />
+
+      {/* Mobile FAB — floating Add Product button */}
+      {!displayLoading && (
+        <button
+          onClick={handleShowAddForm}
+          className="fixed bottom-6 right-6 z-40 md:hidden flex items-center justify-center w-14 h-14 bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white rounded-full shadow-[0_8px_24px_rgba(2,36,72,0.25)] hover:shadow-[0_12px_32px_rgba(2,36,72,0.35)] active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-[#022448] focus:ring-offset-2"
+          aria-label="Add product"
+        >
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      )}
     </DashboardContainer>
   );
 };

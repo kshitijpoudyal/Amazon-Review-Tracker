@@ -1,4 +1,5 @@
-// Global color system for consistent styling across the application
+// Global color system — Synthetic Naturalist theme (inspired by HustleBooks)
+// Core palette: Navy #022448 · Teal #006a68 · Amber (warning) · Red #ba1a1a · Parchment surfaces
 
 // Product status types
 export type StatusType =
@@ -15,219 +16,220 @@ export type StatusType =
     | 'unknown';
 
 export const colors = {
-    // Status colors
+    // Status badge colors — 4-stage pipeline: amber → navy → teal → gray
     status: {
         linked: {
-            bg: 'bg-green-500',
-            border: 'border-green-500',
+            bg: 'bg-[#006a68]',
+            border: 'border-[#006a68]',
             text: 'text-white'
         },
         unlinked: {
-            bg: 'bg-yellow-500',
-            border: 'border-yellow-500',
+            bg: 'bg-amber-500',
+            border: 'border-amber-500',
             text: 'text-white'
         },
         error: {
-            bg: 'bg-red-50',
-            text: 'text-red-800',
-            textSecondary: 'text-red-700',
-            border: 'border-red-200'
+            bg: 'bg-[#ffdad6]',
+            text: 'text-[#ba1a1a]',
+            textSecondary: 'text-[#ba1a1a]',
+            border: 'border-[rgba(186,26,26,0.2)]'
         },
         void: {
-            bg: 'bg-gray-500',
-            border: 'border-gray-500',
+            bg: 'bg-[#9e9e9e]',
+            border: 'border-[#9e9e9e]',
             text: 'text-white'
         },
         complete: {
-            bg: 'bg-green-500',
-            border: 'border-green-500',
+            bg: 'bg-[#006a68]',
+            border: 'border-[#006a68]',
             text: 'text-white'
         },
         'refund-pending': {
-            bg: 'bg-blue-500',
+            bg: 'bg-[#022448]',
             text: 'text-white',
-            border: 'border-blue-500'
+            border: 'border-[#022448]'
         },
         'send-screenshot': {
-            bg: 'bg-indigo-500',
+            bg: 'bg-[#022448]',
             text: 'text-white',
-            border: 'border-indigo-500'
+            border: 'border-[#022448]'
         },
         'review-pending': {
-            bg: 'bg-yellow-500',
+            bg: 'bg-amber-500',
             text: 'text-white',
-            border: 'border-yellow-500'
+            border: 'border-amber-500'
         },
         'add-review': {
-            bg: 'bg-orange-500',
+            bg: 'bg-amber-500',
             text: 'text-white',
-            border: 'border-orange-500'
+            border: 'border-amber-500'
         },
         'order-placed': {
-            bg: 'bg-purple-500',
+            bg: 'bg-amber-500',
             text: 'text-white',
-            border: 'border-purple-500'
+            border: 'border-amber-500'
         },
         unknown: {
-            bg: 'bg-gray-500',
+            bg: 'bg-[#9e9e9e]',
             text: 'text-white',
-            border: 'border-gray-500'
+            border: 'border-[#9e9e9e]'
         }
     },
 
     // Financial/Delta colors
     financial: {
-        positive: 'text-green-500',
-        positiveLight: 'text-green-400',
-        neutral: 'text-gray-500',
-        neutral2: 'text-yellow-500',
-        negativeLight: 'text-red-400',
-        negative: 'text-red-500',
+        positive: 'text-[#006a68]',
+        positiveLight: 'text-[#006a68]',
+        neutral: 'text-[#43474e]',
+        neutral2: 'text-[#43474e]',
+        negativeLight: 'text-[#ba1a1a]/70',
+        negative: 'text-[#ba1a1a]',
         badges: {
-            paid: 'text-red-500 bg-red-50',
-            received: 'text-green-500 bg-green-50',
-            deltaPositive: 'text-green-500 bg-green-50',
-            deltaNegative: 'text-red-500 bg-red-50'
+            paid: 'text-[#ba1a1a] bg-[#ffdad6]',
+            received: 'text-[#006a68] bg-[#006a68]/10',
+            deltaPositive: 'text-[#006a68] bg-[#006a68]/10',
+            deltaNegative: 'text-[#ba1a1a] bg-[#ffdad6]'
         }
     },
 
-    // Text colors
+    // Text colors — on-surface hierarchy
     text: {
-        primary: 'text-gray-900',
-        secondary: 'text-gray-600',
-        muted: 'text-gray-500',
-        disabled: 'text-gray-400',
-        link: 'text-blue-600',
-        linkHover: 'text-blue-800',
+        primary: 'text-[#1b1c19]',
+        secondary: 'text-[#43474e]',
+        muted: 'text-[#74777f]',
+        disabled: 'text-[#9e9e9e]',
+        link: 'text-[#006a68]',
+        linkHover: 'text-[#022448]',
         white: 'text-white',
-        green: 'text-green-600',
-        danger: 'text-red-600',
+        green: 'text-[#006a68]',
+        danger: 'text-[#ba1a1a]',
     },
 
-    // Background colors
+    // Background surfaces — 3-level parchment system
     background: {
-        gradient: 'bg-gradient-to-r from-blue-500 to-purple-700',
-        primary: 'bg-white',
-        secondary: 'bg-gray-100',
-        dark: 'bg-gray-800',
-        muted: 'bg-gray-100',
-        linkedRow: 'bg-green-50',
-        unlinkedRow: 'bg-orange-50'
+        gradient: 'bg-gradient-to-br from-[#022448] to-[#1e3a5f]',
+        primary: 'bg-[#fbf9f3]',
+        secondary: 'bg-[#eae8e2]',
+        dark: 'bg-[#022448]',
+        muted: 'bg-[#eae8e2]',
+        linkedRow: 'bg-[#006a68]/8',
+        unlinkedRow: 'bg-amber-50'
     },
 
-    // Card specific
+    // Card
     card: {
-        background: 'bg-white',
-        border: 'border border-gray-200',
-        shadow: 'shadow-md',
-        value: 'text-gray-900',
-        label: 'text-gray-600'
+        background: 'bg-[#ffffff]',
+        border: 'border border-[rgba(196,198,207,0.15)]',
+        shadow: 'shadow-[0_12px_32px_rgba(2,36,72,0.06)]',
+        value: 'text-[#1b1c19]',
+        label: 'text-[#43474e]'
     },
 
-    // Buttons
+    // Buttons — rounded-full; primary uses navy gradient
     button: {
-        primary: 'bg-indigo-500 hover:bg-indigo-400 text-white focus-visible:outline-indigo-500',
-        primaryIcon: 'bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed',
-        danger: 'text-red-600 hover:bg-red-50',
-        indigo: 'bg-indigo-500 hover:bg-indigo-400 text-white focus-visible:outline-indigo-500',
-        secondary: 'border border-gray-300 text-gray-700 hover:bg-gray-50',
-        dangerSolid: 'bg-red-600 hover:bg-red-400 text-white focus-visible:outline-red-500',
-        close: 'text-gray-500 hover:text-gray-700'
+        primary: 'bg-gradient-to-br from-[#022448] to-[#1e3a5f] hover:from-[#1e3a5f] hover:to-[#022448] text-white focus-visible:outline-[#022448]',
+        primaryIcon: 'bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#022448] disabled:opacity-50 disabled:cursor-not-allowed',
+        danger: 'text-[#ba1a1a] hover:bg-[#ffdad6]',
+        indigo: 'bg-gradient-to-br from-[#022448] to-[#1e3a5f] hover:opacity-90 text-white focus-visible:outline-[#022448]',
+        secondary: 'bg-[#eae8e2] text-[#022448] hover:bg-[#e4e2dd]',
+        dangerSolid: 'bg-[#ba1a1a] hover:bg-[#ba1a1a]/80 text-white focus-visible:outline-[#ba1a1a]',
+        close: 'text-[#74777f] hover:text-[#1b1c19]'
     },
 
     // Form controls
     form: {
         input: {
-            base: 'border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-indigo-500',
-            error: 'border border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500',
-            disabled: 'bg-gray-50 border border-gray-300',
-            text: 'text-gray-900',
-            placeholder: 'placeholder-gray-500'
+            base: 'border-0 bg-[#e4e2dd] focus:outline-none focus:ring-2 focus:ring-[#022448] focus:ring-offset-0',
+            error: 'border-0 bg-[#ffdad6] focus:ring-2 focus:ring-[#ba1a1a]',
+            disabled: 'bg-[#eae8e2] border-0 opacity-60',
+            text: 'text-[#1b1c19]',
+            placeholder: 'placeholder-[#74777f]'
         },
-        label: 'text-gray-700 font-medium',
-        checkbox: 'text-blue-600 focus:ring-blue-500'
+        label: 'font-label text-[#43474e] font-medium uppercase tracking-wider text-xs',
+        checkbox: 'text-[#006a68] focus:ring-[#006a68]'
     },
 
     // Tabs
     tabs: {
-        active: 'border-blue-500 text-blue-600',
-        inactive: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+        active: 'border-[#022448] text-[#022448]',
+        inactive: 'border-transparent text-[#74777f] hover:text-[#43474e] hover:border-[#c4c6cf]'
     },
 
     // Borders
     border: {
-        default: 'border-gray-200',
-        light: 'border-gray-100'
+        default: 'border-[rgba(196,198,207,0.15)]',
+        light: 'border-[rgba(196,198,207,0.10)]'
     },
 
-    // Loading/Shimmer effects
+    // Loading/shimmer
     loading: {
-        shimmer: 'bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-shimmer',
-        skeleton: 'bg-gray-200'
+        shimmer: 'bg-gradient-to-r from-[#eae8e2] via-[#fbf9f3] to-[#eae8e2] bg-[length:200%_100%] animate-shimmer',
+        skeleton: 'bg-[#e4e2dd]'
     },
 
-    // Menu/Dropdown specific
+    // Menu/Dropdown
     menu: {
-        background: 'bg-white',
-        border: 'border border-gray-200',
-        shadow: 'shadow-lg',
-        outline: 'outline outline-1 -outline-offset-1 outline-gray-200'
+        background: 'bg-[#fbf9f3]',
+        border: 'border border-[rgba(196,198,207,0.15)]',
+        shadow: 'shadow-[0_12px_32px_rgba(2,36,72,0.08)]',
+        outline: 'outline outline-1 -outline-offset-1 outline-[rgba(196,198,207,0.2)]'
     },
 
-    // Modal specific
+    // Modal
     modal: {
-        overlay: 'bg-gray-500 bg-opacity-75',
-        overlaySolid: 'bg-gray-600',
-        shadow: 'shadow-lg',
+        overlay: 'bg-[#022448]/30 backdrop-blur-sm',
+        overlaySolid: 'bg-[#022448]/40',
+        shadow: 'shadow-[0_24px_64px_rgba(2,36,72,0.12)]',
         item: {
             base: 'px-3 py-2 cursor-pointer',
-            hover: 'hover:bg-gray-50',
-            selected: 'bg-blue-50 border-l-4 border-blue-500',
-            unselected: 'hover:bg-gray-50'
+            hover: 'hover:bg-[#eae8e2]',
+            selected: 'bg-[#006a68]/10 border-l-4 border-[#006a68]',
+            unselected: 'hover:bg-[#eae8e2]'
         },
         search: {
-            container: 'border-b border-gray-200',
-            input: 'w-full px-3 py-2 border-none focus:outline-none',
-            placeholder: 'placeholder-gray-500'
+            container: 'border-b border-[rgba(196,198,207,0.15)]',
+            input: 'w-full px-3 py-2 border-none focus:outline-none bg-transparent',
+            placeholder: 'placeholder-[#74777f]'
         },
         void: {
-            badge: 'bg-orange-100 text-orange-800',
-            button: 'bg-orange-500 text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500',
-            unvoidButton: 'bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            badge: 'bg-[#eae8e2] text-[#43474e]',
+            button: 'bg-amber-500 text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500',
+            unvoidButton: 'bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#022448]'
         },
-        danger: 'text-red-600 hover:bg-red-50',
-        menuButton: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:border-blue-500',
-        menuItem: 'text-gray-700 data-[focus]:bg-blue-50 data-[focus]:text-blue-700 hover:bg-blue-50 hover:text-blue-700'
+        danger: 'text-[#ba1a1a] hover:bg-[#ffdad6]',
+        menuButton: 'bg-[#fbf9f3] text-[#1b1c19] border border-[rgba(196,198,207,0.2)] hover:bg-[#eae8e2] focus:border-[#022448]',
+        menuItem: 'text-[#1b1c19] data-[focus]:bg-[#006a68]/10 data-[focus]:text-[#022448] hover:bg-[#006a68]/10 hover:text-[#022448]'
     },
 
-    // Filter controls specific
+    // Toolbar filter controls
     filters: {
-        container: 'bg-white border-b border-gray-200',
-        addProductButton: 'bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed',
-        searchInput: 'border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-        select: 'border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white',
-        clearButton: 'text-gray-500 hover:text-gray-700 border border-gray-300 hover:bg-gray-50'
+        container: 'bg-[#eae8e2]',
+        addProductButton: 'bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#022448] disabled:opacity-50 disabled:cursor-not-allowed',
+        searchInput: 'bg-[#e4e2dd] border-0 focus:outline-none focus:ring-2 focus:ring-[#022448]',
+        select: 'bg-[#e4e2dd] border-0 focus:outline-none focus:ring-2 focus:ring-[#022448]',
+        clearButton: 'text-[#74777f] hover:text-[#1b1c19] bg-[#eae8e2] hover:bg-[#e4e2dd]'
     },
 
-    // Header/Navigation specific
+    // Header — deep navy
     header: {
-        background: 'bg-gradient-to-r from-blue-500 to-purple-700',
-        backgroundDark: 'dark:from-blue-600 dark:to-purple-800',
+        background: 'bg-[#022448]',
+        backgroundDark: '',
         navigation: {
-            link: 'text-white',
-            linkHover: 'hover:text-gray-300'
+            link: 'text-white/90 hover:text-white',
+            linkHover: 'hover:text-white'
         },
         mobile: {
-            menuButton: 'text-gray-400 hover:text-white',
-            ring: 'sm:ring-gray-900/10 dark:sm:ring-gray-100/10',
-            closeButton: 'text-gray-400 hover:text-white',
+            menuButton: 'text-white/70 hover:text-white',
+            ring: 'sm:ring-white/10',
+            closeButton: 'text-white/70 hover:text-white',
             divider: 'divide-white/10',
-            menuLink: 'text-white hover:bg-white/5'
+            menuLink: 'text-white/90 hover:bg-white/10'
         }
     }
 } as const;
 
-// Helper functions for common color patterns
+// Helper functions
+
 export const getFinancialColor = (amount: number | null): string => {
     if (amount === null) return colors.financial.neutral;
     if (amount > 0) return colors.financial.positive;
@@ -243,18 +245,15 @@ export const getRowBackgroundColor = (isLinked: boolean) => {
     return isLinked ? colors.background.linkedRow : colors.background.unlinkedRow;
 };
 
-// Badge component utility
 export const getBadgeClasses = (type: StatusType) => {
-    const baseClasses = 'inline-block px-2 py-1 rounded-full text-center text-xs font-semibold tracking-wider';
+    const baseClasses = 'inline-block px-2.5 py-1 rounded-full text-center text-xs font-semibold tracking-wider font-label uppercase';
     return `${baseClasses} ${colors.status[type].bg} ${colors.status[type].text}`;
 };
 
-// Action button utility
 export const getActionButtonClasses = () => {
-    return `flex items-center justify-center w-8 h-8 ${colors.button.primary} rounded-full shadow-md transition focus:outline-none focus:ring-2 focus:ring-gray-400`;
+    return `flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white rounded-full shadow-[0_4px_12px_rgba(2,36,72,0.15)] transition focus:outline-none focus:ring-2 focus:ring-[#022448]`;
 };
 
-// Stats color utility
 export const getStatsColor = (type: string, value?: number): string => {
     switch (type) {
         case 'completed':

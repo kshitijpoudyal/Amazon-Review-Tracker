@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   collection, 
   getDocs, 
@@ -15,9 +15,50 @@ import {
 import { db } from '../firebase/config';
 import { PayPalTransaction, PayPalTransactionData } from '../types/PayPalTransaction';
 
+// ─── Cache helpers ──────────────────────────────────────────────────────────
+const CACHE_VERSION = 'v1';
+const ppCacheKey = (uid: string) => `art_paypal_${CACHE_VERSION}_${uid}`;
+
+function readPayPalCache(uid: string): PayPalTransaction[] | null {
+  try {
+    const raw = localStorage.getItem(ppCacheKey(uid));
+    if (!raw) return null;
+    const { transactions } = JSON.parse(raw);
+    return Array.isArray(transactions) ? transactions : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePayPalCache(uid: string, transactions: PayPalTransaction[]): void {
+  try {
+    localStorage.setItem(ppCacheKey(uid), JSON.stringify({ transactions, ts: Date.now() }));
+  } catch {}
+}
+
+function buildTransactionData(transactions: PayPalTransaction[]): PayPalTransactionData {
+  return {
+    transactions,
+    summary: {
+      totalIncome: transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
+      totalFees: transactions.reduce((s, t) => s + Math.abs(t.fees), 0),
+      netReceivedTotal: transactions.reduce((s, t) => s + t.total, 0),
+      transactionCount: transactions.length
+    }
+  };
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 export const usePayPalTransactions = (userId?: string) => {
-  const [data, setData] = useState<PayPalTransactionData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Synchronously read cache before first render
+  const initRef = useRef<{ data: PayPalTransactionData | null; hasCache: boolean } | null>(null);
+  if (!initRef.current) {
+    const cached = userId ? readPayPalCache(userId) : null;
+    initRef.current = { data: cached ? buildTransactionData(cached) : null, hasCache: !!cached };
+  }
+
+  const [data, setData] = useState<PayPalTransactionData | null>(initRef.current.data);
+  const [loading, setLoading] = useState(!initRef.current.hasCache);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTransactions = useCallback(async () => {
@@ -27,52 +68,31 @@ export const usePayPalTransactions = (userId?: string) => {
       return;
     }
 
-    setLoading(true);
+    // Only block UI if no cached data to show
+    if (!initRef.current?.hasCache) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
       const transactionsRef = collection(db, 'users', userId, 'paypal_transactions');
-      // Simplified query with single orderBy to avoid composite index requirement
       const transactionsQuery = query(transactionsRef, orderBy('date', 'desc'));
       const transactionsSnap = await getDocs(transactionsQuery);
 
-      const transactions: PayPalTransaction[] = transactionsSnap.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data
-        } as PayPalTransaction;
-      });
+      const transactions: PayPalTransaction[] = transactionsSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as PayPalTransaction));
 
       // Client-side sorting by date and time (most recent first)
       transactions.sort((a, b) => {
-        // First sort by date
         const dateComparison = b.date.localeCompare(a.date);
-        if (dateComparison !== 0) {
-          return dateComparison;
-        }
-        // If dates are equal, sort by time
+        if (dateComparison !== 0) return dateComparison;
         return b.time.localeCompare(a.time);
       });
 
-      // Calculate summary from transactions
-      const summary = {
-        totalIncome: transactions
-          .filter(t => t.amount > 0)
-          .reduce((sum, transaction) => sum + transaction.amount, 0),
-        totalFees: transactions
-          .reduce((sum, transaction) => sum + Math.abs(transaction.fees), 0),
-        netReceivedTotal: transactions
-          .reduce((sum, transaction) => sum + transaction.total, 0),
-        transactionCount: transactions.length
-      };
-
-      const transactionData: PayPalTransactionData = {
-        transactions,
-        summary
-      };
-
-      setData(transactionData);
+      writePayPalCache(userId, transactions);
+      setData(buildTransactionData(transactions));
     } catch (error) {
       console.error('❌ Error fetching PayPal transactions:', error);
       setError(error instanceof Error ? error.message : 'Unknown error');

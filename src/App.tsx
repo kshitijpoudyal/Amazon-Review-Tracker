@@ -23,7 +23,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="max-w-8xl mx-auto glass-effect shadow-card overflow-hidden">
+    <div className="min-h-screen bg-[#fbf9f3]">
       <AppHeader user={user} onLogout={logout} />
       <main>
         <Outlet />

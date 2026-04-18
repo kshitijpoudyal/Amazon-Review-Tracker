@@ -60,29 +60,29 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };  
   
   return (
-    <div className="min-h-screen gradient-bg-1 flex items-center justify-center p-5">
-      <div className="max-w-md w-full glass-effect rounded-2xl shadow-card overflow-hidden">
+    <div className="min-h-screen bg-[#eae8e2] flex items-center justify-center p-5">
+      <div className="max-w-md w-full bg-[#ffffff] rounded-3xl shadow-[0_24px_64px_rgba(2,36,72,0.10)] overflow-hidden">
         {/* Header */}
         <div className="gradient-bg text-white p-8 text-center">
-          <h1 className="text-3xl font-bold mb-2 text-shadow-lg">
+          <h1 className="text-3xl font-bold mb-2 tracking-tight">
             Amazon Review Tracker
           </h1>
-          <p className="text-blue-100">Sign in to manage your products</p>
+          <p className="text-white/70 text-sm font-label uppercase tracking-widest">Sign in to manage your products</p>
         </div>
 
         {/* Form */}
-        <div className="p-8 bg-white">
-          <form onSubmit={handleEmailAuth} className="space-y-6">
+        <div className="p-8 bg-[#fbf9f3]">
+          <form onSubmit={handleEmailAuth} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-label font-semibold text-[#43474e] uppercase tracking-wider mb-2">
                 Email Address
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                className="w-full px-4 py-3 rounded-2xl bg-[#e4e2dd] border-0 text-[#1b1c19] placeholder-[#74777f] focus:outline-none focus:ring-2 focus:ring-[#022448] text-base transition-all"
                 placeholder="Enter your email"
                 required
               />
@@ -90,14 +90,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-label font-semibold text-[#43474e] uppercase tracking-wider mb-2">
                 Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                className="w-full px-4 py-3 rounded-2xl bg-[#e4e2dd] border-0 text-[#1b1c19] placeholder-[#74777f] focus:outline-none focus:ring-2 focus:ring-[#022448] text-base transition-all"
                 placeholder="Enter your password"
                 required
                 minLength={6}
@@ -106,7 +106,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-[#ffdad6] text-[#ba1a1a] px-4 py-3 rounded-2xl text-sm">
                 {error}
               </div>
             )}
@@ -115,26 +115,26 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full px-4 py-3 bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white rounded-full hover:from-[#1e3a5f] hover:to-[#022448] focus:outline-none focus:ring-2 focus:ring-[#022448] font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_4px_16px_rgba(2,36,72,0.2)]"
             >
               {loading ? 'Processing...' : (isSignUp ? 'Create Account' : 'Sign In')}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-300"></div>
-            <span className="px-4 text-gray-500 text-sm">or</span>
-            <div className="flex-1 border-t border-gray-300"></div>
+          <div className="my-6 flex items-center gap-4">
+            <div className="flex-1 h-px bg-[rgba(196,198,207,0.3)]"></div>
+            <span className="text-[#74777f] text-sm font-label uppercase tracking-wider">or</span>
+            <div className="flex-1 h-px bg-[rgba(196,198,207,0.3)]"></div>
           </div>
 
           {/* Google Sign In */}
           <button
             onClick={handleGoogleAuth}
             disabled={loading}
-            className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+            className="w-full px-4 py-3 bg-[#eae8e2] text-[#1b1c19] rounded-full hover:bg-[#e4e2dd] focus:outline-none focus:ring-2 focus:ring-[#022448] font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-3 shadow-[0_2px_8px_rgba(2,36,72,0.06)]"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -148,10 +148,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+              className="text-[#006a68] hover:text-[#022448] text-sm font-medium transition-colors"
             >
-              {isSignUp 
-                ? 'Already have an account? Sign in' 
+              {isSignUp
+                ? 'Already have an account? Sign in'
                 : "Don't have an account? Create one"
               }
             </button>
