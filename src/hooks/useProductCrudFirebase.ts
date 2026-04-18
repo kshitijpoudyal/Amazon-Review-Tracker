@@ -55,28 +55,27 @@ export const useProductCrudFirebase = (userId?: string) => {
     }
   }, [data?.products, user?.email]);
 
-  const updateProduct = useCallback(async (index: number, updatedProduct: Product) => {
-    // Instant optimistic update — user sees change immediately
-    mutateLocal(products => products.map((p, i) => i === index ? updatedProduct : p));
+  const updateProduct = useCallback(async (_index: number, updatedProduct: Product) => {
+    // Optimistic update — match by ID, not index, because `index` comes from
+    // filteredProducts (a subset) and would corrupt the full products array.
+    mutateLocal(products => products.map(p => p.id === updatedProduct.id ? updatedProduct : p));
 
     setIsSaving(true);
     try {
       const success = await saveToFirebase(updatedProduct);
       if (!success) {
-        // Revert on failure
         console.error('❌ Save failed, reverting...');
         await refetch();
       } else {
-        // Fire-and-forget summary update (derived data, non-blocking)
         if (firebaseData) {
-          const updated = firebaseData.products.map((p, i) => i === index ? updatedProduct : p);
+          const updated = firebaseData.products.map(p => p.id === updatedProduct.id ? updatedProduct : p);
           updateSummaryFirebase(calculateSummary(updated)).catch(() => {});
         }
       }
       return success;
     } catch (error) {
       console.error('❌ Error updating product:', error);
-      await refetch(); // Revert optimistic update
+      await refetch();
       return false;
     } finally {
       setIsSaving(false);

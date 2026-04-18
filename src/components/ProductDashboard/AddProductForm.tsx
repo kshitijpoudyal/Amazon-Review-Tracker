@@ -15,10 +15,11 @@ interface AddProductFormProps {
 const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel }) => {
   const { activeVendors, DEFAULT_VENDOR_ID } = useVendors();
   const [showBookmarklet, setShowBookmarklet] = useState(false);
+  const [bookmarkletCopied, setBookmarkletCopied] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'url-only' | 'error'>('idle');
   const [showPasteBox, setShowPasteBox] = useState(false);
 
-  const [newProduct, setNewProduct] = useState<Product>({
+  const emptyProduct = (): Product => ({
     item: "",
     url: "",
     imageUrl: "",
@@ -35,6 +36,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
     isVoid: false,
     vendorId: DEFAULT_VENDOR_ID,
   });
+
+  const [newProduct, setNewProduct] = useState<Product>(emptyProduct);
 
   const handleInputChange = (field: keyof Product, value: string | number | boolean | null) => {
     setNewProduct(prev => ({ ...prev, [field]: value }));
@@ -77,9 +80,25 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
     handleInputChange(field, value === "" ? null : parseFloat(value));
   };
 
+  const resetForm = () => {
+    setNewProduct(emptyProduct());
+    setImportStatus('idle');
+    setShowPasteBox(false);
+    setShowBookmarklet(false);
+    setBookmarkletCopied(false);
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onCancel();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newProduct.item.trim()) onAdd(newProduct);
+    if (newProduct.item.trim()) {
+      onAdd(newProduct);
+      resetForm();
+    }
   };
 
   const applyPayload = (data: ReturnType<typeof parseBookmarkletClipboard>) => {
@@ -139,7 +158,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
       </div>
       <button
         type="button"
-        onClick={onCancel}
+        onClick={handleCancel}
         className="w-8 h-8 flex items-center justify-center text-[#74777f] hover:text-[#1b1c19] hover:bg-[#eae8e2] rounded-full transition-colors"
         aria-label="Close"
       >
@@ -233,8 +252,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
             </div>
           </div>
 
-          {/* Bookmarklet setup toggle — desktop only */}
-          <div className="hidden sm:block">
+          {/* Bookmarklet setup toggle */}
+          <div>
             <button
               type="button"
               onClick={() => setShowBookmarklet(v => !v)}
@@ -248,7 +267,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
 
             {showBookmarklet && (
               <div className={`mt-3 text-xs ${colors.text.muted} space-y-3 pl-4 border-l-2 border-[rgba(196,198,207,0.3)]`}>
-                <div>
+                <div className="hidden sm:block">
                   <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>🖥️ Desktop — drag to bookmarks bar</p>
                   <ol className="list-decimal list-inside space-y-1 leading-relaxed">
                     <li>Show bookmarks bar (Ctrl/⌘+Shift+B)</li>
@@ -265,7 +284,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
                   </a>
                 </div>
 
-                <div className={`border-t ${colors.border.default} pt-2`}>
+                <div className={`sm:border-t sm:${colors.border.default} sm:pt-2`}>
                   <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>📱 Android & iPhone — one-time setup</p>
                   <ol className="list-decimal list-inside space-y-1 leading-relaxed mb-2">
                     <li>Bookmark any page in your browser</li>
@@ -279,22 +298,32 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
                     <li>Long-press the text box → Select All → Copy</li>
                     <li>Come back here → tap Import → paste in the box that appears</li>
                   </ol>
-                  <p className={`mb-1 text-xs ${colors.text.secondary}`}>Long-press → Select All → Copy this code for the bookmark:</p>
-                  <textarea
-                    readOnly
-                    value={BOOKMARKLET_HREF}
-                    rows={3}
-                    onFocus={e => e.target.select()}
-                    className={`w-full px-2 py-2 text-xs font-mono rounded-lg border ${colors.border.default} bg-white ${colors.text.muted} resize-none`}
-                  />
-                </div>
-
-                <div className={`border-t ${colors.border.default} pt-2`}>
-                  <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>🔗 Any phone — order # only</p>
-                  <ol className="list-decimal list-inside space-y-1 leading-relaxed">
-                    <li>Amazon app → open order → Share → Copy Link</li>
-                    <li>Come back here → Import from Clipboard</li>
-                  </ol>
+                  <p className={`mb-1 text-xs ${colors.text.secondary}`}>Paste this code into the bookmark URL:</p>
+                  <div className="relative">
+                    <textarea
+                      readOnly
+                      value={BOOKMARKLET_HREF}
+                      rows={3}
+                      onFocus={e => e.target.select()}
+                      className={`w-full px-2 py-2 pr-16 text-xs font-mono rounded-lg border ${colors.border.default} bg-white ${colors.text.muted} resize-none`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(BOOKMARKLET_HREF).then(() => {
+                          setBookmarkletCopied(true);
+                          setTimeout(() => setBookmarkletCopied(false), 2000);
+                        });
+                      }}
+                      className={`absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                        bookmarkletCopied
+                          ? 'bg-[#006a68]/10 text-[#006a68]'
+                          : `${colors.background.secondary} ${colors.text.secondary} hover:bg-[#e4e2dd]`
+                      }`}
+                    >
+                      {bookmarkletCopied ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -414,7 +443,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
     <div className="flex gap-3">
       <button
         type="button"
-        onClick={onCancel}
+        onClick={handleCancel}
         className={`flex-1 px-4 py-3 ${colors.button.secondary} rounded-full font-medium text-sm`}
       >
         Cancel
@@ -432,7 +461,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onCancel}
+      onClose={handleCancel}
       header={modalHeader}
       body={modalBody}
       footer={modalFooter}
