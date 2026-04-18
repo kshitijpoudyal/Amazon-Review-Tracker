@@ -253,7 +253,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
                   <ol className="list-decimal list-inside space-y-1 leading-relaxed">
                     <li>Show bookmarks bar (Ctrl/⌘+Shift+B)</li>
                     <li>Drag the button below to your bookmarks bar</li>
-                    <li>On any Amazon order page, click it → overlay appears → Ctrl+C → come back here → Import</li>
+                    <li>On any Amazon order page, click it → data copies automatically → come back and click Import</li>
                   </ol>
                   <a
                     href={BOOKMARKLET_HREF}
