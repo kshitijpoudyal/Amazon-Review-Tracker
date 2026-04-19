@@ -67,7 +67,15 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                         })}
                     </div>
                 </div>
-                <div className="flex lg:hidden">
+                <div className="flex lg:hidden items-center gap-3">
+                    <a
+                        href="https://www.kshitijstudio.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
+                    >
+                        Powered by KshitijStudio
+                    </a>
                     <button
                         type="button"
                         onClick={() => setMobileMenuOpen(true)}
@@ -84,7 +92,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                     rel="noopener noreferrer"
                     className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
                   >
-                    Powered by Kshitij Studio
+                    Powered by KshitijStudio
                   </a>
                   {/* User icon with dropdown */}
                   <div className="relative" ref={userMenuRef}>
@@ -164,7 +172,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                                 rel="noopener noreferrer"
                                 className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
                             >
-                                Powered by Kshitij Studio
+                                Powered by KshitijStudio
                             </a>
                         </div>
                     </div>
