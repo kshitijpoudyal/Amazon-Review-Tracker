@@ -156,6 +156,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               }
             </button>
           </div>
+
+          {/* Powered by KshitijStudio */}
+          <div className="mt-8 pt-6 border-t border-[rgba(196,198,207,0.3)] text-center">
+            <a
+              href="https://www.kshitijstudio.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-[#74777f] hover:text-[#022448] transition-colors font-label uppercase tracking-wider"
+            >
+              <span>Powered by</span>
+              <span className="font-semibold text-[#022448]">KshitijStudio</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

@@ -65,6 +65,14 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                     </button>
                 </div>
                 <div className="hidden lg:flex items-center gap-3">
+                  <a
+                    href="https://www.kshitijstudio.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
+                  >
+                    by KshitijStudio
+                  </a>
                   <span className={`text-sm ${colors.header.navigation.link}`}>{displayName}</span>
                   <a href="#" onClick={onLogout} className="text-sm font-semibold text-white/70 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-all">
                     Log out →
