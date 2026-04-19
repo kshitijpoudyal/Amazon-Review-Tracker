@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Dialog, DialogPanel } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 import { User } from 'firebase/auth';
 import { colors } from '../../utils/colors';
 
@@ -17,13 +17,26 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
         { name: 'PayPal', href: '/paypal' }
     ]
 
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+                setUserMenuOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     // Safety check - should never be null due to ProtectedRoute, but defensive programming
     if (!user) {
         return null;
     }
 
     const displayName = user.displayName || user.email || 'User';
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     return (
         <header className={`${colors.header.background}`}>
@@ -71,12 +84,31 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                     rel="noopener noreferrer"
                     className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
                   >
-                    by KshitijStudio
+                    Powered by Kshitij Studio
                   </a>
-                  <span className={`text-sm ${colors.header.navigation.link}`}>{displayName}</span>
-                  <a href="#" onClick={onLogout} className="text-sm font-semibold text-white/70 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-all">
-                    Log out →
-                  </a>
+                  {/* User icon with dropdown */}
+                  <div className="relative" ref={userMenuRef}>
+                    <button
+                      onClick={() => setUserMenuOpen(v => !v)}
+                      className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 transition-all text-white/70 hover:text-white"
+                      aria-label="User menu"
+                    >
+                      <UserCircleIcon className="w-7 h-7" />
+                    </button>
+                    {userMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-52 rounded-xl bg-white shadow-lg ring-1 ring-black/5 z-50 overflow-hidden">
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                        </div>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); onLogout(); }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Log out →
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
             </nav>
             <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
