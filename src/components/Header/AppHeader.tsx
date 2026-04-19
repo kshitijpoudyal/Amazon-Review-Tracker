@@ -157,6 +157,16 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                                 </a>
                             </div>
                         </div>
+                        <div className="pt-4 text-center">
+                            <a
+                                href="https://www.kshitijstudio.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
+                            >
+                                Powered by Kshitij Studio
+                            </a>
+                        </div>
                     </div>
                 </DialogPanel>
             </Dialog>
