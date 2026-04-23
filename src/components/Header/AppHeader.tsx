@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Dialog, DialogPanel } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { User } from 'firebase/auth';
 import { colors } from '../../utils/colors';
 
@@ -20,6 +20,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
+    const [installPrompt, setInstallPrompt] = useState<Event & { prompt: () => void; userChoice: Promise<{ outcome: string }> } | null>(null);
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -30,6 +31,22 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        const handler = (e: Event) => {
+            e.preventDefault();
+            setInstallPrompt(e as Event & { prompt: () => void; userChoice: Promise<{ outcome: string }> });
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstall = async () => {
+        if (!installPrompt) return;
+        installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        if (outcome === 'accepted') setInstallPrompt(null);
+    };
 
     // Safety check - should never be null due to ProtectedRoute, but defensive programming
     if (!user) {
@@ -108,6 +125,15 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                         <div className="px-4 py-3 border-b border-gray-100">
                           <p className="text-xs text-gray-400 truncate">{user.email}</p>
                         </div>
+                        {installPrompt && (
+                          <button
+                            onClick={() => { setUserMenuOpen(false); handleInstall(); }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 border-b border-gray-100"
+                          >
+                            <ArrowDownTrayIcon className="w-4 h-4 text-[#006a68]" />
+                            Install App
+                          </button>
+                        )}
                         <button
                           onClick={() => { setUserMenuOpen(false); onLogout(); }}
                           className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -155,7 +181,16 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                                     );
                                 })}
                             </div>
-                            <div className="py-6">
+                            <div className="py-6 space-y-1">
+                                {installPrompt && (
+                                    <button
+                                        onClick={() => { setMobileMenuOpen(false); handleInstall(); }}
+                                        className={`-mx-3 w-full text-left rounded-lg px-3 py-2.5 text-base/7 font-semibold flex items-center gap-2 ${colors.header.mobile.menuLink}`}
+                                    >
+                                        <ArrowDownTrayIcon className="w-5 h-5" />
+                                        Install App
+                                    </button>
+                                )}
                                 <a
                                     href="#"
                                     onClick={onLogout}

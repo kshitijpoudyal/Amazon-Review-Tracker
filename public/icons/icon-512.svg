@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#022448"/>
+  <!-- Box lid -->
+  <rect x="96" y="164" width="320" height="56" rx="10" fill="#0a9e9b"/>
+  <!-- Box ribbon on lid -->
+  <rect x="228" y="164" width="56" height="56" rx="0" fill="#007d7a" opacity="0.7"/>
+  <!-- Box body -->
+  <rect x="112" y="220" width="288" height="168" rx="10" fill="#006a68"/>
+  <!-- Box ribbon on body -->
+  <rect x="228" y="220" width="56" height="168" rx="0" fill="#004f4d" opacity="0.7"/>
+  <!-- Star rating icon -->
+  <path d="M256 270 L265.5 299 L296 299 L272 317 L281.5 346 L256 328 L230.5 346 L240 317 L216 299 L246.5 299 Z" fill="white" opacity="0.95"/>
+</svg>

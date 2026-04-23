@@ -208,7 +208,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </div>
             <button
               onClick={() => setShowMobileFilters(v => !v)}
-              className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-colors flex-shrink-0 ${
+              className={`flex items-center justify-center p-4 rounded-xl border transition-colors flex-shrink-0 ${
                 showMobileFilters || hasActiveFilters
                   ? 'bg-[#022448] text-white border-[#022448]'
                   : `${colors.background.secondary} ${colors.text.secondary} border-transparent`

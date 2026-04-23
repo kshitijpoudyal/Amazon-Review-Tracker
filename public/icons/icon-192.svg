@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- Background -->
+  <rect width="192" height="192" rx="36" fill="#022448"/>
+  <!-- Box lid -->
+  <rect x="36" y="60" width="120" height="21" rx="4" fill="#0a9e9b"/>
+  <!-- Box ribbon on lid -->
+  <rect x="85" y="60" width="22" height="21" rx="0" fill="#007d7a" opacity="0.7"/>
+  <!-- Box body -->
+  <rect x="42" y="81" width="108" height="63" rx="4" fill="#006a68"/>
+  <!-- Box ribbon on body -->
+  <rect x="85" y="81" width="22" height="63" rx="0" fill="#004f4d" opacity="0.7"/>
+  <!-- Star -->
+  <path d="M96 102 L99.5 113 L111 113 L102 120 L105.5 131 L96 124 L86.5 131 L90 120 L81 113 L92.5 113 Z" fill="white" opacity="0.95"/>
+</svg>
