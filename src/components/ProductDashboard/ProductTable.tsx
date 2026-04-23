@@ -454,6 +454,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
           />
         </div>
 
+        {/* Vendor */}
+        {product.vendorId && (
+          <p className={`text-xs ${colors.text.muted}`}>
+            <span className="font-medium">Vendor:</span> {getVendorName(product.vendorId)}
+          </p>
+        )}
+
         {/* Financials */}
         <div className="flex items-end gap-5">
           <div>
