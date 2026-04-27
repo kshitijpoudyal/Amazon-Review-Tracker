@@ -89,7 +89,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                         href="https://www.kshitijstudio.com"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
+                        className="text-xs text-white hover:text-white/80 transition-colors tracking-wide"
                     >
                         Powered by KshitijStudio
                     </a>
@@ -107,7 +107,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                     href="https://www.kshitijstudio.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
+                    className="text-xs text-white hover:text-white/80 transition-colors tracking-wide"
                   >
                     Powered by KshitijStudio
                   </a>
@@ -205,7 +205,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                                 href="https://www.kshitijstudio.com"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-white/40 hover:text-white/70 transition-colors tracking-wide"
+                                className="text-xs text-white hover:text-white/80 transition-colors tracking-wide"
                             >
                                 Powered by KshitijStudio
                             </a>

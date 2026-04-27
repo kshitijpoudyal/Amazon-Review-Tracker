@@ -3,7 +3,13 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(grep -iv \"kshitijpoudyal@gmail\\\\|^$\")",
+      "Bash(sort -u -k3)",
+      "Bash(git config *)",
+      "Bash(awk '{print $3}')",
+      "Bash(grep \"Poudyal$\")",
+      "Bash(awk '$3 != \"kshitijpoudyal@gmail.com\"')"
     ]
   }
 }

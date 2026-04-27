@@ -163,10 +163,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               href="https://www.kshitijstudio.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-[#74777f] hover:text-[#022448] transition-colors font-label uppercase tracking-wider"
+              className="inline-flex items-center gap-1.5 text-xs text-white hover:text-white/80 transition-colors font-label uppercase tracking-wider"
             >
               <span>Powered by</span>
-              <span className="font-semibold text-[#022448]">KshitijStudio</span>
+              <span className="font-semibold text-white">KshitijStudio</span>
             </a>
           </div>
         </div>
