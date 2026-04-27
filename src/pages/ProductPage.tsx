@@ -209,7 +209,7 @@ const ProductPage: React.FC = () => {
   ] : [];
 
   return (
-    <DashboardContainer>
+    <DashboardContainer className="pb-24 md:pb-0">
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={displayLoading} />
       

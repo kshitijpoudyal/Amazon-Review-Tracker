@@ -9,7 +9,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children
 }) => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-6">
       {children}
     </div>
   );

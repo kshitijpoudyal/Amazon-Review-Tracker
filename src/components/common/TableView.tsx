@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { MobileItemCard, MobileCardSkeleton } from './MobileItemCard';
 import { colors } from '../../utils/colors';
 import { Button } from './Button';
@@ -9,6 +9,7 @@ export interface TableColumn {
   align?: 'left' | 'center' | 'right';
   width?: string;
   className?: string;
+  sortable?: boolean;
 }
 
 export interface TableAction {
@@ -22,6 +23,7 @@ export interface TableAction {
 export interface TableRow {
   id: string | number;
   data: Record<string, React.ReactNode>;
+  sortValues?: Record<string, string | number | null>;
   statusColor?: string;
   borderColor?: string;
   className?: string;
@@ -105,7 +107,7 @@ const TableLoadingView: React.FC<{ columns: TableColumn[]; loadingRows?: number 
     {/* Desktop Loading Layout */}
     <div className="hidden md:block">
       <div className="overflow-hidden border border-[rgba(196,198,207,0.15)] bg-[#fbf9f3] shadow-navy rounded-2xl">
-        <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden">
+        <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden pb-1">
           <table className="w-full">
             {/* Table Header */}
             <thead className={`${colors.background.gradient} border-b border-[rgba(196,198,207,0.1)] sticky top-0 z-10`}>
@@ -151,6 +153,33 @@ export const TableView: React.FC<TableViewProps> = ({
   activeDropdown,
   onDropdownToggle,
 }) => {
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const handleSortClick = (key: string) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    if (!sortKey) return rows;
+    return [...rows].sort((a, b) => {
+      const av = a.sortValues?.[sortKey] ?? null;
+      const bv = b.sortValues?.[sortKey] ?? null;
+      if (av === null && bv === null) return 0;
+      if (av === null) return 1;
+      if (bv === null) return -1;
+      const cmp = typeof av === 'number' && typeof bv === 'number'
+        ? av - bv
+        : String(av).localeCompare(String(bv), undefined, { sensitivity: 'base' });
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [rows, sortKey, sortDir]);
+
   if (loading) {
     return <TableLoadingView columns={columns} loadingRows={loadingRows} />;
   }
@@ -197,7 +226,7 @@ export const TableView: React.FC<TableViewProps> = ({
       {/* Desktop Table Layout */}
       <div className="hidden md:block">
         <div className={`overflow-hidden border border-[rgba(196,198,207,0.15)] ${colors.background.primary} shadow-navy rounded-2xl`}>
-          <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden">
+          <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden pb-1">
             <table className="w-full">
               {/* Table Header */}
               <thead className={`${colors.background.gradient} border-b border-[rgba(196,198,207,0.1)] sticky top-0 z-10`}>
@@ -205,12 +234,22 @@ export const TableView: React.FC<TableViewProps> = ({
                   {columns.map((column) => (
                     <th
                       key={column.key}
+                      onClick={column.sortable ? () => handleSortClick(column.key) : undefined}
                       className={`px-6 py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
-                        column.align === 'right' ? 'text-right' : 
+                        column.align === 'right' ? 'text-right' :
                         column.align === 'center' ? 'text-center' : 'text-left'
-                      } ${column.width || ''} ${column.className || ''}`}
+                      } ${column.width || ''} ${column.className || ''} ${column.sortable ? 'cursor-pointer select-none hover:text-white' : ''}`}
                     >
-                      {column.label}
+                      {column.sortable ? (
+                        <span className="inline-flex items-center gap-1">
+                          {column.label}
+                          <span className="opacity-60">
+                            {sortKey === column.key
+                              ? sortDir === 'asc' ? '↑' : '↓'
+                              : '↕'}
+                          </span>
+                        </span>
+                      ) : column.label}
                     </th>
                   ))}
                 </tr>
@@ -218,7 +257,7 @@ export const TableView: React.FC<TableViewProps> = ({
 
               {/* Table Body */}
               <tbody className="divide-y divide-[rgba(196,198,207,0.1)]">
-                {rows.map((row) => (
+                {sortedRows.map((row) => (
                   <tr
                     key={row.id}
                     className={`group hover:bg-[#eae8e2]/60 transition-colors duration-150 ${row.className || ''}`}

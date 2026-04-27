@@ -234,40 +234,47 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
   // Define table columns
   const columns: TableColumn[] = [
-    { 
-      key: 'item', 
+    {
+      key: 'item',
       label: `Item (${products.length})`,
-      align: 'left'
+      align: 'left',
+      sortable: true
     },
-    { 
-      key: 'vendor', 
+    {
+      key: 'vendor',
       label: 'Vendor',
-      align: 'left'
+      align: 'left',
+      sortable: true
     },
-    { 
-      key: 'date', 
+    {
+      key: 'date',
       label: 'Date',
-      align: 'left'
+      align: 'left',
+      sortable: true
     },
-    { 
-      key: 'status', 
+    {
+      key: 'status',
       label: 'Status',
-      align: 'center'
+      align: 'center',
+      sortable: true
     },
-    { 
-      key: 'paid', 
+    {
+      key: 'paid',
       label: 'Paid',
-      align: 'center'
+      align: 'center',
+      sortable: true
     },
-    { 
-      key: 'received', 
+    {
+      key: 'received',
       label: 'Received',
-      align: 'center'
+      align: 'center',
+      sortable: true
     },
-    { 
-      key: 'delta', 
+    {
+      key: 'delta',
       label: 'Delta',
-      align: 'center'
+      align: 'center',
+      sortable: true
     },
     ...(readOnly ? [] : [{ 
       key: 'actions', 
@@ -286,6 +293,15 @@ const ProductTable: React.FC<ProductTableProps> = ({
     return {
       id: product.id || index,
       borderColor: colors.status[status.type].border,
+      sortValues: {
+        item: product.item || '',
+        vendor: getVendorName(product.vendorId) || '',
+        date: product.orderDate || '',
+        status: status.label,
+        paid: product.paid ?? null,
+        received: product.received ?? null,
+        delta: product.delta ?? null,
+      },
       data: {
         item: (
           <div className='flex flex-col'>

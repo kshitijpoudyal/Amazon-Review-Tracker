@@ -86,40 +86,40 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
   // Define table columns
   const columns: TableColumn[] = [
-    { 
-      key: 'datetime', 
+    {
+      key: 'datetime',
       label: `Date/Time (${filteredAndSortedTransactions.length})`,
-      align: 'left'
+      align: 'left',
+      sortable: true
     },
-    { 
-      key: 'transactionId', 
+    {
+      key: 'transactionId',
       label: 'Transaction ID',
       align: 'left'
     },
-    { 
-      key: 'name', 
+    {
+      key: 'name',
       label: 'Name',
-      align: 'left'
+      align: 'left',
+      sortable: true
     },
-    { 
-      key: 'status', 
-      label: 'Status',
-      align: 'center'
-    },
-    { 
-      key: 'amount', 
+    {
+      key: 'amount',
       label: 'Amount',
-      align: 'center'
+      align: 'center',
+      sortable: true
     },
-    { 
-      key: 'fees', 
+    {
+      key: 'fees',
       label: 'Fees',
-      align: 'center'
+      align: 'center',
+      sortable: true
     },
-    { 
-      key: 'netReceived', 
+    {
+      key: 'netReceived',
       label: 'Net Received',
-      align: 'center'
+      align: 'center',
+      sortable: true
     },
     { 
       key: 'productLink', 
@@ -143,6 +143,13 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
       id: transaction.id || index,
       borderColor: isLinked ? 'border-l-[#006a68]' : 'border-l-amber-500',
       className: '',
+      sortValues: {
+        datetime: transaction.date || '',
+        name: transaction.name || '',
+        amount: transaction.amount ?? null,
+        fees: transaction.fees ?? null,
+        netReceived: transaction.total ?? null,
+      },
       data: {
         datetime: (
           <div className='flex flex-col'>
@@ -163,19 +170,15 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 {transaction.itemTitle}
               </div>
             )}
-          </div>
-        ),
-        status: (
-          <div className='flex flex-col items-center'>
-            {isLinked ? (
-              <span className={getBadgeClasses('linked')}>
-                {transaction.linkedProductIds!.length === 1 ? 'Linked' : `${transaction.linkedProductIds!.length} Linked`}
-              </span>
-            ) : (
-              <span className={getBadgeClasses('unlinked')}>
-                Unlinked
-              </span>
-            )}
+            <div className="mt-1">
+              {isLinked ? (
+                <span className={getBadgeClasses('linked')}>
+                  {transaction.linkedProductIds!.length === 1 ? 'Linked' : `${transaction.linkedProductIds!.length} Linked`}
+                </span>
+              ) : (
+                <span className={getBadgeClasses('unlinked')}>Unlinked</span>
+              )}
+            </div>
           </div>
         ),
         amount: (

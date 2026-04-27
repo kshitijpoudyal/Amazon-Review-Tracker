@@ -5,6 +5,7 @@ import { Modal, ProductThumbnail } from '../common';
 import { useVendors } from '../../hooks/useVendors';
 import { formatCurrency } from '../../utils/currency';
 import { getProductStatus } from '../../utils/productStatus';
+import { parseBookmarkletClipboard } from '../../utils/bookmarklet';
 
 interface EditProductModalProps {
   product: Product;
@@ -29,6 +30,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 }) => {
   const { activeVendors, DEFAULT_VENDOR_ID, getVendorName } = useVendors();
   const [editedProduct, setEditedProduct] = useState<Product>({ ...product });
+  const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'url-only' | 'error'>('idle');
+  const [showPasteBox, setShowPasteBox] = useState(false);
 
   useEffect(() => {
     setEditedProduct({ ...product });
@@ -67,6 +70,65 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     }
   };
 
+  const formatDateForInput = (dateString: string): string => {
+    try {
+      const MONTHS: Record<string, string> = {
+        january: '01', february: '02', march: '03', april: '04',
+        may: '05', june: '06', july: '07', august: '08',
+        september: '09', october: '10', november: '11', december: '12',
+      };
+      const match = dateString.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})$/);
+      if (match) {
+        const month = MONTHS[match[1].toLowerCase()];
+        if (month) return `${match[3]}-${month}-${match[2].padStart(2, '0')}`;
+      }
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    } catch {
+      return '';
+    }
+  };
+
+  const applyPayload = (data: ReturnType<typeof parseBookmarkletClipboard>) => {
+    setEditedProduct(prev => ({
+      ...prev,
+      item: data.productName || prev.item,
+      url: data.productUrl || prev.url,
+      imageUrl: data.imageUrl || prev.imageUrl,
+      orderNumber: data.orderNumber || prev.orderNumber,
+      paid: data.orderTotal ?? prev.paid,
+      orderDate: data.orderDate ? formatDateForInput(data.orderDate) : prev.orderDate,
+    }));
+    const isUrlOnly = !data.productName && !data.orderDate && !!data.orderNumber;
+    setImportStatus(isUrlOnly ? 'url-only' : 'success');
+    setShowPasteBox(false);
+    setTimeout(() => setImportStatus('idle'), 4000);
+  };
+
+  const handleClipboardImport = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const data = parseBookmarkletClipboard(text);
+      applyPayload(data);
+    } catch {
+      setShowPasteBox(true);
+      setImportStatus('idle');
+    }
+  };
+
+  const handlePasteBoxPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const text = e.clipboardData.getData('text');
+    try {
+      const data = parseBookmarkletClipboard(text);
+      applyPayload(data);
+    } catch {
+      setImportStatus('error');
+      setShowPasteBox(false);
+      setTimeout(() => setImportStatus('idle'), 3000);
+    }
+  };
+
   const handleSave = () => onSave(editedProduct);
 
   const status = getProductStatus(editedProduct);
@@ -83,9 +145,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           size="lg"
         />
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-label uppercase tracking-widest text-[#74777f] mb-0.5">
-            Editing Product
-          </p>
           <h2 className="text-base font-bold text-[#1b1c19] line-clamp-2 leading-snug">
             {editedProduct.item || 'Untitled Product'}
           </h2>
@@ -114,6 +173,54 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   // ── Body ───────────────────────────────────────────────────────
   const modalBody = (
     <div className="divide-y divide-[rgba(196,198,207,0.12)]">
+
+      {/* ── Quick Import ──────────────────────────────────────── */}
+      <div className="px-6 py-5 space-y-3">
+        <p className="text-[10px] font-label uppercase tracking-widest text-[#74777f]">
+          Quick Import
+        </p>
+        <button
+          type="button"
+          onClick={handleClipboardImport}
+          className={`w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${
+            importStatus === 'success'  ? 'bg-[#006a68]/10 text-[#006a68]'
+            : importStatus === 'url-only' ? 'bg-amber-50 text-amber-700'
+            : importStatus === 'error'    ? 'bg-[#ffdad6] text-[#ba1a1a]'
+            : `${colors.background.secondary} ${colors.text.secondary} hover:bg-[#e4e2dd]`
+          }`}
+        >
+          <span className="text-base">
+            {importStatus === 'success' ? '✅' : importStatus === 'url-only' ? '🔢' : importStatus === 'error' ? '⚠️' : '📋'}
+          </span>
+          <span>
+            {importStatus === 'success'   ? 'All fields filled!'
+            : importStatus === 'url-only' ? 'Order # filled — add other fields manually'
+            : importStatus === 'error'    ? 'Nothing found — copy an Amazon order URL first'
+            : 'Import from Clipboard'}
+          </span>
+        </button>
+        {showPasteBox && (
+          <div className="rounded-xl border border-[rgba(196,198,207,0.4)] bg-[#eae8e2] p-3 space-y-2">
+            <p className="text-xs text-[#74777f] font-medium">
+              📱 Long-press below and tap <strong>Paste</strong>
+            </p>
+            <textarea
+              autoFocus
+              rows={3}
+              placeholder="Paste bookmarklet data here…"
+              onPaste={handlePasteBoxPaste}
+              className="w-full text-xs font-mono bg-white border border-[rgba(196,198,207,0.4)] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#022448]/30 text-[#1b1c19] placeholder:text-[#c4c6cf]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPasteBox(false)}
+              className="text-xs text-[#74777f] hover:text-[#1b1c19]"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Void banner */}
       {editedProduct.isVoid && (

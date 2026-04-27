@@ -152,7 +152,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
           </svg>
         </div>
         <div>
-          <p className="text-[10px] font-label uppercase tracking-widest text-[#74777f]">New Entry</p>
           <h2 className="text-base font-bold text-[#1b1c19]">Add Product</h2>
         </div>
       </div>
