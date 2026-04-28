@@ -22,6 +22,8 @@ export interface Product {
   delta: number | null;
   isVoid?: boolean;
   vendorId?: string; // Reference to vendor ID
+  lastStatus?: string; // Last computed status — used to detect transitions
+  statusChangedAt?: string; // ISO date of last status change
 }
 
 export interface ProductData {

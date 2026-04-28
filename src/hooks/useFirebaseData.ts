@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Product, ProductData } from '../types/Product';
+import { getProductStatusType } from '../utils/productStatus';
 
 // ─── Cache helpers ──────────────────────────────────────────────────────────
 const CACHE_VERSION = 'v1';
@@ -112,9 +113,14 @@ export const useFirebaseData = (userId?: string) => {
       
       const productRef = doc(db, 'users', userId, 'products', product.id);
       
+      const newStatus = getProductStatusType(product);
+      const statusChanged = product.lastStatus !== newStatus;
+
       const productData = {
         ...product,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        lastStatus: newStatus,
+        ...(statusChanged && { statusChangedAt: new Date().toISOString() }),
       };
 
       await setDoc(productRef, productData, { merge: true });
@@ -130,10 +136,13 @@ export const useFirebaseData = (userId?: string) => {
     if (!userId) return false;
 
     try {
+      const initialStatus = getProductStatusType(product);
       const productData = {
         ...product,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        lastStatus: initialStatus,
+        statusChangedAt: new Date().toISOString(),
       };
 
       const docRef = await addDoc(collection(db, 'users', userId, 'products'), productData);

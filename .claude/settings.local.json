@@ -9,7 +9,11 @@
       "Bash(git config *)",
       "Bash(awk '{print $3}')",
       "Bash(grep \"Poudyal$\")",
-      "Bash(awk '$3 != \"kshitijpoudyal@gmail.com\"')"
+      "Bash(awk '$3 != \"kshitijpoudyal@gmail.com\"')",
+      "Bash(gh api *)",
+      "Bash(gh auth *)",
+      "Bash(grep -r \"SENDGRID\\\\|FROM_EMAIL\\\\|FROM_NAME\" /Users/a266352/kay/Amazon-Review-Tracker --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.js\" --include=\"*.json\" ! -path \"*/node_modules/*\" ! -path \"*/.git/*\")",
+      "Bash(find *)"
     ]
   }
 }
