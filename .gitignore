@@ -38,3 +38,5 @@ firebase-service-account.json
 backups/
 *.backup
 amazon-sample/
+.vercel
+.env*.local
