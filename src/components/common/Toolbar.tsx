@@ -102,7 +102,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 <ChevronDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
               </MenuButton>
 
-              <MenuItems className="absolute left-0 sm:right-0 z-20 mt-2 w-48 origin-top-left sm:origin-top-right rounded-2xl bg-[#fbf9f3] shadow-[0_12px_32px_rgba(2,36,72,0.08)] ring-1 ring-[rgba(196,198,207,0.2)] focus:outline-none transform transition-all duration-200 data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75">
+              <MenuItems className="absolute left-0 sm:right-0 z-20 mt-2 w-48 origin-top-left sm:origin-top-right rounded-2xl bg-[#fbf9f3] shadow-[0_12px_32px_rgba(2,36,72,0.08)] ring-1 ring-[rgba(196,198,207,0.2)] focus:outline-none transform transition-all duration-200 data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 max-h-60 overflow-y-auto filter-scrollbar">
                 <div className="py-2">
                   {filter.options?.map((option, index) => (
                     <MenuItem key={option.value}>

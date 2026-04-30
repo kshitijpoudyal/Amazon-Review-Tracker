@@ -125,6 +125,29 @@
     background-color: rgba(116, 119, 127, 0.45);
   }
 
+  /* Ultra-thin, nearly invisible scrollbar for dropdowns */
+  .filter-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(116, 119, 127, 0.12) transparent;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(116, 119, 127, 0.12);
+    border-radius: 9999px;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(116, 119, 127, 0.3);
+  }
+
   .scrollbar-hidden {
     -ms-overflow-style: none;
     scrollbar-width: none;

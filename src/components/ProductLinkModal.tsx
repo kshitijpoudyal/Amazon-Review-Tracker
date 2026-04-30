@@ -341,8 +341,27 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
     </div>
   );
 
+  const handleUnlink = () => {
+    onProductSelect([]);
+    closeModal();
+  };
+
+  const isAlreadyLinked = selectedProductIds.length > 0;
+
   const footer = (
     <form onSubmit={handleSave} className="flex gap-3">
+      {isAlreadyLinked && (
+        <button
+          type="button"
+          onClick={handleUnlink}
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-full border border-[#ba1a1a]/30 text-[#ba1a1a] bg-[#ba1a1a]/5 hover:bg-[#ba1a1a]/10 active:scale-95 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          Unlink
+        </button>
+      )}
       <button
         type="button"
         onClick={closeModal}
