@@ -12,6 +12,7 @@ export const useDataSource = (userId: string | undefined) => {
       updateProduct: privateData.updateProduct,
       addProduct: privateData.addProduct,
       deleteProduct: privateData.deleteProduct,
+      refetch: privateData.refreshFromFirebase,
       userProfile: null,
     };
   }, [privateData]);

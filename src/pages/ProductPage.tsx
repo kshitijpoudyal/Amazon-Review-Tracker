@@ -19,6 +19,7 @@ import {
   DashboardSection,
   FilterControlConfig,
   EmailReminderPanel,
+  PullToRefresh,
   useToast
 } from '../components/common';
 import Toolbar from '../components/common/Toolbar';
@@ -74,6 +75,7 @@ const ProductPage: React.FC = () => {
     updateProduct,
     addProduct,
     deleteProduct,
+    refetch,
   } = useDataSource(user?.uid);
 
   // Enforce minimum loading time of 3 seconds
@@ -209,6 +211,7 @@ const ProductPage: React.FC = () => {
   ] : [];
 
   return (
+    <PullToRefresh onRefresh={refetch} disabled={displayLoading}>
     <DashboardContainer className="pb-24 md:pb-0">
       {/* Stats Cards */}
       <DashboardStats stats={statsData} loading={displayLoading} />
@@ -262,6 +265,7 @@ const ProductPage: React.FC = () => {
         </button>
       )}
     </DashboardContainer>
+    </PullToRefresh>
   );
 };
 

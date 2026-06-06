@@ -13,7 +13,12 @@
       "Bash(gh api *)",
       "Bash(gh auth *)",
       "Bash(grep -r \"SENDGRID\\\\|FROM_EMAIL\\\\|FROM_NAME\" /Users/a266352/kay/Amazon-Review-Tracker --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.js\" --include=\"*.json\" ! -path \"*/node_modules/*\" ! -path \"*/.git/*\")",
-      "Bash(find *)"
+      "Bash(find *)",
+      "Bash(sort -u -k2)",
+      "Bash(git remote *)",
+      "Bash(git filter-repo *)",
+      "Bash(git push *)",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute"
     ]
   }
 }

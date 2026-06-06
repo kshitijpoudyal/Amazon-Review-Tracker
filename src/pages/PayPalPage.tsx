@@ -13,6 +13,7 @@ import {
   DashboardError,
   DashboardSection,
   FilterControlConfig,
+  PullToRefresh,
   useToast
 } from '../components/common';
 import { formatCurrency } from '../utils/currency';
@@ -208,6 +209,7 @@ export const PayPalPage: React.FC = () => {
   ];
 
   return (
+    <PullToRefresh onRefresh={refetch} disabled={displayLoading}>
     <DashboardLayout>
       {/* Error Display */}
       {error && (
@@ -248,5 +250,6 @@ export const PayPalPage: React.FC = () => {
         onCancel={handleHideAddForm}
       />
     </DashboardLayout>
+    </PullToRefresh>
   );
 };
