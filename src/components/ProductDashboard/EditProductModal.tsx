@@ -429,7 +429,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         {editedProduct.delta !== null && (
           <button
             type="button"
-            onClick={() => handleInputChange('delta', null)}
+            onClick={() => setEditedProduct(prev => ({ ...prev, delta: null, received: null }))}
             className="text-xs text-[#74777f] hover:text-[#1b1c19] underline transition-colors"
           >
             Reset delta to null

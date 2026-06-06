@@ -233,14 +233,21 @@ export const usePayPalTransactions = (userId?: string) => {
       
       if (productSnap.exists()) {
         const productData = productSnap.data();
-        const paid = productData.paid || 0;
-        const delta = totalReceived - paid;
 
-        await updateDoc(productRef, {
-          received: totalReceived,
-          delta: delta,
-          updatedAt: serverTimestamp()
-        });
+        if (linkedTransactions.length === 0) {
+          await updateDoc(productRef, {
+            received: null,
+            delta: null,
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          const paid = productData.paid || 0;
+          await updateDoc(productRef, {
+            received: totalReceived,
+            delta: totalReceived - paid,
+            updatedAt: serverTimestamp()
+          });
+        }
       }
     } catch (err) {
       console.error('Error updating product received amount:', err);
