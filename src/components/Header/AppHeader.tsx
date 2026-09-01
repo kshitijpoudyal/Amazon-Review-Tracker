@@ -164,8 +164,8 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                             <div className="space-y-2 py-6">
                                 {navigation.map((item) => {
                                     const isActive = item.href === '/' 
-                                        ? location.pathname === '/' 
-                                        : location.pathname.startsWith(item.href);
+                                ? location.pathname === '/' 
+                                : location.pathname.startsWith(item.href);
                                     return (
                                         <a
                                             key={item.name}

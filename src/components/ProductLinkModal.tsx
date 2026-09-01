@@ -4,6 +4,7 @@ import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Modal, ProductThumbnail } from './common';
 import { getProductStatus, isVoid, isRefundPending } from '../utils/productStatus';
 import { formatCurrency } from '../utils/currency';
+import { getPayPalMatchSuggestions } from '../utils/paypalMatchSuggestions';
 
 interface ProductLinkModalProps {
   products: Product[];
@@ -28,6 +29,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>(selectedProductIds);
   const [hideLinked, setHideLinked] = useState(true);
   const [hideVoid, setHideVoid] = useState(true);
+  const [suggestionsExpanded, setSuggestionsExpanded] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setSuggestionsExpanded(true);
       const id = setTimeout(() => inputRef.current?.focus(), 60);
       return () => clearTimeout(id);
     }
@@ -81,6 +84,11 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
 
   const linkedCount = products.filter(p => linkedProductIds.includes(p.id || '') || getProductStatus(p).type === 'complete').length;
   const voidCount = products.filter(p => isVoid(p)).length;
+
+  const matchSuggestions = useMemo(() => {
+    if (!transaction) return [];
+    return getPayPalMatchSuggestions(transaction, products, linkedProductIds);
+  }, [transaction, products, linkedProductIds]);
 
   // Sum of selected products' received amounts (for match indicator)
   const selectedProducts = products.filter(p => p.id && tempSelectedIds.includes(p.id));
@@ -265,6 +273,66 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
           </button>
         )}
       </div>
+
+      {/* Suggested matches */}
+      {transaction && matchSuggestions.length > 0 && tempSelectedIds.length === 0 && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setSuggestionsExpanded(v => !v)}
+            className="w-full flex items-center justify-between gap-2 text-left group"
+            aria-expanded={suggestionsExpanded}
+          >
+            <p className="text-[10px] font-label uppercase tracking-widest text-[#74777f] group-hover:text-[#43474e] transition-colors">
+              Suggested matches ({matchSuggestions.length})
+            </p>
+            <svg
+              className={`w-4 h-4 text-[#74777f] flex-shrink-0 transition-transform ${suggestionsExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {suggestionsExpanded && (
+            <div className="space-y-2">
+              {matchSuggestions.map(({ product, amountDiff, confidence }) => {
+                const id = product.id || '';
+                const status = getProductStatus(product);
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => id && handleToggle(id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-[#006a68]/20 bg-[#006a68]/5 hover:bg-[#006a68]/10 transition-colors text-left"
+                  >
+                    <ProductThumbnail imageUrl={product.imageUrl} productName={product.item} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#1b1c19] truncate">{product.item}</p>
+                      <p className="text-xs text-[#74777f] mt-0.5">
+                        Paid {formatCurrency(product.paid)} · {status.label}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                        confidence === 'high' ? 'bg-[#006a68]/15 text-[#006a68]'
+                          : confidence === 'medium' ? 'bg-amber-100 text-amber-800'
+                          : 'bg-[#eae8e2] text-[#74777f]'
+                      }`}>
+                        {confidence}
+                      </span>
+                      {amountDiff >= 0.01 && (
+                        <p className="text-[10px] text-[#74777f] mt-1">±{formatCurrency(amountDiff)}</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
