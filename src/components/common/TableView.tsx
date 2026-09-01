@@ -115,7 +115,7 @@ const TableLoadingView: React.FC<{ columns: TableColumn[]; loadingRows?: number 
                 {columns.map((column) => (
                   <th
                     key={`header-${column.key}`}
-                    className={`px-6 py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
+                    className={`px-4 py-3 lg:px-6 lg:py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
                       column.align === 'right' ? 'text-right' : 
                       column.align === 'center' ? 'text-center' : 'text-left'
                     } ${column.width || ''} ${column.className || ''}`}
@@ -235,7 +235,7 @@ export const TableView: React.FC<TableViewProps> = ({
                     <th
                       key={column.key}
                       onClick={column.sortable ? () => handleSortClick(column.key) : undefined}
-                      className={`px-6 py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
+                      className={`px-4 py-3 lg:px-6 lg:py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
                         column.align === 'right' ? 'text-right' :
                         column.align === 'center' ? 'text-center' : 'text-left'
                       } ${column.width || ''} ${column.className || ''} ${column.sortable ? 'cursor-pointer select-none hover:text-white' : ''}`}

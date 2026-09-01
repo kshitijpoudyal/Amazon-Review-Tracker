@@ -57,13 +57,13 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
 
     return (
         <header className={`${colors.header.background}`}>
-            <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8">
+            <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-6 lg:px-8">
                 {/* Brand + Nav */}
                 <div className="flex items-center gap-x-6">
                     <span className="text-white font-bold text-sm tracking-tight select-none">
                         📦 Review Tracker
                     </span>
-                    <div className="hidden lg:flex lg:gap-x-1">
+                    <div className="hidden md:flex md:gap-x-1">
                         {navigation.map((item) => {
                             const isActive = item.href === '/' 
                                 ? location.pathname === '/' 
@@ -84,7 +84,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                         })}
                     </div>
                 </div>
-                <div className="flex lg:hidden items-center gap-3">
+                <div className="flex md:hidden items-center gap-3">
                     <a
                         href="https://www.kshitijstudio.com"
                         target="_blank"
@@ -102,7 +102,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                         <Bars3Icon aria-hidden="true" className="size-6" />
                     </button>
                 </div>
-                <div className="hidden lg:flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-3">
                   <a
                     href="https://www.kshitijstudio.com"
                     target="_blank"
@@ -145,7 +145,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                   </div>
                 </div>
             </nav>
-            <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
+            <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="md:hidden">
                 <div className="fixed inset-0 z-50" />
                 <DialogPanel className={`fixed inset-y-0 right-0 z-50 w-full overflow-y-auto ${colors.header.background} p-4 sm:max-w-sm sm:ring-1 ${colors.header.mobile.ring}`}>
                     <div className="flex items-center justify-between">

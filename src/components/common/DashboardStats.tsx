@@ -41,8 +41,8 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 
   if (loading) {
     return (
-      <div className="px-4 sm:px-6 lg:px-8 py-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+      <div className="px-4 sm:px-6 md:px-6 lg:px-8 py-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <StatCardSkeleton key={i} />
           ))}
@@ -52,8 +52,8 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+    <div className="px-4 sm:px-6 md:px-6 lg:px-8 py-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {stats.map((stat, index) => (
           <StatCard
             key={index}

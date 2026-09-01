@@ -104,8 +104,401 @@ function _bookmarkletSource() {
  */
 export const BOOKMARKLET_HREF = `javascript:(function(){const de=document.querySelector('[data-component="orderDate"] span');const od=de?de.textContent.replace(/[^\\w\\s,]/g,'').trim():'';const oe=document.querySelector('[data-component="orderId"] span');let on=oe?oe.textContent.trim():'';if(!on){const m=location.href.match(/orderID=(\\d{3}-\\d{7}-\\d{7})/);if(m)on=m[1];}if(!on){const m=document.body.innerText.match(/\\b(\\d{3}-\\d{7}-\\d{7})\\b/);if(m)on=m[1];}const tm=document.body.innerText.match(/Grand Total[:\\s]+\\$?([\\d,]+\\.\\d{2})/i);const ot=tm?parseFloat(tm[1].replace(/,/g,'')):null;const tl=document.querySelector('[data-component="itemTitle"] a');const pn=tl?tl.textContent.trim().replace(/\\s+/g,' '):'';let pu='';if(tl){const m=tl.href.match(/\\/dp\\/([A-Z0-9]{10})/);pu=m?'https://www.amazon.com/dp/'+m[1]:tl.href.split('?')[0];}const ie=document.querySelector('[data-component="itemImage"] img');const iu=ie?(ie.getAttribute('data-a-hires')||ie.src):'';const p={orderDate:od,orderNumber:on,orderTotal:ot,productName:pn,productUrl:pu,imageUrl:iu};const j=JSON.stringify(p);function showOv(){const ov=document.createElement('div');ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';const bx=document.createElement('div');bx.style.cssText='background:#fff;border-radius:16px;padding:20px;width:100%;max-width:480px;font-family:system-ui,sans-serif;';const h=document.createElement('p');h.style.cssText='font-weight:700;font-size:15px;margin:0 0 4px;color:#1b1c19;';h.textContent='Order data ready';const s=document.createElement('p');s.style.cssText='font-size:12px;color:#74777f;margin:0 0 12px;line-height:1.5;white-space:pre-wrap;';s.textContent=(pn||'(product not found)')+'\\n'+(on||'')+(ot?'  \\u00B7  $'+ot:'');const ins=document.createElement('p');ins.style.cssText='font-size:13px;color:#022448;font-weight:600;margin:0 0 6px;';ins.textContent='Long-press below \\u2192 Select All \\u2192 Copy';const ta=document.createElement('textarea');ta.value=j;ta.readOnly=true;ta.rows=5;ta.style.cssText='width:100%;font-size:10px;font-family:monospace;border:2px solid #022448;border-radius:8px;padding:8px;box-sizing:border-box;color:#1b1c19;background:#f5f5f5;resize:none;';const cb=document.createElement('button');cb.textContent='Close';cb.style.cssText='margin-top:12px;width:100%;padding:10px;border:none;border-radius:8px;background:#eae8e2;font-size:14px;font-weight:600;cursor:pointer;color:#1b1c19;';cb.onclick=function(){document.body.removeChild(ov);};bx.appendChild(h);bx.appendChild(s);bx.appendChild(ins);bx.appendChild(ta);bx.appendChild(cb);ov.appendChild(bx);document.body.appendChild(ov);ta.focus();ta.select();}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(j).then(function(){const bn=document.createElement('div');bn.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#022448;color:#fff;padding:12px 24px;border-radius:12px;font-family:system-ui,sans-serif;font-size:14px;font-weight:600;z-index:999999;box-shadow:0 8px 24px rgba(0,0,0,0.3);white-space:nowrap;';bn.textContent='\\u2713 Copied!';document.body.appendChild(bn);setTimeout(function(){if(bn.parentNode)bn.parentNode.removeChild(bn);},2000);}).catch(showOv);}else{showOv();}})();`;
 
+/**
+ * Wayfair Order Details Bookmarklet
+ *
+ * On My Orders list pages with multiple orders, open "View/Edit Details" for
+ * the item first — the bookmarklet scopes extraction to that drawer and matches
+ * the corresponding order card for date/order number.
+ */
+// @ts-expect-error intentional documentation function
+function _wayfairBookmarkletSource() {
+  const SKIP = /Wayfair Rewards|Protection Plan|Professional Assembly|Allstate|Gift Card/i;
+
+  function findDrawerRoot(): Element | null {
+    for (const dialog of document.querySelectorAll('[role="dialog"], [aria-modal="true"]')) {
+      const text = dialog.textContent || '';
+      if (/view\s*\/?\s*edit\s*details|your item/i.test(text)) return dialog;
+    }
+    for (const el of document.querySelectorAll('h1,h2,h3,h4,h5,h6,div,span')) {
+      const t = (el.textContent || '').trim();
+      if (t.length > 40 || !/view\s*\/?\s*edit\s*details/i.test(t)) continue;
+      let node: Element | null = el;
+      for (let d = 0; d < 12 && node; d++) {
+        const st = window.getComputedStyle(node);
+        const r = node.getBoundingClientRect();
+        if (
+          r.width > 250 &&
+          r.height > 300 &&
+          (st.position === 'fixed' || st.position === 'absolute') &&
+          r.left > window.innerWidth * 0.3
+        ) {
+          return node;
+        }
+        node = node.parentElement;
+      }
+    }
+    return null;
+  }
+
+  function findOrderCards(): Element[] {
+    const cards: Element[] = [];
+    const seen = new Set<Element>();
+    for (const el of document.querySelectorAll('*')) {
+      const t = el.textContent || '';
+      if (el.childElementCount > 4 || !/Wayfair Order #\d+/.test(t) || t.length > 120) continue;
+      let card: Element | null = el;
+      for (let u = 0; u < 12 && card; u++) {
+        const ct = card.textContent || '';
+        if (/Ordered On:/i.test(ct) && ct.length > 80 && ct.length < 12000) {
+          if (!seen.has(card)) {
+            seen.add(card);
+            cards.push(card);
+          }
+          break;
+        }
+        card = card.parentElement;
+      }
+    }
+    return cards;
+  }
+
+  function findOrderCardForProduct(productHint: string): Element | null {
+    const cards = findOrderCards();
+    if (!productHint) return cards[0] || null;
+    const hint = productHint.toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 30);
+    for (const card of cards) {
+      if ((card.textContent || '').toLowerCase().includes(hint)) return card;
+    }
+    return cards[0] || null;
+  }
+
+  function extractProductFromScope(scope: Element | Document) {
+    let productName = '';
+    let productUrl = '';
+    let imageUrl = '';
+    let orderTotal: number | null = null;
+
+    const blocks: Element[] = [];
+    const seen = new Set<Element>();
+    scope.querySelectorAll('img').forEach((img) => {
+      let el: Element | null = img.parentElement;
+      for (let d = 0; d < 8 && el; d++) {
+        const t = el.textContent || '';
+        if (/Quantity\s*:/i.test(t) && t.length > 30 && t.length < 4000) {
+          if (!seen.has(el)) {
+            seen.add(el);
+            blocks.push(el);
+          }
+          break;
+        }
+        el = el.parentElement;
+      }
+    });
+
+    for (const block of blocks) {
+      const blockText = block.textContent || '';
+      if (SKIP.test(blockText)) continue;
+
+      const lines = blockText.split('\n').map((l) => l.trim()).filter(Boolean);
+      const skipLine =
+        /^(Delivered|Ordered|Wayfair|Total|Quantity|Upholstery|Add |Missing|Return |Report |Track |Edit |View |By |Download|Your Item|Your Shipment|Delivery)/i;
+
+      for (const line of lines) {
+        if (line.length > 15 && !skipLine.test(line) && !/^\d+$/.test(line) && line.split(' ').length >= 3) {
+          productName = line.replace(/\s+/g, ' ');
+          break;
+        }
+      }
+
+      block.querySelectorAll('a[href]').forEach((a) => {
+        if (productUrl) return;
+        const href = (a as HTMLAnchorElement).href || '';
+        if (
+          href.includes('wayfair.com') &&
+          (href.includes('/pdp/') || href.includes('~') || /view details/i.test(a.textContent || ''))
+        ) {
+          productUrl = href.split('?')[0];
+          if (!productName && (a.textContent || '').trim().length > 15) {
+            productName = (a.textContent || '').trim().replace(/\s+/g, ' ');
+          }
+        }
+      });
+
+      const img = block.querySelector('img[src]') as HTMLImageElement | null;
+      if (img) imageUrl = img.src || '';
+
+      for (const line of lines) {
+        if (/Assembly|Protection|Add Professional|Allstate/i.test(line)) continue;
+        const priceMatch = line.match(/\$\s?([\d,]+\.\d{2})/);
+        if (priceMatch) {
+          orderTotal = parseFloat(priceMatch[1].replace(/,/g, ''));
+          break;
+        }
+      }
+      break;
+    }
+
+    if (!productName) {
+      scope.querySelectorAll('a[href*="/pdp/"], a[href*="~"]').forEach((lk) => {
+        if (productName) return;
+        let par: Element | null = lk.parentElement;
+        for (let u = 0; u < 6 && par; u++) {
+          if (SKIP.test(par.textContent || '')) {
+            par = null;
+            break;
+          }
+          par = par.parentElement;
+        }
+        if (par === null) return;
+        productName = (lk.textContent || '').trim().replace(/\s+/g, ' ');
+        productUrl = (lk as HTMLAnchorElement).href.split('?')[0];
+      });
+    }
+
+    return { productName, productUrl, imageUrl, orderTotal };
+  }
+
+  function extractTotalPrice(scope: Element | Document | null): number | null {
+    if (!scope) return null;
+    const text = scope === document ? document.body.innerText : (scope as HTMLElement).innerText;
+
+    const directMatch = text.match(/Total Price[:\s]*\$?\s*([\d,]+\.\d{2})/i);
+    if (directMatch) return parseFloat(directMatch[1].replace(/,/g, ''));
+
+    if (scope !== document && 'querySelectorAll' in scope) {
+      for (const el of scope.querySelectorAll('h1,h2,h3,h4,h5,h6,div,span')) {
+        const heading = (el.textContent || '').trim();
+        if (!/^your order$/i.test(heading)) continue;
+        let section: Element | null = el.parentElement;
+        for (let u = 0; u < 6 && section; u++) {
+          const sectionMatch = (section.textContent || '').match(/Total Price[:\s]*\$?\s*([\d,]+\.\d{2})/i);
+          if (sectionMatch) return parseFloat(sectionMatch[1].replace(/,/g, ''));
+          section = section.parentElement;
+        }
+      }
+    }
+    return null;
+  }
+
+  function extractOrderMeta(scope: Element | Document) {
+    const text = scope === document ? document.body.innerText : (scope as HTMLElement).innerText;
+    const dateMatch = text.match(/Ordered On:\s*([A-Za-z]+\s+\d{1,2},?\s*\d{4})/i);
+    const orderNumMatch = text.match(/Wayfair Order #(\d+)/i);
+    let orderNumber = orderNumMatch ? orderNumMatch[1] : '';
+    if (!orderNumber) {
+      const urlMatch = location.href.match(/order(?:Id|ID|Number)[=/](\d{8,})/i);
+      if (urlMatch) orderNumber = urlMatch[1];
+    }
+    if (!orderNumber) {
+      const pathMatch = location.href.match(/\/(\d{10,})(?:[/?#]|$)/);
+      if (pathMatch) orderNumber = pathMatch[1];
+    }
+    return {
+      orderDate: dateMatch ? dateMatch[1].trim() : '',
+      orderNumber,
+      orderTotal: extractTotalPrice(scope),
+    };
+  }
+
+  const drawer = findDrawerRoot();
+  const orderCount = (document.body.innerText.match(/Wayfair Order #/g) || []).length;
+
+  if (!drawer && orderCount > 1) {
+    void 'Open View/Edit Details first, then run bookmarklet';
+    return;
+  }
+
+  const productScope = drawer || document;
+  const { productName, productUrl, imageUrl, orderTotal: itemPrice } = extractProductFromScope(productScope);
+
+  const orderCard = drawer
+    ? findOrderCardForProduct(productName)
+    : orderCount === 1
+      ? findOrderCards()[0]
+      : null;
+  const orderMeta = extractOrderMeta(orderCard || productScope);
+
+  let orderTotal = itemPrice;
+  if (orderTotal == null) {
+    orderTotal =
+      extractTotalPrice(drawer) ??
+      extractTotalPrice(orderCard) ??
+      orderMeta.orderTotal;
+  }
+
+  const payload = {
+    retailer: 'wayfair',
+    orderDate: orderMeta.orderDate,
+    orderNumber: orderMeta.orderNumber,
+    orderTotal,
+    productName,
+    productUrl,
+    imageUrl,
+  };
+  void payload;
+}
+
+/** Readable Wayfair bookmarklet body — minified into WAYFAIR_BOOKMARKLET_HREF at build time in source */
+const WAYFAIR_BOOKMARKLET_BODY = `(function(){
+var SKIP=/Wayfair Rewards|Protection Plan|Professional Assembly|Allstate|Gift Card/i;
+function findDrawerRoot(){
+  var dialogs=document.querySelectorAll('[role="dialog"], [aria-modal="true"]');
+  for(var i=0;i<dialogs.length;i++){
+    var dt=dialogs[i].innerText||'';
+    if(/view\\s*\\/?\\s*edit\\s*details|your item/i.test(dt))return dialogs[i];
+  }
+  var nodes=document.querySelectorAll('h1,h2,h3,h4,h5,h6,div,span');
+  for(var j=0;j<nodes.length;j++){
+    var t=(nodes[j].textContent||'').trim();
+    if(t.length>40||!/view\\s*\\/?\\s*edit\\s*details/i.test(t))continue;
+    var node=nodes[j];
+    for(var d=0;d<12&&node;d++){
+      var st=window.getComputedStyle(node);
+      var r=node.getBoundingClientRect();
+      if(r.width>250&&r.height>300&&(st.position==='fixed'||st.position==='absolute')&&r.left>window.innerWidth*0.3)return node;
+      node=node.parentElement;
+    }
+  }
+  return null;
+}
+function findOrderCards(){
+  var cards=[],seen=new Set();
+  document.querySelectorAll('*').forEach(function(el){
+    var t=el.innerText||'';
+    if(el.childElementCount>4||!/Wayfair Order #\\d+/.test(t)||t.length>120)return;
+    var card=el;
+    for(var u=0;u<12&&card;u++){
+      var ct=card.innerText||'';
+      if(/Ordered On:/i.test(ct)&&ct.length>80&&ct.length<12000){
+        if(!seen.has(card)){seen.add(card);cards.push(card);}
+        break;
+      }
+      card=card.parentElement;
+    }
+  });
+  return cards;
+}
+function findOrderCardForProduct(hint){
+  var cards=findOrderCards();
+  if(!hint)return cards[0]||null;
+  var h=hint.toLowerCase().replace(/\\s+/g,' ').trim().slice(0,30);
+  for(var i=0;i<cards.length;i++){
+    if((cards[i].innerText||'').toLowerCase().indexOf(h)>=0)return cards[i];
+  }
+  return cards[0]||null;
+}
+function extractProduct(scope){
+  var productName='',productUrl='',imageUrl='',orderTotal=null;
+  var blocks=[],seen=new Set();
+  scope.querySelectorAll('img').forEach(function(img){
+    var el=img.parentElement;
+    for(var d=0;d<8&&el;d++){
+      var tx=el.innerText||'';
+      if(/Quantity\\s*:/i.test(tx)&&tx.length>30&&tx.length<4000){
+        if(!seen.has(el)){seen.add(el);blocks.push(el);}
+        break;
+      }
+      el=el.parentElement;
+    }
+  });
+  for(var i=0;i<blocks.length;i++){
+    var block=blocks[i],bt=block.innerText||'';
+    if(SKIP.test(bt))continue;
+    var lines=bt.split('\\n').map(function(l){return l.trim();}).filter(Boolean);
+    var skipLine=/^(Delivered|Ordered|Wayfair|Total|Quantity|Upholstery|Add |Missing|Return |Report |Track |Edit |View |By |Download|Your Item|Your Shipment|Delivery)/i;
+    for(var j=0;j<lines.length;j++){
+      var line=lines[j];
+      if(line.length>15&&!skipLine.test(line)&&!/^\\d+$/.test(line)&&line.split(' ').length>=3){productName=line.replace(/\\s+/g,' ');break;}
+    }
+    var links=block.querySelectorAll('a[href]');
+    for(var k=0;k<links.length;k++){
+      var a=links[k],href=a.href||'';
+      if(href.indexOf('wayfair.com')>-1&&(href.indexOf('/pdp/')>-1||href.indexOf('~')>-1||/view details/i.test(a.textContent))){
+        productUrl=href.split('?')[0];
+        if(!productName&&a.textContent.trim().length>15)productName=a.textContent.trim().replace(/\\s+/g,' ');
+        break;
+      }
+    }
+    var im=block.querySelector('img[src]');
+    if(im)imageUrl=im.src||'';
+    for(var p=0;p<lines.length;p++){
+      var pl=lines[p];
+      if(/Assembly|Protection|Add Professional|Allstate/i.test(pl))continue;
+      var pm=pl.match(/\\$\\s?([\\d,]+\\.\\d{2})/);
+      if(pm){orderTotal=parseFloat(pm[1].replace(/,/g,''));break;}
+    }
+    break;
+  }
+  if(!productName){
+    scope.querySelectorAll('a[href*="/pdp/"], a[href*="~"]').forEach(function(lk){
+      if(productName)return;
+      var par=lk.parentElement;
+      for(var u=0;u<6&&par;u++){if(SKIP.test(par.innerText||'')){par=null;break;}par=par.parentElement;}
+      if(par===null)return;
+      productName=lk.textContent.trim().replace(/\\s+/g,' ');
+      productUrl=lk.href.split('?')[0];
+    });
+  }
+  return {productName:productName,productUrl:productUrl,imageUrl:imageUrl,orderTotal:orderTotal};
+}
+function extractTotalPrice(scope){
+  if(!scope)return null;
+  var text=scope===document?document.body.innerText:scope.innerText;
+  var dm=text.match(/Total Price[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i);
+  if(dm)return parseFloat(dm[1].replace(/,/g,''));
+  if(scope!==document&&scope.querySelectorAll){
+    var headers=scope.querySelectorAll('h1,h2,h3,h4,h5,h6,div,span');
+    for(var i=0;i<headers.length;i++){
+      var heading=(headers[i].textContent||'').trim();
+      if(!/^your order$/i.test(heading))continue;
+      var section=headers[i].parentElement;
+      for(var u=0;u<6&&section;u++){
+        var sm=(section.innerText||'').match(/Total Price[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i);
+        if(sm)return parseFloat(sm[1].replace(/,/g,''));
+        section=section.parentElement;
+      }
+    }
+  }
+  return null;
+}
+function extractOrderMeta(scope){
+  var text=scope===document?document.body.innerText:scope.innerText;
+  var dm=text.match(/Ordered On:\\s*([A-Za-z]+\\s+\\d{1,2},?\\s*\\d{4})/i);
+  var onm=text.match(/Wayfair Order #(\\d+)/i);
+  var orderNumber=onm?onm[1]:'';
+  if(!orderNumber){var um=location.href.match(/order(?:Id|ID|Number)[=\\/](\\d{8,})/i);if(um)orderNumber=um[1];}
+  if(!orderNumber){var om=location.href.match(/\\/(\\d{10,})(?:[\\/?#]|$)/);if(om)orderNumber=om[1];}
+  return {orderDate:dm?dm[1].trim():'',orderNumber:orderNumber,orderTotal:extractTotalPrice(scope)};
+}
+function showError(msg){
+  var bn=document.createElement('div');
+  bn.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#ba1a1a;color:#fff;padding:12px 20px;border-radius:12px;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;z-index:9999999;box-shadow:0 8px 24px rgba(0,0,0,0.3);max-width:90vw;text-align:center;line-height:1.4;';
+  bn.textContent=msg;
+  document.body.appendChild(bn);
+  setTimeout(function(){if(bn.parentNode)bn.parentNode.removeChild(bn);},4500);
+}
+var drawer=findDrawerRoot();
+var orderCount=(document.body.innerText.match(/Wayfair Order #/g)||[]).length;
+if(!drawer&&orderCount>1){showError('Open View/Edit Details for the item first, then click the bookmark');return;}
+var productScope=drawer||document;
+var prod=extractProduct(productScope);
+var orderCard=drawer?findOrderCardForProduct(prod.productName):(orderCount===1?findOrderCards()[0]:null);
+var meta=extractOrderMeta(orderCard||productScope);
+var orderTotal=prod.orderTotal;
+if(orderTotal==null){orderTotal=extractTotalPrice(drawer)||extractTotalPrice(orderCard)||meta.orderTotal;}
+var p={retailer:'wayfair',orderDate:meta.orderDate,orderNumber:meta.orderNumber,orderTotal:orderTotal,productName:prod.productName,productUrl:prod.productUrl,imageUrl:prod.imageUrl};
+var j=JSON.stringify(p),pn=prod.productName,on=meta.orderNumber,ot=orderTotal;
+function showOv(){var ov=document.createElement('div');ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';var bx=document.createElement('div');bx.style.cssText='background:#fff;border-radius:16px;padding:20px;width:100%;max-width:480px;font-family:system-ui,sans-serif;';var h=document.createElement('p');h.style.cssText='font-weight:700;font-size:15px;margin:0 0 4px;color:#1b1c19;';h.textContent='Order data ready';var s=document.createElement('p');s.style.cssText='font-size:12px;color:#74777f;margin:0 0 12px;line-height:1.5;white-space:pre-wrap;';s.textContent=(pn||'(product not found)')+'\\n'+(on||'')+(ot?'  \\u00B7  $'+ot:'');var ins=document.createElement('p');ins.style.cssText='font-size:13px;color:#7b189f;font-weight:600;margin:0 0 6px;';ins.textContent='Long-press below \\u2192 Select All \\u2192 Copy';var ta=document.createElement('textarea');ta.value=j;ta.readOnly=true;ta.rows=5;ta.style.cssText='width:100%;font-size:10px;font-family:monospace;border:2px solid #7b189f;border-radius:8px;padding:8px;box-sizing:border-box;color:#1b1c19;background:#f5f5f5;resize:none;';var cb=document.createElement('button');cb.textContent='Close';cb.style.cssText='margin-top:12px;width:100%;padding:10px;border:none;border-radius:8px;background:#eae8e2;font-size:14px;font-weight:600;cursor:pointer;color:#1b1c19;';cb.onclick=function(){document.body.removeChild(ov);};bx.appendChild(h);bx.appendChild(s);bx.appendChild(ins);bx.appendChild(ta);bx.appendChild(cb);ov.appendChild(bx);document.body.appendChild(ov);ta.focus();ta.select();}
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(j).then(function(){var bn=document.createElement('div');bn.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7b189f;color:#fff;padding:12px 24px;border-radius:12px;font-family:system-ui,sans-serif;font-size:14px;font-weight:600;z-index:999999;box-shadow:0 8px 24px rgba(0,0,0,0.3);white-space:nowrap;';bn.textContent='\\u2713 Copied!';document.body.appendChild(bn);setTimeout(function(){if(bn.parentNode)bn.parentNode.removeChild(bn);},2000);}).catch(showOv);}else{showOv();}
+})();`;
+
+/** Minified Wayfair bookmarklet — same clipboard/overlay pattern as Amazon */
+export const WAYFAIR_BOOKMARKLET_HREF = `javascript:${WAYFAIR_BOOKMARKLET_BODY.replace(/\s*\n\s*/g, '')}`;
+
 /** Schema for the JSON the bookmarklet puts on the clipboard */
 export interface BookmarkletPayload {
+  retailer?: 'amazon' | 'wayfair';
   orderDate: string;
   orderNumber: string;
   orderTotal: number | null;
@@ -142,6 +535,38 @@ export function parseBookmarkletClipboard(text: string): BookmarkletPayload {
     };
   }
 
-  throw new Error('Not a recognised Amazon data format');
+  // Case 3: Wayfair order URL pasted directly
+  if (/wayfair\.com/i.test(trimmed)) {
+    const wayfairOrderMatch =
+      trimmed.match(/order(?:Id|ID|Number)[=/](\d{8,})/i) ||
+      trimmed.match(/\/(\d{10,})(?:[/?#]|$)/);
+    if (wayfairOrderMatch) {
+      return {
+        retailer: 'wayfair',
+        orderDate: '',
+        orderNumber: wayfairOrderMatch[1],
+        orderTotal: null,
+        productName: '',
+        productUrl: '',
+        imageUrl: '',
+      };
+    }
+  }
+
+  // Case 4: Bare Wayfair order number (10+ digits)
+  const bareWayfairMatch = trimmed.match(/^\d{10,}$/);
+  if (bareWayfairMatch) {
+    return {
+      retailer: 'wayfair',
+      orderDate: '',
+      orderNumber: bareWayfairMatch[0],
+      orderTotal: null,
+      productName: '',
+      productUrl: '',
+      imageUrl: '',
+    };
+  }
+
+  throw new Error('Not a recognised Amazon or Wayfair data format');
 }
 

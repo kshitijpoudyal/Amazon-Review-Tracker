@@ -87,45 +87,43 @@ const Modal: React.FC<ModalProps> = ({
                 ${className}
                 `}
             >
-                {/* Header */}
-                {(header || title || showCloseButton) && (
-                    <div className={`flex-shrink-0 p-4 sm:p-6 border-b ${colors.border.default}`}>
-                        {
-                            header ? (
-                                header
-                            ) : (
-                                <div className="flex justify-between items-center">
-                                    {title && (
-                                        <h2 className={`text-xl sm:text-2xl font-bold ${colors.text.primary}`}>
-                                            {title}
-                                        </h2>
-                                    )}
-                                    {showCloseButton && (
-                                            <button
-                                                onClick={onClose}
-                                                className={`${colors.button.close} transition-colors p-2 sm:p-1 -mr-2 sm:-mr-1`}
-                                                aria-label="Close modal"
-                                            >
-                                                <svg
-                                                    className="w-6 h-6"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M6 18L18 6M6 6l12 12"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        )
-                                    }
-                                </div>
-                            )}
+                {/* Header — custom headers manage their own padding/border */}
+                {header ? (
+                    <div className="flex-shrink-0">
+                        {header}
                     </div>
-                )}
+                ) : (title || showCloseButton) ? (
+                    <div className={`flex-shrink-0 p-4 sm:p-6 border-b ${colors.border.default}`}>
+                        <div className="flex justify-between items-center">
+                            {title && (
+                                <h2 className={`text-xl sm:text-2xl font-bold ${colors.text.primary}`}>
+                                    {title}
+                                </h2>
+                            )}
+                            {showCloseButton && (
+                                <button
+                                    onClick={onClose}
+                                    className={`${colors.button.close} transition-colors p-2 sm:p-1 -mr-2 sm:-mr-1`}
+                                    aria-label="Close modal"
+                                >
+                                    <svg
+                                        className="w-6 h-6"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ) : null}
 
                 {/* Body - Scrollable */}
                 <div className="flex-1 overflow-y-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">

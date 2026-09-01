@@ -195,7 +195,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           <span>
             {importStatus === 'success'   ? 'All fields filled!'
             : importStatus === 'url-only' ? 'Order # filled — add other fields manually'
-            : importStatus === 'error'    ? 'Nothing found — copy an Amazon order URL first'
+            : importStatus === 'error'    ? 'Nothing found — copy an Amazon or Wayfair order first'
             : 'Import from Clipboard'}
           </span>
         </button>
