@@ -4,7 +4,7 @@ import { ImageUploader } from "./ImageUploader";
 import { colors } from "../../utils/colors";
 import { Modal } from "../common";
 import { useVendors } from "../../hooks/useVendors";
-import { BOOKMARKLET_HREF, WAYFAIR_BOOKMARKLET_HREF, parseBookmarkletClipboard } from "../../utils/bookmarklet";
+import { BOOKMARKLET_HREF, WAYFAIR_BOOKMARKLET_HREF, WALMART_BOOKMARKLET_HREF, parseBookmarkletClipboard } from "../../utils/bookmarklet";
 
 interface AddProductFormProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
   const [showBookmarklet, setShowBookmarklet] = useState(false);
   const [bookmarkletCopied, setBookmarkletCopied] = useState(false);
   const [wayfairBookmarkletCopied, setWayfairBookmarkletCopied] = useState(false);
+  const [walmartBookmarkletCopied, setWalmartBookmarkletCopied] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'url-only' | 'error'>('idle');
   const [showPasteBox, setShowPasteBox] = useState(false);
 
@@ -88,6 +89,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
     setShowBookmarklet(false);
     setBookmarkletCopied(false);
     setWayfairBookmarkletCopied(false);
+    setWalmartBookmarkletCopied(false);
   };
 
   const handleCancel = () => {
@@ -198,7 +200,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
             <span>
               {importStatus === 'success'   ? 'All fields filled!'
               : importStatus === 'url-only' ? 'Order # filled — add other fields manually'
-              : importStatus === 'error'    ? 'Nothing found — copy an Amazon or Wayfair order first'
+              : importStatus === 'error'    ? 'Nothing found — copy an Amazon, Wayfair, or Walmart order first'
               : 'Import from Clipboard'}
             </span>
           </button>
@@ -275,6 +277,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
                     <li>Drag a button below to your bookmarks bar</li>
                     <li>On the matching order page, click it → data copies → come back and click Import</li>
                     <li className="text-[#74777f]">Wayfair: open <strong>View/Edit Details</strong> for the item first (My Orders lists multiple orders)</li>
+                    <li className="text-[#74777f]">Walmart: open <strong>Purchase history → Order details</strong> for the order</li>
                   </ol>
                   <div className="flex flex-wrap gap-2 mt-2">
                     <a
@@ -293,6 +296,14 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
                     >
                       🛋️ Copy Wayfair Order
                     </a>
+                    <a
+                      href={WALMART_BOOKMARKLET_HREF}
+                      draggable
+                      onClick={e => e.preventDefault()}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#0071dc]/30 text-[#0071dc] text-xs font-medium cursor-grab active:cursor-grabbing select-none"
+                    >
+                      🛒 Copy Walmart Order
+                    </a>
                   </div>
                 </div>
 
@@ -305,6 +316,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
                   </ol>
                   <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>Each time you add a product:</p>
                   <ol className="list-decimal list-inside space-y-1 leading-relaxed mb-2">
+                    <li>Walmart: Purchase history → order details → tap bookmark</li>
                     <li>Wayfair: My Orders → tap <strong>View Details</strong> on the item → drawer opens → tap bookmark</li>
                     <li>Amazon: open order → tap bookmark</li>
                     <li>Long-press the text box → Select All → Copy</li>
@@ -337,7 +349,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
                     </button>
                   </div>
                   <p className={`mb-1 text-xs ${colors.text.secondary}`}>Wayfair bookmark URL:</p>
-                  <div className="relative">
+                  <div className="relative mb-3">
                     <textarea
                       readOnly
                       value={WAYFAIR_BOOKMARKLET_HREF}
@@ -360,6 +372,32 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
                       }`}
                     >
                       {wayfairBookmarkletCopied ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <p className={`mb-1 text-xs ${colors.text.secondary}`}>Walmart bookmark URL:</p>
+                  <div className="relative">
+                    <textarea
+                      readOnly
+                      value={WALMART_BOOKMARKLET_HREF}
+                      rows={3}
+                      onFocus={e => e.target.select()}
+                      className="w-full px-2 py-2 pr-16 text-xs font-mono rounded-lg border border-[#0071dc]/30 bg-white text-[#74777f] resize-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(WALMART_BOOKMARKLET_HREF).then(() => {
+                          setWalmartBookmarkletCopied(true);
+                          setTimeout(() => setWalmartBookmarkletCopied(false), 2000);
+                        });
+                      }}
+                      className={`absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                        walmartBookmarkletCopied
+                          ? 'bg-[#0071dc]/10 text-[#0071dc]'
+                          : `${colors.background.secondary} ${colors.text.secondary} hover:bg-[#e4e2dd]`
+                      }`}
+                    >
+                      {walmartBookmarkletCopied ? '✓ Copied' : 'Copy'}
                     </button>
                   </div>
                 </div>

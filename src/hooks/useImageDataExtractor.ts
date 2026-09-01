@@ -135,6 +135,95 @@ const extractProductName = (text: string, lines: string[]): string | null => {
 };
 
 /**
+ * Extract Walmart order number — format: 7 digits - 8 digits
+ * e.g. 2000137-32104888
+ */
+const extractWalmartOrderNumber = (text: string): string | null => {
+  const match = text.match(/\b(\d{7}-\d{8})\b/);
+  return match ? match[1] : null;
+};
+
+/**
+ * Extract Walmart order date from header like "Nov 07, 2025 order"
+ */
+const extractWalmartOrderDate = (text: string): string | null => {
+  const match = text.match(/([A-Za-z]+\s+\d{1,2}),?\s*(\d{4})\s+order/i);
+  if (!match) return null;
+  return `${match[1]}, ${match[2]}`;
+};
+
+/**
+ * Extract Walmart order total — standalone "Total" line (not Subtotal)
+ */
+const extractWalmartTotal = (text: string): number | null => {
+  const matches = [...text.matchAll(/(?:^|\n)\s*Total\s*\$?\s*([\d,]+\.\d{2})/gim)];
+  if (!matches.length) return null;
+  const val = parseFloat(matches[matches.length - 1][1].replace(/,/g, ''));
+  return isNaN(val) ? null : val;
+};
+
+const WALMART_EXCLUDE_LINE_PATTERNS = [
+  ...EXCLUDE_LINE_PATTERNS,
+  /sold by/i,
+  /fulfilled by/i,
+  /delivered on/i,
+  /charge history/i,
+  /ending in/i,
+  /savings/i,
+  /walmart\+/i,
+  /no \$35 order minimum/i,
+  /how can we help/i,
+  /purchase history/i,
+  /order details/i,
+  /^\d+\s+item/i,
+];
+
+const isWalmartExcluded = (line: string) =>
+  WALMART_EXCLUDE_LINE_PATTERNS.some(p => p.test(line.trim()));
+
+const looksLikeWalmartOrder = (text: string): boolean =>
+  /\b\d{7}-\d{8}\b/.test(text) &&
+  (/walmart/i.test(text) || /Order\s*#/i.test(text) || /\sorder\s*\|/i.test(text));
+
+/**
+ * Extract product name from Walmart order OCR text
+ */
+const extractWalmartProductName = (lines: string[]): string | null => {
+  const candidates = lines
+    .map(l => l.trim())
+    .filter(l => l.length > 15 && l.split(' ').length >= 3 && !isWalmartExcluded(l));
+
+  candidates.sort((a, b) => b.length - a.length);
+  return candidates[0] || null;
+};
+
+/**
+ * Main Walmart order parser
+ */
+const parseWalmartOrder = (text: string): ExtractedOrderData => {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const orderDate = extractWalmartOrderDate(text);
+  const orderNumber = extractWalmartOrderNumber(text);
+  const orderTotal = extractWalmartTotal(text);
+  const productName = extractWalmartProductName(lines);
+
+  return {
+    orderNumber,
+    orderDate,
+    orderTotal,
+    shippingAddress: {},
+    items: productName
+      ? [{ quantity: 1, name: productName, price: orderTotal ?? 0 }]
+      : [],
+    paymentInfo: {}
+  };
+};
+
+const parseOrderFromText = (text: string): ExtractedOrderData =>
+  looksLikeWalmartOrder(text) ? parseWalmartOrder(text) : parseAmazonOrder(text);
+
+/**
  * Main Amazon order parser — clean and focused
  */
 const parseAmazonOrder = (text: string): ExtractedOrderData => {
@@ -191,7 +280,7 @@ export const useImageDataExtractor = () => {
       setDebugInfo(text);
       const result: ImageExtractionResult = { rawText: text };
       if (type === 'amazon-order') {
-        result.orderData = parseAmazonOrder(text);
+        result.orderData = parseOrderFromText(text);
       }
       return result;
     } catch (err) {
@@ -214,7 +303,7 @@ export const useImageDataExtractor = () => {
       setDebugInfo(text);
       const result: ImageExtractionResult = { rawText: text };
       if (type === 'amazon-order') {
-        result.orderData = parseAmazonOrder(text);
+        result.orderData = parseOrderFromText(text);
       }
       return result;
     } catch (err) {

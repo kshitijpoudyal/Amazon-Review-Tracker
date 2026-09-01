@@ -496,9 +496,313 @@ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.write
 /** Minified Wayfair bookmarklet — same clipboard/overlay pattern as Amazon */
 export const WAYFAIR_BOOKMARKLET_HREF = `javascript:${WAYFAIR_BOOKMARKLET_BODY.replace(/\s*\n\s*/g, '')}`;
 
+/**
+ * Walmart Order Details Bookmarklet
+ *
+ * On walmart.com order details (Purchase history → View details), scrapes order
+ * metadata from scoped DOM selectors inside [data-testid="orderInfoCard"], with
+ * __NEXT_DATA__ / text fallbacks for order date, number, and total only.
+ */
+// @ts-expect-error intentional documentation function
+function _walmartBookmarkletSource() {
+  function parseNextData(): Record<string, unknown> | null {
+    const el = document.getElementById('__NEXT_DATA__');
+    if (!el?.textContent) return null;
+    try {
+      return JSON.parse(el.textContent);
+    } catch {
+      return null;
+    }
+  }
+
+  function walk(obj: unknown, fn: (node: unknown) => boolean, depth = 0): boolean {
+    if (!obj || depth > 18) return false;
+    if (fn(obj)) return true;
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        if (walk(item, fn, depth + 1)) return true;
+      }
+    } else if (typeof obj === 'object') {
+      for (const val of Object.values(obj as Record<string, unknown>)) {
+        if (walk(val, fn, depth + 1)) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Order meta only — product fields from __NEXT_DATA__ are unreliable on this page */
+  function extractOrderMetaFromNextData(data: Record<string, unknown> | null) {
+    const result = {
+      orderDate: '',
+      orderNumber: '',
+      orderTotal: null as number | null,
+    };
+    if (!data) return result;
+
+    walk(data, (node) => {
+      if (!node || typeof node !== 'object' || Array.isArray(node)) return false;
+      const n = node as Record<string, unknown>;
+
+      const orderId = n.orderId ?? n.orderNumber ?? n.customerOrderId ?? n.purchaseOrderId;
+      if (typeof orderId === 'string') {
+        const m = orderId.match(/\d{7}-\d{8}/);
+        if (m) result.orderNumber = m[0];
+      }
+
+      const orderDate = n.orderDate ?? n.placedDate ?? n.createDate ?? n.orderPlacedDate;
+      if (typeof orderDate === 'string' && /\d{4}/.test(orderDate)) {
+        const d = new Date(orderDate);
+        if (!isNaN(d.getTime())) {
+          result.orderDate = d.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          });
+        }
+      }
+
+      const total = n.orderTotal ?? n.grandTotal ?? n.total;
+      if (typeof total === 'number' && total > 0) result.orderTotal = total;
+      if (total && typeof total === 'object') {
+        const t = total as Record<string, unknown>;
+        if (typeof t.value === 'number') result.orderTotal = t.value;
+        if (typeof t.displayValue === 'string') {
+          const tm = t.displayValue.match(/([\d,]+\.\d{2})/);
+          if (tm) result.orderTotal = parseFloat(tm[1].replace(/,/g, ''));
+        }
+      }
+
+      return false;
+    });
+
+    return result;
+  }
+
+  function extractOrderMetaFromDom() {
+    const root = document.querySelector('.print-bill-body') || document;
+    let orderDate = '';
+    let orderNumber = '';
+    let orderTotal: number | null = null;
+
+    const dateEl = root.querySelector('.print-bill-date');
+    if (dateEl) {
+      const m = (dateEl.textContent || '').match(/([A-Za-z]+\s+\d{1,2},?\s+\d{4})/);
+      if (m) orderDate = m[1].replace(/,\s*/, ', ').trim();
+    }
+
+    const idEl = root.querySelector('.print-bill-bar-id');
+    if (idEl) {
+      const m = (idEl.textContent || '').match(/(\d{7}-\d{8})/);
+      if (m) orderNumber = m[1];
+    }
+
+    const totalEl = root.querySelector('.bill-order-total-payment');
+    if (totalEl) {
+      const m = (totalEl.textContent || '').match(/\$([\d,]+\.\d{2})/);
+      if (m) orderTotal = parseFloat(m[1].replace(/,/g, ''));
+    }
+
+    return { orderDate, orderNumber, orderTotal };
+  }
+
+  function extractFromText(text: string) {
+    let orderDate = '';
+    const dateMatch = text.match(/([A-Za-z]+\s+\d{1,2},?\s+\d{4})\s+order/i);
+    if (dateMatch) orderDate = dateMatch[1].replace(/,\s*/, ', ').trim();
+
+    let orderNumber = '';
+    const orderNumMatch = text.match(/Order\s*#\s*(\d{7}-\d{8})/i);
+    if (orderNumMatch) orderNumber = orderNumMatch[1];
+    if (!orderNumber) {
+      const bareMatch = text.match(/\b(\d{7}-\d{8})\b/);
+      if (bareMatch) orderNumber = bareMatch[1];
+    }
+    if (!orderNumber) {
+      const urlMatch = location.href.match(/order[=\/](\d{7}-\d{8})/i);
+      if (urlMatch) orderNumber = urlMatch[1];
+    }
+
+    let orderTotal: number | null = null;
+    const totalMatches = [...text.matchAll(/(?:^|\n)\s*Total\s*\$?\s*([\d,]+\.\d{2})/gim)];
+    if (totalMatches.length) {
+      const last = totalMatches[totalMatches.length - 1][1];
+      orderTotal = parseFloat(last.replace(/,/g, ''));
+    }
+
+    return { orderDate, orderNumber, orderTotal };
+  }
+
+  function isProductImage(src: string): boolean {
+    if (!src) return false;
+    if (/\.svg(\?|$)/i.test(src)) return false;
+    if (/logo|icon|badge|avatar|shipping-box|wplus|barcode|cards-clock/i.test(src)) return false;
+    return /walmartimages|\.jpe?g|\.png|\.webp/i.test(src);
+  }
+
+  function extractProductFromDom() {
+    let productName = '';
+    let productUrl = '';
+    let imageUrl = '';
+
+    const orderCard = document.querySelector('[data-testid="orderInfoCard"]');
+    if (!orderCard) return { productName, productUrl, imageUrl };
+
+    const toggle = orderCard.querySelector('[data-automation-id="items-toggle-link"]');
+    if (toggle?.getAttribute('aria-expanded') === 'false') {
+      (toggle as HTMLElement).click();
+    }
+
+    const nameEl = orderCard.querySelector('[data-testid="productName"]');
+    if (nameEl) {
+      productName = (nameEl.textContent || '').trim().replace(/\s+/g, ' ');
+    }
+
+    const linkEl = orderCard.querySelector(
+      '[data-testid="itemtile-stack"] a[href*="/ip/"]'
+    ) as HTMLAnchorElement | null;
+    if (linkEl) {
+      productUrl = linkEl.href.split('?')[0];
+      if (!productName) {
+        const aria = linkEl.getAttribute('aria-label')?.trim();
+        if (aria && aria.length > 10) productName = aria;
+      }
+    }
+
+    const tileImg = orderCard.querySelector('img[data-testid="productTileImage"]') as HTMLImageElement | null;
+    if (tileImg?.src && isProductImage(tileImg.src)) {
+      imageUrl = tileImg.src;
+    }
+
+    if (!imageUrl) {
+      const collapsedImg = orderCard.querySelector(
+        '[data-testid="collapsedItemList"] img'
+      ) as HTMLImageElement | null;
+      if (collapsedImg?.src && isProductImage(collapsedImg.src)) {
+        imageUrl = collapsedImg.src;
+        if (!productName && collapsedImg.alt && collapsedImg.alt.length > 10) {
+          productName = collapsedImg.alt.trim();
+        }
+      }
+    }
+
+    return { productName, productUrl, imageUrl };
+  }
+
+  const domOrder = extractOrderMetaFromDom();
+  const nextData = extractOrderMetaFromNextData(parseNextData());
+  const textMeta = extractFromText(document.body.innerText);
+  const product = extractProductFromDom();
+
+  const payload = {
+    retailer: 'walmart' as const,
+    orderDate: domOrder.orderDate || nextData.orderDate || textMeta.orderDate,
+    orderNumber: domOrder.orderNumber || nextData.orderNumber || textMeta.orderNumber,
+    orderTotal: domOrder.orderTotal ?? nextData.orderTotal ?? textMeta.orderTotal,
+    productName: product.productName,
+    productUrl: product.productUrl,
+    imageUrl: product.imageUrl,
+  };
+  void payload;
+}
+
+const WALMART_BOOKMARKLET_BODY = `(function(){
+function parseNextData(){
+  var el=document.getElementById('__NEXT_DATA__');
+  if(!el||!el.textContent)return null;
+  try{return JSON.parse(el.textContent);}catch(e){return null;}
+}
+function walk(obj,fn,depth){
+  if(!obj||depth>18)return false;
+  if(fn(obj))return true;
+  if(Array.isArray(obj)){for(var i=0;i<obj.length;i++)if(walk(obj[i],fn,depth+1))return true;}
+  else if(typeof obj==='object'){for(var k in obj)if(walk(obj[k],fn,depth+1))return true;}
+  return false;
+}
+function extractOrderMetaFromNextData(data){
+  var result={orderDate:'',orderNumber:'',orderTotal:null};
+  if(!data)return result;
+  walk(data,function(node){
+    if(!node||typeof node!=='object'||Array.isArray(node))return false;
+    var on=node.orderId||node.orderNumber||node.customerOrderId||node.purchaseOrderId;
+    if(typeof on==='string'){var om=on.match(/\\d{7}-\\d{8}/);if(om)result.orderNumber=om[0];}
+    var od=node.orderDate||node.placedDate||node.createDate||node.orderPlacedDate;
+    if(typeof od==='string'&&/\\d{4}/.test(od)){var d=new Date(od);if(!isNaN(d.getTime()))result.orderDate=d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});}
+    var total=node.orderTotal||node.grandTotal||node.total;
+    if(typeof total==='number'&&total>0)result.orderTotal=total;
+    if(total&&typeof total==='object'){if(typeof total.value==='number')result.orderTotal=total.value;if(typeof total.displayValue==='string'){var tm=total.displayValue.match(/([\\d,]+\\.\\d{2})/);if(tm)result.orderTotal=parseFloat(tm[1].replace(/,/g,''));}}
+    return false;
+  },0);
+  return result;
+}
+function extractOrderMetaFromDom(){
+  var root=document.querySelector('.print-bill-body')||document;
+  var orderDate='',orderNumber='',orderTotal=null;
+  var dateEl=root.querySelector('.print-bill-date');
+  if(dateEl){var dm=(dateEl.textContent||'').match(/([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})/);if(dm)orderDate=dm[1].replace(/,\\s*/,', ').trim();}
+  var idEl=root.querySelector('.print-bill-bar-id');
+  if(idEl){var im=(idEl.textContent||'').match(/(\\d{7}-\\d{8})/);if(im)orderNumber=im[1];}
+  var totalEl=root.querySelector('.bill-order-total-payment');
+  if(totalEl){var tm=(totalEl.textContent||'').match(/\\$([\\d,]+\\.\\d{2})/);if(tm)orderTotal=parseFloat(tm[1].replace(/,/g,''));}
+  return {orderDate:orderDate,orderNumber:orderNumber,orderTotal:orderTotal};
+}
+function extractFromText(text){
+  var orderDate='',orderNumber='',orderTotal=null;
+  var dm=text.match(/([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})\\s+order/i);
+  if(dm)orderDate=dm[1].replace(/,\\s*/,', ').trim();
+  var onm=text.match(/Order\\s*#\\s*(\\d{7}-\\d{8})/i);
+  if(onm)orderNumber=onm[1];
+  if(!orderNumber){var bm=text.match(/\\b(\\d{7}-\\d{8})\\b/);if(bm)orderNumber=bm[1];}
+  if(!orderNumber){var um=location.href.match(/order[=\\/](\\d{7}-\\d{8})/i);if(um)orderNumber=um[1];}
+  var totals=[...text.matchAll(/(?:^|\\n)\\s*Total\\s*\\$?\\s*([\\d,]+\\.\\d{2})/gim)];
+  if(totals.length){orderTotal=parseFloat(totals[totals.length-1][1].replace(/,/g,''));}
+  return {orderDate:orderDate,orderNumber:orderNumber,orderTotal:orderTotal};
+}
+function isProductImage(src){
+  if(!src)return false;
+  if(/\\.svg(\\?|$)/i.test(src))return false;
+  if(/logo|icon|badge|avatar|shipping-box|wplus|barcode|cards-clock/i.test(src))return false;
+  return /walmartimages|\\.jpe?g|\\.png|\\.webp/i.test(src);
+}
+function extractProductFromDom(){
+  var productName='',productUrl='',imageUrl='';
+  var orderCard=document.querySelector('[data-testid="orderInfoCard"]');
+  if(!orderCard)return {productName:productName,productUrl:productUrl,imageUrl:imageUrl};
+  var toggle=orderCard.querySelector('[data-automation-id="items-toggle-link"]');
+  if(toggle&&toggle.getAttribute('aria-expanded')==='false')toggle.click();
+  var nameEl=orderCard.querySelector('[data-testid="productName"]');
+  if(nameEl)productName=(nameEl.textContent||'').trim().replace(/\\s+/g,' ');
+  var linkEl=orderCard.querySelector('[data-testid="itemtile-stack"] a[href*="/ip/"]');
+  if(linkEl){
+    productUrl=linkEl.href.split('?')[0];
+    if(!productName){var aria=linkEl.getAttribute('aria-label');if(aria&&aria.trim().length>10)productName=aria.trim();}
+  }
+  var tileImg=orderCard.querySelector('img[data-testid="productTileImage"]');
+  if(tileImg&&tileImg.src&&isProductImage(tileImg.src))imageUrl=tileImg.src;
+  if(!imageUrl){
+    var collapsedImg=orderCard.querySelector('[data-testid="collapsedItemList"] img');
+    if(collapsedImg&&collapsedImg.src&&isProductImage(collapsedImg.src)){
+      imageUrl=collapsedImg.src;
+      if(!productName&&collapsedImg.alt&&collapsedImg.alt.length>10)productName=collapsedImg.alt.trim();
+    }
+  }
+  return {productName:productName,productUrl:productUrl,imageUrl:imageUrl};
+}
+var domOrder=extractOrderMetaFromDom();
+var nextData=extractOrderMetaFromNextData(parseNextData());
+var textMeta=extractFromText(document.body.innerText);
+var prod=extractProductFromDom();
+var p={retailer:'walmart',orderDate:domOrder.orderDate||nextData.orderDate||textMeta.orderDate,orderNumber:domOrder.orderNumber||nextData.orderNumber||textMeta.orderNumber,orderTotal:domOrder.orderTotal!=null?domOrder.orderTotal:(nextData.orderTotal!=null?nextData.orderTotal:textMeta.orderTotal),productName:prod.productName,productUrl:prod.productUrl,imageUrl:prod.imageUrl};
+var j=JSON.stringify(p),pn=p.productName,on=p.orderNumber,ot=p.orderTotal;
+function showOv(){var ov=document.createElement('div');ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';var bx=document.createElement('div');bx.style.cssText='background:#fff;border-radius:16px;padding:20px;width:100%;max-width:480px;font-family:system-ui,sans-serif;';var h=document.createElement('p');h.style.cssText='font-weight:700;font-size:15px;margin:0 0 4px;color:#1b1c19;';h.textContent='Order data ready';var s=document.createElement('p');s.style.cssText='font-size:12px;color:#74777f;margin:0 0 12px;line-height:1.5;white-space:pre-wrap;';s.textContent=(pn||'(product not found)')+'\\n'+(on||'')+(ot?'  \\u00B7  $'+ot:'');var ins=document.createElement('p');ins.style.cssText='font-size:13px;color:#0071dc;font-weight:600;margin:0 0 6px;';ins.textContent='Long-press below \\u2192 Select All \\u2192 Copy';var ta=document.createElement('textarea');ta.value=j;ta.readOnly=true;ta.rows=5;ta.style.cssText='width:100%;font-size:10px;font-family:monospace;border:2px solid #0071dc;border-radius:8px;padding:8px;box-sizing:border-box;color:#1b1c19;background:#f5f5f5;resize:none;';var cb=document.createElement('button');cb.textContent='Close';cb.style.cssText='margin-top:12px;width:100%;padding:10px;border:none;border-radius:8px;background:#eae8e2;font-size:14px;font-weight:600;cursor:pointer;color:#1b1c19;';cb.onclick=function(){document.body.removeChild(ov);};bx.appendChild(h);bx.appendChild(s);bx.appendChild(ins);bx.appendChild(ta);bx.appendChild(cb);ov.appendChild(bx);document.body.appendChild(ov);ta.focus();ta.select();}
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(j).then(function(){var bn=document.createElement('div');bn.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0071dc;color:#fff;padding:12px 24px;border-radius:12px;font-family:system-ui,sans-serif;font-size:14px;font-weight:600;z-index:999999;box-shadow:0 8px 24px rgba(0,0,0,0.3);white-space:nowrap;';bn.textContent='\\u2713 Copied!';document.body.appendChild(bn);setTimeout(function(){if(bn.parentNode)bn.parentNode.removeChild(bn);},2000);}).catch(showOv);}else{showOv();}
+})();`;
+
+/** Minified Walmart bookmarklet — same clipboard/overlay pattern as Amazon */
+export const WALMART_BOOKMARKLET_HREF = `javascript:${WALMART_BOOKMARKLET_BODY.replace(/\s*\n\s*/g, '')}`;
+
 /** Schema for the JSON the bookmarklet puts on the clipboard */
 export interface BookmarkletPayload {
-  retailer?: 'amazon' | 'wayfair';
+  retailer?: 'amazon' | 'wayfair' | 'walmart';
   orderDate: string;
   orderNumber: string;
   orderTotal: number | null;
@@ -553,7 +857,36 @@ export function parseBookmarkletClipboard(text: string): BookmarkletPayload {
     }
   }
 
-  // Case 4: Bare Wayfair order number (10+ digits)
+  // Case 4: Walmart order URL or bare order number (7-8 digits with dash)
+  if (/walmart\.com/i.test(trimmed)) {
+    const walmartOrderMatch = trimmed.match(/\b(\d{7}-\d{8})\b/);
+    if (walmartOrderMatch) {
+      return {
+        retailer: 'walmart',
+        orderDate: '',
+        orderNumber: walmartOrderMatch[1],
+        orderTotal: null,
+        productName: '',
+        productUrl: '',
+        imageUrl: '',
+      };
+    }
+  }
+
+  const bareWalmartMatch = trimmed.match(/^(\d{7}-\d{8})$/);
+  if (bareWalmartMatch) {
+    return {
+      retailer: 'walmart',
+      orderDate: '',
+      orderNumber: bareWalmartMatch[1],
+      orderTotal: null,
+      productName: '',
+      productUrl: '',
+      imageUrl: '',
+    };
+  }
+
+  // Case 5: Bare Wayfair order number (10+ digits)
   const bareWayfairMatch = trimmed.match(/^\d{10,}$/);
   if (bareWayfairMatch) {
     return {
@@ -567,6 +900,6 @@ export function parseBookmarkletClipboard(text: string): BookmarkletPayload {
     };
   }
 
-  throw new Error('Not a recognised Amazon or Wayfair data format');
+  throw new Error('Not a recognised Amazon, Wayfair, or Walmart data format');
 }
 

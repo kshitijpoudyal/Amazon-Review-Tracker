@@ -105,7 +105,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 </div>
                 <div>
                   <p className="text-lg font-medium text-blue-700 mb-1">📸 Upload Receipt Image</p>
-                  <p className="text-sm text-blue-600">Tap to select Amazon receipt photo</p>
+                  <p className="text-sm text-blue-600">Tap to select order receipt photo</p>
                 </div>
                 <div className="text-xs text-gray-500">
                   PNG, JPG, GIF up to 10MB
@@ -214,11 +214,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
           {!extractedData.orderData && (
             <div>
-              <h4 className="font-medium text-red-700 mb-2">No Amazon Order Data Found</h4>
+              <h4 className="font-medium text-red-700 mb-2">No Order Data Found</h4>
               <div className="bg-red-50 border border-red-200 rounded p-3">
                 <p className="text-red-700 text-sm">
-                  The uploaded image doesn't appear to be an Amazon order receipt, or the text couldn't be extracted properly. 
-                  Please make sure you're uploading a clear image of an Amazon order receipt.
+                  The uploaded image doesn't appear to be an Amazon or Walmart order receipt, or the text couldn't be extracted properly.
+                  Please make sure you're uploading a clear screenshot of an order details page.
                 </p>
               </div>
             </div>
