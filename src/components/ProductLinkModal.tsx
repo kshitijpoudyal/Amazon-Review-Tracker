@@ -187,7 +187,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
 
   // ── Modal pieces ─────────────────────────────────────────────────────────
   const header = (
-    <div className="space-y-3">
+    <div className="px-4 sm:px-6 pt-5 pb-4 border-b border-[rgba(196,198,207,0.15)] space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-[#1b1c19]">Link Products</h3>
       </div>
