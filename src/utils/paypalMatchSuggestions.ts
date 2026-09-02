@@ -1,6 +1,7 @@
 import { Product } from '../types/Product';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { getProductStatusType } from './productStatus';
+import { getAmountDiffFromBand, getRefundConfidence } from './refundUtils';
 
 export interface PayPalMatchSuggestion {
   product: Product;
@@ -10,6 +11,13 @@ export interface PayPalMatchSuggestion {
 }
 
 const ELIGIBLE_STATUSES = new Set(['refund-pending', 'send-screenshot', 'review-pending']);
+
+const ROUND_SHORTFALLS = [10, 20];
+
+function isRoundSellerShortfall(paid: number, targetAmount: number): boolean {
+  const shortfall = paid - targetAmount;
+  return ROUND_SHORTFALLS.some((s) => Math.abs(shortfall - s) < 0.02);
+}
 
 export function getPayPalMatchSuggestions(
   transaction: PayPalTransaction,
@@ -30,20 +38,21 @@ export function getPayPalMatchSuggestions(
   });
 
   const scored = candidates.map((product) => {
-    const amountDiff = Math.abs((product.paid ?? 0) - targetAmount);
+    const paid = product.paid ?? 0;
+    const amountDiff = getAmountDiffFromBand(paid, targetAmount, product.tax);
     let score = amountDiff;
 
     const status = getProductStatusType(product);
     if (status === 'refund-pending') score *= 0.5;
     if (status === 'send-screenshot') score *= 0.7;
 
+    if (isRoundSellerShortfall(paid, targetAmount)) score *= 0.6;
+
     const nameLower = transaction.name.toLowerCase();
     const itemLower = (product.item || '').toLowerCase();
     if (itemLower && nameLower.includes(itemLower.slice(0, 20))) score *= 0.3;
 
-    let confidence: PayPalMatchSuggestion['confidence'] = 'low';
-    if (amountDiff < 0.01) confidence = 'high';
-    else if (amountDiff <= 5) confidence = 'medium';
+    const confidence = getRefundConfidence(paid, targetAmount, product.tax);
 
     return { product, score, amountDiff, confidence };
   });

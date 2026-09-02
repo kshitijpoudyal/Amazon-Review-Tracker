@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import ProductTable from '../components/ProductDashboard/ProductTable';
 import AddProductForm from '../components/ProductDashboard/AddProductForm';
 import { useAuth } from '../hooks/useAuth';
@@ -10,8 +10,10 @@ import { useProductStats } from '../hooks/useProductStats';
 import { useSortedProducts } from '../hooks/useSortedProducts';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { useVendors } from '../hooks/useVendors';
+import { usePayPalTransactions } from '../hooks/usePayPalTransactions';
 import { StatusFilter, DeltaFilter, VendorFilter, Product } from '../types/Product';
 import { VendorAdminUtils } from '../components/VendorAdminUtils';
+import NextActionsStrip from '../components/ProductDashboard/NextActionsStrip';
 import {
   DashboardContainer,
   DashboardStats,
@@ -77,6 +79,18 @@ const ProductPage: React.FC = () => {
     deleteProduct,
     refetch,
   } = useDataSource(user?.uid);
+
+  const { data: paypalData } = usePayPalTransactions(user?.uid);
+
+  const unlinkedPayPalStats = useMemo(() => {
+    const unlinked = (paypalData?.transactions || []).filter(
+      (t) => !t.linkedProductIds || t.linkedProductIds.length === 0
+    );
+    return {
+      count: unlinked.length,
+      amount: unlinked.reduce((sum, t) => sum + t.total, 0),
+    };
+  }, [paypalData?.transactions]);
 
   // Enforce minimum loading time of 3 seconds
   const displayLoading = useMinimumLoading(loading);
@@ -222,6 +236,15 @@ const ProductPage: React.FC = () => {
           <VendorAdminUtils />
         </DashboardSection>
       )}
+
+      {/* Next actions + quick filters */}
+      <NextActionsStrip
+        products={data?.products || []}
+        activeStatusFilter={statusFilter}
+        onStatusFilter={(filter) => updateFilter('statusFilter', filter)}
+        unlinkedPayPalCount={unlinkedPayPalStats.count}
+        unlinkedPayPalAmount={unlinkedPayPalStats.amount}
+      />
 
       {/* Filter Controls — sticky so it stays visible while scrolling */}
       <div className="sticky top-0 z-30 bg-[#fbf9f3] pb-2 pt-1">

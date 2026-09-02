@@ -1,3 +1,5 @@
+export type Retailer = 'amazon' | 'walmart' | 'wayfair';
+
 export interface Vendor {
   id: string;
   name: string;
@@ -12,6 +14,7 @@ export interface Product {
   imageUrl?: string; // Product image URL
   orderDate: string | null;
   orderNumber?: string; // Order number (not displayed in UI but searchable)
+  retailer?: Retailer;
   orderPlaced: boolean;
   orderDelivered: boolean;
   reviewAdded: boolean;
@@ -20,10 +23,19 @@ export interface Product {
   paid: number | null;
   received: number | null;
   delta: number | null;
+  tax?: number | null;
+  refundNotes?: string;
+  paypalTransactionIds?: string[];
+  refundReceivedAt?: string; // ISO date when PayPal refund was linked
   isVoid?: boolean;
   vendorId?: string; // Reference to vendor ID
   lastStatus?: string; // Last computed status — used to detect transitions
   statusChangedAt?: string; // ISO date of last status change
+}
+
+export interface ProductLinkOptions {
+  completeWorkflow?: boolean;
+  splitPrice?: boolean;
 }
 
 export interface ProductData {

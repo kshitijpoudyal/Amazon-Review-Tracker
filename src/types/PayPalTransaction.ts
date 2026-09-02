@@ -14,6 +14,7 @@ export interface PayPalTransaction {
   transactionId: string; // Unique PayPal transaction ID
   itemTitle?: string;
   linkedProductIds?: string[]; // UPDATED: Array of Product IDs for mapping multiple products
+  splitPrice?: boolean; // When true, transaction total is divided among linked products
   createdAt?: any; // Firebase timestamp
   updatedAt?: any; // Firebase timestamp
 }

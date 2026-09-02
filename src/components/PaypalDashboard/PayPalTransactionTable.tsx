@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PayPalTransaction } from '../../types/PayPalTransaction';
-import { Product } from '../../types/Product';
+import { Product, ProductLinkOptions } from '../../types/Product';
 import ProductLinkModal from '../ProductLinkModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
@@ -16,7 +16,7 @@ interface PayPalTransactionTableProps {
   products: Product[];
   loading?: boolean;
   productsLoading?: boolean;
-  onUpdateProductLink?: (transactionId: string, productIds: string[]) => Promise<boolean>;
+  onUpdateProductLink?: (transactionId: string, productIds: string[], options?: ProductLinkOptions) => Promise<boolean>;
   onDeleteTransaction?: (transactionId: string) => Promise<boolean>;
 }
 
@@ -399,9 +399,9 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           selectedProductIds={
             transactions.find(t => t.id === activeTransactionId)?.linkedProductIds || []
           }
-          onProductSelect={async (productIds: string[]) => {
+          onProductSelect={async (productIds, options) => {
             if (onUpdateProductLink && activeTransactionId) {
-              await onUpdateProductLink(activeTransactionId, productIds);
+              await onUpdateProductLink(activeTransactionId, productIds, options);
             }
             setIsModalActive(false);
             setActiveTransactionId(null);

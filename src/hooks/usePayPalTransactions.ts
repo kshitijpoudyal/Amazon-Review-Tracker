@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { PayPalTransaction, PayPalTransactionData } from '../types/PayPalTransaction';
+import { ProductLinkOptions } from '../types/Product';
 
 // ─── Cache helpers ──────────────────────────────────────────────────────────
 const CACHE_VERSION = 'v1';
@@ -164,38 +165,51 @@ export const usePayPalTransactions = (userId?: string) => {
     return { added, skipped, withdrawalSkipped };
   };
 
-  const updateTransactionProductLink = async (transactionId: string, linkedProductIds: string[]): Promise<boolean> => {
+  const updateTransactionProductLink = async (
+    transactionId: string,
+    linkedProductIds: string[],
+    options?: ProductLinkOptions
+  ): Promise<boolean> => {
     if (!userId) return false;
 
     try {
       // Get the current transaction to check its previous linked products
       const transactionRef = doc(db, 'users', userId, 'paypal_transactions', transactionId);
       const transactionSnap = await getDoc(transactionRef);
-      const currentTransaction = transactionSnap.data();
+      const currentTransaction = transactionSnap.data() as PayPalTransaction | undefined;
       const previousLinkedProductIds = currentTransaction?.linkedProductIds || [];
+
+      const shouldSplit =
+        linkedProductIds.length === 2 && options?.splitPrice === true;
 
       // Update the transaction link
       await updateDoc(transactionRef, {
         linkedProductIds: linkedProductIds.length > 0 ? linkedProductIds : null,
+        splitPrice: shouldSplit ? true : null,
         updatedAt: serverTimestamp()
       });
       
       // Refresh transaction data
       await fetchTransactions();
       
+      const completeWorkflow =
+        options?.completeWorkflow === true &&
+        linkedProductIds.length === 1;
+
       // Update product received amounts for affected products
-      // Update previously linked products that are no longer linked
       for (const prevProductId of previousLinkedProductIds) {
         if (!linkedProductIds.includes(prevProductId)) {
           await updateProductReceivedAmount(prevProductId);
         }
       }
       
-      // Update newly linked products
       for (const productId of linkedProductIds) {
-        if (!previousLinkedProductIds.includes(productId)) {
-          await updateProductReceivedAmount(productId);
-        }
+        const isNewLink = !previousLinkedProductIds.includes(productId);
+        const shouldComplete = completeWorkflow && isNewLink;
+        await updateProductReceivedAmount(productId, {
+          completeWorkflow: shouldComplete,
+          refundDate: currentTransaction?.date,
+        });
       }
       
       return true;
@@ -206,7 +220,10 @@ export const usePayPalTransactions = (userId?: string) => {
     }
   };
 
-  const updateProductReceivedAmount = async (productId: string): Promise<void> => {
+  const updateProductReceivedAmount = async (
+    productId: string,
+    options?: { completeWorkflow?: boolean; refundDate?: string }
+  ): Promise<void> => {
     if (!userId) return;
 
     try {
@@ -222,10 +239,6 @@ export const usePayPalTransactions = (userId?: string) => {
       const linkedTransactions = transactions.filter(
         transaction => transaction.linkedProductIds && transaction.linkedProductIds.includes(productId)
       );
-      
-      const totalReceived = linkedTransactions.reduce(
-        (sum, transaction) => sum + transaction.total, 0
-      );
 
       // Update the product's received amount
       const productRef = doc(db, 'users', userId, 'products', productId);
@@ -238,15 +251,43 @@ export const usePayPalTransactions = (userId?: string) => {
           await updateDoc(productRef, {
             received: null,
             delta: null,
+            paypalTransactionIds: null,
+            refundReceivedAt: null,
             updatedAt: serverTimestamp()
           });
         } else {
           const paid = productData.paid || 0;
-          await updateDoc(productRef, {
+          const totalReceived = linkedTransactions.reduce((sum, transaction) => {
+            const linkedIds = transaction.linkedProductIds || [];
+            const share =
+              transaction.splitPrice && linkedIds.length > 1
+                ? transaction.total / linkedIds.length
+                : transaction.total;
+            return sum + share;
+          }, 0);
+          const paypalTransactionIds = linkedTransactions.map((t) => t.transactionId);
+          const refundReceivedAt =
+            options?.refundDate ||
+            linkedTransactions[linkedTransactions.length - 1]?.date ||
+            new Date().toISOString().slice(0, 10);
+
+          const updates: Record<string, unknown> = {
             received: totalReceived,
             delta: totalReceived - paid,
-            updatedAt: serverTimestamp()
-          });
+            paypalTransactionIds,
+            refundReceivedAt,
+            updatedAt: serverTimestamp(),
+          };
+
+          if (options?.completeWorkflow) {
+            updates.orderPlaced = true;
+            updates.orderDelivered = true;
+            updates.reviewAdded = true;
+            updates.reviewLive = true;
+            updates.reviewSSSent = true;
+          }
+
+          await updateDoc(productRef, updates);
         }
       }
     } catch (err) {

@@ -19,6 +19,7 @@ import {
 import { formatCurrency } from '../utils/currency';
 import Toolbar from '../components/common/Toolbar';
 import { getStatsColor } from '../utils/colors';
+import { ProductLinkOptions } from '../types/Product';
 
 /**
  * PayPalPage Component
@@ -133,11 +134,21 @@ export const PayPalPage: React.FC = () => {
     return success;
   };
 
-  const handleUpdateProductLink = async (transactionId: string, productIds: string[]) => {
-    const success = await updateProductLink(transactionId, productIds);
+  const handleUpdateProductLink = async (
+    transactionId: string,
+    productIds: string[],
+    options?: ProductLinkOptions
+  ) => {
+    const success = await updateProductLink(transactionId, productIds, options);
     if (success) {
       await refetch();
-      showToast(productIds.length > 0 ? `Linked ${productIds.length} product${productIds.length !== 1 ? 's' : ''}` : 'Links cleared');
+      const finished = options?.completeWorkflow ? ' — marked complete' : '';
+      const split = options?.splitPrice ? ' — amount split' : '';
+      showToast(
+        productIds.length > 0
+          ? `Linked ${productIds.length} product${productIds.length !== 1 ? 's' : ''}${finished}${split}`
+          : 'Links cleared'
+      );
     }
     return success;
   };

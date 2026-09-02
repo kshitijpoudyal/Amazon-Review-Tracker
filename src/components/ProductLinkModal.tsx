@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Product } from '../types/Product';
+import { Product, ProductLinkOptions } from '../types/Product';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Modal, ProductThumbnail } from './common';
 import { getProductStatus, isVoid, isRefundPending } from '../utils/productStatus';
 import { formatCurrency } from '../utils/currency';
 import { getPayPalMatchSuggestions } from '../utils/paypalMatchSuggestions';
+import { classifyShortfall, isWithinRefundBand } from '../utils/refundUtils';
 
 interface ProductLinkModalProps {
   products: Product[];
   selectedProductIds: string[];
-  onProductSelect: (productIds: string[]) => void;
+  onProductSelect: (productIds: string[], options?: ProductLinkOptions) => void;
   linkedProductIds?: string[];
   transaction?: PayPalTransaction;
   isOpen: boolean;
@@ -30,6 +31,8 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   const [hideLinked, setHideLinked] = useState(true);
   const [hideVoid, setHideVoid] = useState(true);
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(true);
+  const [completeWorkflow, setCompleteWorkflow] = useState(true);
+  const [splitPrice, setSplitPrice] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -39,10 +42,12 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setSuggestionsExpanded(true);
+      setCompleteWorkflow(true);
+      setSplitPrice(transaction?.splitPrice === true);
       const id = setTimeout(() => inputRef.current?.focus(), 60);
       return () => clearTimeout(id);
     }
-  }, [isOpen]);
+  }, [isOpen, transaction?.splitPrice]);
 
   const closeModal = () => {
     setSearchTerm('');
@@ -58,7 +63,13 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onProductSelect(tempSelectedIds);
+    let options: ProductLinkOptions | undefined;
+    if (tempSelectedIds.length === 1 && completeWorkflow) {
+      options = { completeWorkflow: true };
+    } else if (tempSelectedIds.length === 2) {
+      options = { splitPrice };
+    }
+    onProductSelect(tempSelectedIds, options);
     closeModal();
   };
 
@@ -90,12 +101,28 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
     return getPayPalMatchSuggestions(transaction, products, linkedProductIds);
   }, [transaction, products, linkedProductIds]);
 
-  // Sum of selected products' received amounts (for match indicator)
+  // Preview: compare transaction to selected product cost (paid), not existing received
   const selectedProducts = products.filter(p => p.id && tempSelectedIds.includes(p.id));
-  const totalSelectedReceived = selectedProducts.reduce((sum, p) => sum + (p.received ?? 0), 0);
   const totalSelectedPaid = selectedProducts.reduce((sum, p) => sum + (p.paid ?? 0), 0);
-  const matchDiff = transaction ? totalSelectedReceived - transaction.total : null;
-  const isMatched = matchDiff !== null && Math.abs(matchDiff) < 0.01;
+  const refundAmount = transaction?.total ?? 0;
+  const previewShortfall =
+    tempSelectedIds.length === 1 && transaction && selectedProducts[0]?.paid != null
+      ? classifyShortfall(selectedProducts[0].paid!, refundAmount)
+      : null;
+  const withinBand =
+    tempSelectedIds.length === 1 &&
+    transaction &&
+    selectedProducts[0]?.paid != null &&
+    isWithinRefundBand(selectedProducts[0].paid!, refundAmount, selectedProducts[0].tax);
+  const splitAmount =
+    transaction && tempSelectedIds.length === 2
+      ? refundAmount / 2
+      : null;
+  const isExactMatch =
+    tempSelectedIds.length === 1 &&
+    transaction &&
+    selectedProducts[0]?.paid != null &&
+    Math.abs(selectedProducts[0].paid! - refundAmount) < 0.01;
 
   const formatDate = (dateStr: string) => {
     try {
@@ -323,7 +350,9 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                         {confidence}
                       </span>
                       {amountDiff >= 0.01 && (
-                        <p className="text-[10px] text-[#74777f] mt-1">±{formatCurrency(amountDiff)}</p>
+                        <p className="text-[10px] text-[#74777f] mt-1">
+                          {amountDiff <= 5 ? `~${formatCurrency(amountDiff)} off band` : `${formatCurrency(amountDiff)} off band`}
+                        </p>
                       )}
                     </div>
                   </button>
@@ -353,29 +382,79 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
             </button>
           </div>
 
-          {/* Financial summary + match indicator */}
-          <div className="flex items-center gap-3 text-xs text-[#43474e] flex-wrap">
-            <span>Paid <span className="font-semibold text-[#ba1a1a]">{formatCurrency(totalSelectedPaid)}</span></span>
-            <span className="text-[#c4c6cf]">·</span>
-            <span>Received <span className="font-semibold text-[#006a68]">{formatCurrency(totalSelectedReceived)}</span></span>
-            {transaction && matchDiff !== null && (
-              <>
-                <span className="text-[#c4c6cf]">·</span>
-                {isMatched ? (
+          {tempSelectedIds.length === 2 && (
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={splitPrice}
+                onChange={(e) => setSplitPrice(e.target.checked)}
+                className="mt-0.5 rounded border-[#c4c6cf] text-[#006a68] focus:ring-[#006a68]/40"
+              />
+              <span className="text-sm text-[#43474e]">
+                <span className="font-medium text-[#1b1c19]">Split transaction amount</span>
+                <span className="block text-xs text-[#74777f] mt-0.5">
+                  {splitPrice && splitAmount != null
+                    ? `Each product receives ${formatCurrency(splitAmount)} (${formatCurrency(refundAmount)} ÷ 2)`
+                    : 'Each product will receive the full transaction amount'}
+                </span>
+              </span>
+            </label>
+          )}
+
+          {tempSelectedIds.length > 2 && (
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              Each product will receive the full transaction amount. Split manually if this payment covers multiple products.
+            </p>
+          )}
+
+          {/* Refund preview */}
+          {transaction && tempSelectedIds.length === 1 && selectedProducts[0]?.paid != null && (
+            <div className="flex items-center gap-3 text-xs text-[#43474e] flex-wrap">
+              <span>Cost <span className="font-semibold text-[#ba1a1a]">{formatCurrency(selectedProducts[0].paid!)}</span></span>
+              <span className="text-[#c4c6cf]">→</span>
+              <span>Refund <span className="font-semibold text-[#006a68]">{formatCurrency(refundAmount)}</span></span>
+              {previewShortfall && previewShortfall.shortfall >= 0.01 && (
+                <>
+                  <span className="text-[#c4c6cf]">·</span>
+                  <span className="text-[#74777f]">
+                    Shortfall <span className="font-semibold text-[#43474e]">{formatCurrency(previewShortfall.shortfall)}</span>
+                    <span className="ml-1 text-[10px]">({previewShortfall.label})</span>
+                  </span>
+                </>
+              )}
+              {(isExactMatch || withinBand) && (
+                <>
+                  <span className="text-[#c4c6cf]">·</span>
                   <span className="inline-flex items-center gap-1 text-[#006a68] font-semibold">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                     </svg>
-                    Matches transaction
+                    {isExactMatch ? 'Exact match' : 'Expected partial refund'}
                   </span>
-                ) : (
-                  <span className={`font-semibold ${matchDiff > 0 ? 'text-[#006a68]' : 'text-[#ba1a1a]'}`}>
-                    {matchDiff > 0 ? '+' : ''}{formatCurrency(matchDiff)} vs transaction
-                  </span>
-                )}
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {transaction && tempSelectedIds.length === 2 && splitPrice && splitAmount != null && (
+            <div className="flex items-center gap-3 text-xs text-[#43474e] flex-wrap">
+              <span>Total cost <span className="font-semibold text-[#ba1a1a]">{formatCurrency(totalSelectedPaid)}</span></span>
+              <span className="text-[#c4c6cf]">·</span>
+              <span>Transaction <span className="font-semibold text-[#006a68]">{formatCurrency(refundAmount)}</span></span>
+              <span className="text-[#c4c6cf]">·</span>
+              <span className="inline-flex items-center gap-1 text-[#006a68] font-semibold">
+                {formatCurrency(splitAmount)} each
+              </span>
+            </div>
+          )}
+
+          {transaction && tempSelectedIds.length !== 1 && !(tempSelectedIds.length === 2 && splitPrice) && (
+            <div className="flex items-center gap-3 text-xs text-[#43474e] flex-wrap">
+              <span>Total cost <span className="font-semibold text-[#ba1a1a]">{formatCurrency(totalSelectedPaid)}</span></span>
+              <span className="text-[#c4c6cf]">·</span>
+              <span>Transaction <span className="font-semibold text-[#006a68]">{formatCurrency(refundAmount)}</span></span>
+            </div>
+          )}
         </div>
       )}
 
@@ -417,7 +496,24 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   const isAlreadyLinked = selectedProductIds.length > 0;
 
   const footer = (
-    <form onSubmit={handleSave} className="flex gap-3">
+    <form onSubmit={handleSave} className="space-y-3">
+      {tempSelectedIds.length === 1 && !isAlreadyLinked && (
+        <label className="flex items-start gap-2.5 px-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={completeWorkflow}
+            onChange={(e) => setCompleteWorkflow(e.target.checked)}
+            className="mt-0.5 rounded border-[#c4c6cf] text-[#006a68] focus:ring-[#006a68]/40"
+          />
+          <span className="text-sm text-[#43474e]">
+            <span className="font-medium text-[#1b1c19]">Accept refund &amp; finish</span>
+            <span className="block text-xs text-[#74777f] mt-0.5">
+              Mark workflow complete and set refund from this transaction
+            </span>
+          </span>
+        </label>
+      )}
+      <div className="flex gap-3">
       {isAlreadyLinked && (
         <button
           type="button"
@@ -449,6 +545,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
           ? `Link ${tempSelectedIds.length} Product${tempSelectedIds.length !== 1 ? 's' : ''}`
           : 'Link Products'}
       </button>
+      </div>
     </form>
   );
 

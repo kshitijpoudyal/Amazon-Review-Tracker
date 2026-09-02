@@ -114,6 +114,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
       orderNumber: data.orderNumber || prev.orderNumber,
       paid: data.orderTotal ?? prev.paid,
       orderDate: data.orderDate ? formatDateForInput(data.orderDate) : prev.orderDate,
+      retailer: data.retailer ?? prev.retailer,
     }));
     const isUrlOnly = !data.productName && !data.orderDate && !!data.orderNumber;
     setImportStatus(isUrlOnly ? 'url-only' : 'success');
