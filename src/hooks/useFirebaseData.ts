@@ -36,6 +36,12 @@ function writeProductCache(uid: string, products: Product[]): void {
   }
 }
 
+function omitUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined)
+  ) as Partial<T>;
+}
+
 function buildProductData(products: Product[]): ProductData {
   return {
     products,
@@ -116,12 +122,12 @@ export const useFirebaseData = (userId?: string) => {
       const newStatus = getProductStatusType(product);
       const statusChanged = product.lastStatus !== newStatus;
 
-      const productData = {
+      const productData = omitUndefined({
         ...product,
         updatedAt: serverTimestamp(),
         lastStatus: newStatus,
         ...(statusChanged && { statusChangedAt: new Date().toISOString() }),
-      };
+      });
 
       await setDoc(productRef, productData, { merge: true });
       return true;
@@ -137,13 +143,13 @@ export const useFirebaseData = (userId?: string) => {
 
     try {
       const initialStatus = getProductStatusType(product);
-      const productData = {
+      const productData = omitUndefined({
         ...product,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         lastStatus: initialStatus,
         statusChangedAt: new Date().toISOString(),
-      };
+      });
 
       const docRef = await addDoc(collection(db, 'users', userId, 'products'), productData);
       
