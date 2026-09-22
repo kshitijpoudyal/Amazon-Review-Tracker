@@ -20,6 +20,24 @@ import { formatCurrency } from '../utils/currency';
 import Toolbar from '../components/common/Toolbar';
 import { getStatsColor } from '../utils/colors';
 import { ProductLinkOptions } from '../types/Product';
+import { PayPalTransaction } from '../types/PayPalTransaction';
+
+function transactionMatchesAmountSearch(search: string, transaction: PayPalTransaction): boolean {
+  const trimmed = search.trim();
+  const normalized = trimmed.toLowerCase().replace(/[$,\s]/g, '');
+  if (!normalized || !/\d/.test(normalized)) return false;
+
+  return [transaction.amount, transaction.fees, transaction.total].some((value) => {
+    if (value == null) return false;
+    const absValue = Math.abs(value);
+    return (
+      absValue.toFixed(2).includes(normalized) ||
+      value.toFixed(2).includes(normalized) ||
+      formatCurrency(value).toLowerCase().includes(trimmed.toLowerCase()) ||
+      formatCurrency(absValue).toLowerCase().includes(trimmed.toLowerCase())
+    );
+  });
+}
 
 /**
  * PayPalPage Component
@@ -76,11 +94,13 @@ export const PayPalPage: React.FC = () => {
 
   // Filter transactions based on current filter values
   const filteredTransactions = data?.transactions.filter(transaction => {
+    const q = searchTerm.toLowerCase();
     const matchesSearch = !searchTerm ||
-      transaction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.itemTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
+      transaction.name.toLowerCase().includes(q) ||
+      transaction.transactionId.toLowerCase().includes(q) ||
+      transaction.itemTitle?.toLowerCase().includes(q) ||
+      transaction.type.toLowerCase().includes(q) ||
+      transactionMatchesAmountSearch(searchTerm, transaction);
 
     const matchesType = !typeFilter || transaction.type === typeFilter;
 
@@ -96,7 +116,7 @@ export const PayPalPage: React.FC = () => {
     {
       type: 'search',
       key: 'searchTerm',
-      placeholder: 'Search name, transaction ID, type...',
+      placeholder: 'Search name, ID, amount, fees, net...',
       value: searchTerm,
       onChange: (value) => updateFilter('searchTerm', value)
     },
