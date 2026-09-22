@@ -24,7 +24,7 @@ interface ProductTableProps {
 }
 
 const ITEM_NAME_CLASSES =
-  'min-w-0 flex-1 line-clamp-2 break-words leading-snug lg:line-clamp-none lg:truncate lg:max-w-[48ch] xl:max-w-none xl:truncate-none xl:whitespace-normal xl:break-words';
+  'min-w-0 w-full break-words leading-snug line-clamp-2 lg:line-clamp-none lg:whitespace-normal';
 
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
@@ -73,19 +73,30 @@ const ProductTable: React.FC<ProductTableProps> = ({
     return '';
   };
 
+  const renderPayPalBadge = (link: ProductPayPalLink, index: number) => (
+    <span
+      key={link.transactionId || `paypal-${index}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0070BA]/10 text-[#0070BA] ${typography.captionStrong} tabular-nums flex-shrink-0`}
+    >
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+      </svg>
+      {formatCurrency(link.amount)}
+    </span>
+  );
+
   const renderPayPalBadges = (links: ProductPayPalLink[]) => {
     if (links.length === 0) return null;
-    return links.map((link, index) => (
-      <span
-        key={link.transactionId || `paypal-${index}`}
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0070BA]/10 text-[#0070BA] ${typography.captionStrong} tabular-nums flex-shrink-0`}
-      >
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-        </svg>
-        {formatCurrency(link.amount)}
-      </span>
-    ));
+    return links.map((link, index) => renderPayPalBadge(link, index));
+  };
+
+  const renderPayPalBadgeColumn = (links: ProductPayPalLink[]) => {
+    if (links.length === 0) return null;
+    return (
+      <div className="flex flex-col items-end gap-1 shrink-0 self-start pr-1 lg:pr-2">
+        {links.map((link, index) => renderPayPalBadge(link, index))}
+      </div>
+    );
   };
 
   // Get vendor information
@@ -289,13 +300,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
       label: `Item (${products.length})`,
       align: 'left',
       sortable: true,
-      className: 'w-[48%] lg:w-[38%]',
+      className: 'w-[48%] lg:w-[38%] pr-3 lg:pr-4',
     },
     {
       key: 'vendor',
       label: 'Vendor',
       align: 'left',
-      sortable: true
+      sortable: true,
+      className: 'pr-3 lg:pr-4',
     },
     {
       key: 'date',
@@ -356,19 +368,17 @@ const ProductTable: React.FC<ProductTableProps> = ({
       },
       data: {
         item: (
-          <div className="flex items-start gap-3 min-w-0 w-full lg:items-center">
+          <div className="flex items-start gap-3 min-w-0 w-full">
             <ProductThumbnail
               imageUrl={product.imageUrl}
               productName={product.item}
               size="md"
               className="shrink-0"
             />
-            {renderItemName(product)}
-            {paypalLinks.length > 0 && (
-              <div className="flex shrink-0 items-center justify-start gap-1.5">
-                {renderPayPalBadges(paypalLinks)}
-              </div>
-            )}
+            <div className="min-w-0 flex-1">
+              {renderItemName(product)}
+            </div>
+            {renderPayPalBadgeColumn(paypalLinks)}
           </div>
         ),
         vendor: (

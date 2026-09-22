@@ -1,22 +1,97 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import {
+  MagnifyingGlassIcon,
+  XMarkIcon,
+  CheckIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from '@heroicons/react/24/outline';
 import { Product, ProductLinkOptions } from '../types/Product';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { Modal, ProductThumbnail } from './common';
+import ConfirmDeleteModal from './common/ConfirmDeleteModal';
 import { getProductStatus, isVoid, isRefundPending } from '../utils/productStatus';
 import { formatCurrency } from '../utils/currency';
 import { getPayPalMatchSuggestions } from '../utils/paypalMatchSuggestions';
-import { classifyShortfall, isWithinRefundBand } from '../utils/refundUtils';
+import { getBadgeClasses } from '../utils/colors';
 import { typography } from '../utils/typography';
+import {
+  formFooterCancelClass,
+  formFooterPrimaryClass,
+  formInputClass,
+  formLabelClass,
+} from './ProductDashboard/productFormStyles';
+import { ProductFormCurrencyInput } from './ProductDashboard/ProductFormCurrencyInput';
 
 interface ProductLinkModalProps {
   products: Product[];
   selectedProductIds: string[];
-  onProductSelect: (productIds: string[], options?: ProductLinkOptions) => void;
+  onProductSelect: (productIds: string[], options?: ProductLinkOptions) => void | Promise<void>;
   linkedProductIds?: string[];
   transaction?: PayPalTransaction;
   isOpen: boolean;
   onClose: () => void;
 }
+
+function formatOrderDate(dateStr: string): string {
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatTransactionDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+  } catch {
+    /* fall through */
+  }
+  return dateStr;
+}
+
+function absolutePaidDifference(paid: number | null | undefined, transactionAmount: number): number | null {
+  if (paid == null) return null;
+  return Math.abs(paid - transactionAmount);
+}
+
+function equalSplitAmounts(productIds: string[], netReceived: number): Record<string, string> {
+  const perProduct = netReceived / productIds.length;
+  return Object.fromEntries(productIds.map((id) => [id, perProduct.toFixed(2)]));
+}
+
+function parseSplitAmountInputs(
+  productIds: string[],
+  inputs: Record<string, string>
+): Record<string, number> | null {
+  const parsed: Record<string, number> = {};
+  for (const id of productIds) {
+    const value = parseFloat(inputs[id] ?? '');
+    if (Number.isNaN(value) || value < 0) return null;
+    parsed[id] = value;
+  }
+  return parsed;
+}
+
+const visibilityPillActive =
+  'inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[rgba(196,198,207,0.55)] bg-white text-[#43474e] ' +
+  `${typography.captionStrong} transition-colors hover:bg-[#fbf9f3]`;
+
+const visibilityPillInactive =
+  'inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[rgba(196,198,207,0.35)] bg-[#eae8e2]/60 text-[#74777f] ' +
+  `${typography.captionStrong} transition-colors hover:bg-[#eae8e2]`;
 
 export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   products,
@@ -25,15 +100,16 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   linkedProductIds = [],
   transaction,
   isOpen,
-  onClose
+  onClose,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>(selectedProductIds);
   const [hideLinked, setHideLinked] = useState(true);
   const [hideVoid, setHideVoid] = useState(true);
-  const [suggestionsExpanded, setSuggestionsExpanded] = useState(true);
   const [completeWorkflow, setCompleteWorkflow] = useState(true);
-  const [splitPrice, setSplitPrice] = useState(false);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>({});
+  const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -42,13 +118,57 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setSuggestionsExpanded(true);
       setCompleteWorkflow(true);
-      setSplitPrice(transaction?.splitPrice === true);
+      setShowUnlinkConfirm(false);
+
+      const netReceived = transaction?.total ?? 0;
+      const existingCustom = transaction?.productSplitAmounts;
+      const canUseCustom =
+        existingCustom &&
+        selectedProductIds.length >= 2 &&
+        selectedProductIds.every((id) => existingCustom[id] != null);
+
+      if (canUseCustom) {
+        setSplitEnabled(true);
+        setSplitAmounts(
+          Object.fromEntries(
+            selectedProductIds.map((id) => [id, existingCustom[id].toFixed(2)])
+          )
+        );
+      } else if (transaction?.splitPrice && selectedProductIds.length >= 2) {
+        setSplitEnabled(true);
+        setSplitAmounts(equalSplitAmounts(selectedProductIds, netReceived));
+      } else {
+        setSplitEnabled(false);
+        setSplitAmounts({});
+      }
+
       const id = setTimeout(() => inputRef.current?.focus(), 60);
       return () => clearTimeout(id);
     }
-  }, [isOpen, transaction?.splitPrice]);
+  }, [isOpen, transaction?.splitPrice, transaction?.productSplitAmounts, transaction?.total, selectedProductIds]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+      e.preventDefault();
+      inputRef.current?.focus();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   const closeModal = () => {
     setSearchTerm('');
@@ -57,8 +177,8 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   };
 
   const handleToggle = (productId: string) => {
-    setTempSelectedIds(prev =>
-      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
+    setTempSelectedIds((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
     );
   };
 
@@ -67,8 +187,11 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
     let options: ProductLinkOptions | undefined;
     if (tempSelectedIds.length === 1 && completeWorkflow) {
       options = { completeWorkflow: true };
-    } else if (tempSelectedIds.length === 2) {
-      options = { splitPrice };
+    } else if (tempSelectedIds.length >= 2 && splitEnabled) {
+      const parsed = parseSplitAmountInputs(tempSelectedIds, splitAmounts);
+      if (parsed) {
+        options = { customSplitAmounts: parsed };
+      }
     }
     onProductSelect(tempSelectedIds, options);
     closeModal();
@@ -84,420 +207,480 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   const filteredProducts = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return products
-      .filter(p => {
-        if (hideLinked && (linkedProductIds.includes(p.id || '') || getProductStatus(p).type === 'complete')) return false;
+      .filter((p) => {
+        if (hideLinked && (linkedProductIds.includes(p.id || '') || getProductStatus(p).type === 'complete')) {
+          return false;
+        }
         if (hideVoid && isVoid(p)) return false;
         if (!q) return true;
-        return [p.item?.toLowerCase(), p.paid?.toString(), p.orderNumber?.toLowerCase()]
-          .some(f => f?.includes(q));
+        return [p.item?.toLowerCase(), p.paid?.toString(), p.orderNumber?.toLowerCase()].some((f) =>
+          f?.includes(q)
+        );
       })
       .sort((a, b) => sortPriority(a) - sortPriority(b));
   }, [products, searchTerm, linkedProductIds, hideLinked, hideVoid]);
 
-  const linkedCount = products.filter(p => linkedProductIds.includes(p.id || '') || getProductStatus(p).type === 'complete').length;
-  const voidCount = products.filter(p => isVoid(p)).length;
+  const linkedCount = products.filter(
+    (p) => linkedProductIds.includes(p.id || '') || getProductStatus(p).type === 'complete'
+  ).length;
+  const voidCount = products.filter((p) => isVoid(p)).length;
 
   const matchSuggestions = useMemo(() => {
     if (!transaction) return [];
     return getPayPalMatchSuggestions(transaction, products, linkedProductIds);
   }, [transaction, products, linkedProductIds]);
 
-  // Preview: compare transaction to selected product cost (paid), not existing received
-  const selectedProducts = products.filter(p => p.id && tempSelectedIds.includes(p.id));
+  const transactionLinkedProducts = useMemo(
+    () =>
+      selectedProductIds
+        .map((id) => products.find((p) => p.id === id))
+        .filter((p): p is Product => p != null),
+    [selectedProductIds, products]
+  );
+
+  const selectedProducts = products.filter((p) => p.id && tempSelectedIds.includes(p.id));
   const totalSelectedPaid = selectedProducts.reduce((sum, p) => sum + (p.paid ?? 0), 0);
-  const refundAmount = transaction?.total ?? 0;
-  const previewShortfall =
-    tempSelectedIds.length === 1 && transaction && selectedProducts[0]?.paid != null
-      ? classifyShortfall(selectedProducts[0].paid!, refundAmount)
-      : null;
-  const withinBand =
-    tempSelectedIds.length === 1 &&
-    transaction &&
-    selectedProducts[0]?.paid != null &&
-    isWithinRefundBand(selectedProducts[0].paid!, refundAmount, selectedProducts[0].tax);
-  const splitAmount =
-    transaction && tempSelectedIds.length === 2
-      ? refundAmount / 2
-      : null;
-  const isExactMatch =
-    tempSelectedIds.length === 1 &&
-    transaction &&
-    selectedProducts[0]?.paid != null &&
-    Math.abs(selectedProducts[0].paid! - refundAmount) < 0.01;
+  const netReceived = transaction?.total ?? 0;
+  const selectionDifference = Math.abs(totalSelectedPaid - netReceived);
+  const parsedSplitAmounts = splitEnabled
+    ? parseSplitAmountInputs(tempSelectedIds, splitAmounts)
+    : null;
+  const allocatedSplitTotal = parsedSplitAmounts
+    ? Object.values(parsedSplitAmounts).reduce((sum, value) => sum + value, 0)
+    : 0;
+  const splitAllocationDiff = Math.abs(allocatedSplitTotal - netReceived);
+  const splitAmountsValid =
+    !splitEnabled || (parsedSplitAmounts != null && splitAllocationDiff < 0.01);
+  const isAlreadyLinked = selectedProductIds.length > 0;
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      return dateStr;
-    }
-  };
+  useEffect(() => {
+    if (!splitEnabled || tempSelectedIds.length < 2) return;
+    setSplitAmounts((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const id of tempSelectedIds) {
+        if (next[id] == null) {
+          next[id] = (netReceived / tempSelectedIds.length).toFixed(2);
+          changed = true;
+        }
+      }
+      for (const id of Object.keys(next)) {
+        if (!tempSelectedIds.includes(id)) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [tempSelectedIds, splitEnabled, netReceived]);
 
-  // ── Product Row ──────────────────────────────────────────────────────────
+  const linkButtonLabel =
+    tempSelectedIds.length === 0
+      ? 'Link Products'
+      : tempSelectedIds.length === 1
+        ? 'Link 1 Product'
+        : `Link ${tempSelectedIds.length} Products`;
+
   const ProductRow = ({ product }: { product: Product }) => {
     const id = product.id || '';
     const isSelected = tempSelectedIds.includes(id);
-    const isAlreadyLinked = linkedProductIds.includes(id);
+    const isAlreadyLinkedRow = linkedProductIds.includes(id);
     const status = getProductStatus(product);
 
     return (
       <li
         onClick={() => id && handleToggle(id)}
-        className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-all rounded-2xl mx-2 my-1 ${
-          isSelected ? 'bg-[#006a68]/10 ring-1 ring-[#006a68]/30' : 'hover:bg-[#fbf9f3]'
+        className={`flex items-start gap-2.5 px-3 py-2 cursor-pointer transition-colors rounded-xl mx-1 ${
+          isSelected ? 'bg-[#006a68]/10 ring-1 ring-[#006a68]/25' : 'hover:bg-[#fbf9f3]'
         }`}
       >
-        {/* Checkbox */}
-        <div className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-          isSelected ? 'bg-[#006a68] border-[#006a68]' : 'border-[#c4c6cf]'
-        }`}>
+        <div
+          className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+            isSelected ? 'bg-[#006a68] border-[#006a68]' : 'border-[#c4c6cf]'
+          }`}
+          aria-hidden="true"
+        >
           {isSelected && (
             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
             </svg>
           )}
         </div>
 
-        {/* Thumbnail */}
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => id && handleToggle(id)}
+          onClick={(e) => e.stopPropagation()}
+          className="sr-only"
+          aria-label={`Select ${product.item}`}
+        />
+
         <ProductThumbnail imageUrl={product.imageUrl} productName={product.item} size="sm" />
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
-          {/* Name + status */}
           <div className="flex items-start justify-between gap-2">
-            <p className={`text-sm font-medium leading-snug line-clamp-1 ${
-              isSelected ? 'text-[#022448]' : 'text-[#1b1c19]'
-            }`}>
+            <p
+              className={`${typography.bodyStrong} leading-snug line-clamp-2 min-w-0 ${
+                isSelected ? 'text-[#022448]' : 'text-[#1b1c19]'
+              }`}
+            >
               {product.item}
             </p>
-            <span className={`${typography.captionStrong} ${status.color}`}>
+            <span className={`${getBadgeClasses(status.type)} shrink-0 scale-90 origin-top-right`}>
               {status.label}
             </span>
           </div>
 
-          {/* Date + already-linked badge */}
-          <div className="flex items-center gap-2 mt-0.5 text-xs text-[#74777f]">
-            {product.orderDate && <span>{formatDate(product.orderDate)}</span>}
-            {isAlreadyLinked && (
-              <span className="inline-flex items-center gap-1 text-[#006a68] font-medium">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                linked
-              </span>
+          <div className={`${typography.caption} mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5`}>
+            {product.orderDate && <span>{formatOrderDate(product.orderDate)}</span>}
+            {isAlreadyLinkedRow && (
+              <span className="text-[#006a68] font-medium">linked</span>
             )}
           </div>
 
-          {/* Paid / Received / Delta */}
-          <div className="flex items-center gap-3 mt-1.5">
-            <div className="flex items-center gap-1">
-              <span className={`${typography.statLabel}`}>Paid</span>
-              <span className="text-xs font-semibold text-[#ba1a1a]">
-                {product.paid != null ? formatCurrency(product.paid) : '—'}
-              </span>
-            </div>
-            <div className="w-px h-3 bg-[#c4c6cf]" />
-            <div className="flex items-center gap-1">
-              <span className={`${typography.statLabel}`}>Received</span>
-              <span className="text-xs font-semibold text-[#006a68]">
-                {product.received != null ? formatCurrency(product.received) : '—'}
-              </span>
-            </div>
-            {product.delta != null && (
-              <>
-                <div className="w-px h-3 bg-[#c4c6cf]" />
-                <div className="flex items-center gap-1">
-                  <span className={`${typography.statLabel}`}>Δ</span>
-                  <span className={`text-xs font-semibold ${product.delta >= 0 ? 'text-[#006a68]' : 'text-[#ba1a1a]'}`}>
-                    {formatCurrency(product.delta)}
-                  </span>
-                </div>
-              </>
+          <p className={`${typography.caption} tabular-nums mt-0.5 text-[#43474e]`}>
+            Paid {product.paid != null ? formatCurrency(product.paid) : '—'}
+            {' · Received '}
+            {product.received != null && product.received !== 0 ? (
+              <span className="text-[#006a68]">{formatCurrency(product.received)}</span>
+            ) : (
+              '—'
             )}
-          </div>
+          </p>
         </div>
       </li>
     );
   };
 
-  // ── Modal pieces ─────────────────────────────────────────────────────────
   const header = (
-    <div className="px-4 sm:px-6 pt-5 pb-4 border-b border-[rgba(196,198,207,0.15)] space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-[#1b1c19]">Link Products</h3>
-      </div>
+    <div className="px-4 sm:px-6 pt-4 pb-3 border-b border-[rgba(196,198,207,0.15)] space-y-3">
+      <h3 className={typography.modalTitle}>
+        {isAlreadyLinked ? 'Edit linked products' : 'Link Products'}
+      </h3>
 
-      {/* Transaction context card */}
       {transaction && (
-        <div className="bg-[#006a68]/8 border border-[#006a68]/20 rounded-2xl px-4 py-3 space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className={`${typography.overline} text-[#006a68] mb-0.5`}>PayPal Transaction</p>
-              <p className="text-sm font-semibold text-[#1b1c19] truncate">{transaction.name}</p>
-              {transaction.itemTitle && (
-                <p className="text-xs text-[#74777f] truncate mt-0.5">{transaction.itemTitle}</p>
-              )}
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p className={`${typography.statValue} text-[#006a68]`}>{formatCurrency(transaction.total)}</p>
-              <p className={`${typography.caption} text-[#74777f]`}>{transaction.date}</p>
-            </div>
+        <div className="px-3 py-2.5 rounded-xl bg-[#eae8e2]/50 border border-[rgba(196,198,207,0.4)] min-w-0 space-y-1">
+          <div className="flex items-center gap-3 min-w-0">
+            <p className={`${typography.bodyStrong} truncate min-w-0 flex-1`}>{transaction.name}</p>
+            <p className={`${typography.caption} shrink-0 text-[#74777f]`}>
+              {formatTransactionDate(transaction.date)}
+            </p>
           </div>
-          {/* Gross / fees breakdown */}
-          {transaction.fees !== 0 && (
-            <div className={`${typography.caption} text-[#74777f] border-t border-[#006a68]/10 pt-2`}>
-              <span>Gross <span className="font-semibold text-[#43474e]">{formatCurrency(transaction.amount)}</span></span>
-              <span>Fees <span className="font-semibold text-[#ba1a1a]">−{formatCurrency(Math.abs(transaction.fees))}</span></span>
-              <span>Net <span className="font-semibold text-[#006a68]">{formatCurrency(transaction.total)}</span></span>
-            </div>
-          )}
+          <div className={`${typography.caption} flex flex-wrap items-center gap-x-3 gap-y-0.5 tabular-nums text-[#43474e]`}>
+            <span>
+              Amount <span className={`${typography.bodyStrong} text-[#1b1c19]`}>{formatCurrency(transaction.amount)}</span>
+            </span>
+            <span>
+              Net received{' '}
+              <span className={`${typography.bodyStrong} text-[#1b1c19]`}>{formatCurrency(transaction.total)}</span>
+            </span>
+          </div>
         </div>
       )}
 
-      {/* Search bar */}
       <div className="relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#74777f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        <MagnifyingGlassIcon
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#74777f] pointer-events-none"
+          aria-hidden="true"
+        />
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search by name, amount, or order #…"
+          role="searchbox"
+          aria-label="Search by name, amount, or order number"
+          placeholder="Search by name, amount, or order #..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="w-full pl-9 pr-9 py-2.5 bg-[#fbf9f3] rounded-full text-sm text-[#1b1c19] placeholder-[#74777f] focus:outline-none focus:ring-2 focus:ring-[#006a68]/40 transition-all"
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              if (searchTerm) setSearchTerm('');
+              else inputRef.current?.blur();
+            }
+          }}
+          className={`${formInputClass} pl-10 pr-10`}
           autoComplete="off"
         />
-        {searchTerm && (
-          <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#74777f] hover:text-[#1b1c19]">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+        {searchTerm ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm('');
+              inputRef.current?.focus();
+            }}
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#74777f] hover:text-[#43474e]"
+          >
+            <XMarkIcon className="w-4 h-4" aria-hidden="true" />
           </button>
+        ) : (
+          <kbd
+            className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 text-caption text-[#74777f]/50 pointer-events-none"
+            aria-hidden="true"
+          >
+            /
+          </kbd>
         )}
       </div>
 
-      {/* Filter toggles */}
       <div className="flex flex-wrap gap-2">
         {linkedCount > 0 && (
           <button
-            onClick={() => setHideLinked(v => !v)}
-            className={`${typography.captionStrong} px-3 py-1 rounded-full transition-all ${
-              hideLinked ? 'bg-[#022448] text-white' : 'bg-[#eae8e2] text-[#43474e] hover:bg-[#e4e2dd]'
-            }`}
+            type="button"
+            onClick={() => setHideLinked((v) => !v)}
+            className={hideLinked ? visibilityPillInactive : visibilityPillActive}
+            aria-pressed={!hideLinked}
           >
-            {hideLinked ? '✓ Hiding' : 'Hide'} Complete & Linked
+            {hideLinked ? (
+              <EyeSlashIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <EyeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            )}
+            {hideLinked ? 'Show completed item' : 'Hide completed & linked'}
           </button>
         )}
         {voidCount > 0 && (
           <button
-            onClick={() => setHideVoid(v => !v)}
-            className={`${typography.captionStrong} px-3 py-1 rounded-full transition-all ${
-              hideVoid ? 'bg-[#022448] text-white' : 'bg-[#eae8e2] text-[#43474e] hover:bg-[#e4e2dd]'
-            }`}
+            type="button"
+            onClick={() => setHideVoid((v) => !v)}
+            className={hideVoid ? visibilityPillInactive : visibilityPillActive}
+            aria-pressed={!hideVoid}
           >
-            {hideVoid ? '✓ Hiding' : 'Hide'} Void
+            {hideVoid ? (
+              <EyeSlashIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <EyeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            )}
+            {hideVoid ? 'Show void product' : 'Hide void'}
           </button>
         )}
       </div>
 
-      {/* Suggested matches */}
-      {transaction && matchSuggestions.length > 0 && tempSelectedIds.length === 0 && (
+      {isAlreadyLinked && transactionLinkedProducts.length > 0 && transaction ? (
         <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setSuggestionsExpanded(v => !v)}
-            className="w-full flex items-center justify-between gap-2 text-left group"
-            aria-expanded={suggestionsExpanded}
-          >
-            <p className={`${typography.overline} group-hover:text-[#43474e] transition-colors`}>
+          <p className={`${typography.label} text-[#74777f]`}>
+            Linked {transactionLinkedProducts.length === 1 ? 'product' : 'products'}
+          </p>
+          <div className="space-y-1.5">
+            {transactionLinkedProducts.map((product) => {
+              const diff = absolutePaidDifference(product.paid, transaction.total);
+
+              return (
+                <div
+                  key={product.id}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-[#006a68]/35 bg-[#006a68]/10"
+                >
+                  <ProductThumbnail imageUrl={product.imageUrl} productName={product.item} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className={`${typography.bodyStrong} line-clamp-2 text-[#1b1c19]`}>
+                      {product.item}
+                    </p>
+                    <p className={`${typography.caption} tabular-nums text-[#43474e] mt-0.5`}>
+                      Paid {product.paid != null ? formatCurrency(product.paid) : '—'}
+                      {diff != null && (
+                        <> · Difference {formatCurrency(diff)}</>
+                      )}
+                    </p>
+                  </div>
+                  <CheckIcon className="w-4 h-4 text-[#006a68] shrink-0" aria-hidden="true" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        transaction &&
+        matchSuggestions.length > 0 && (
+          <div className="space-y-2">
+            <p className={`${typography.label} text-[#74777f]`}>
               Suggested matches ({matchSuggestions.length})
             </p>
-            <svg
-              className={`w-4 h-4 text-[#74777f] flex-shrink-0 transition-transform ${suggestionsExpanded ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          {suggestionsExpanded && (
-            <div className="space-y-2">
-              {matchSuggestions.map(({ product, amountDiff, confidence }) => {
+            <div className="space-y-1.5">
+              {matchSuggestions.map(({ product }) => {
                 const id = product.id || '';
-                const status = getProductStatus(product);
+                const isSelected = tempSelectedIds.includes(id);
+                const diff = absolutePaidDifference(product.paid, transaction.total);
+
                 return (
                   <button
                     key={id}
                     type="button"
                     onClick={() => id && handleToggle(id)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-[#006a68]/20 bg-[#006a68]/5 hover:bg-[#006a68]/10 transition-colors text-left"
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-colors text-left ${
+                      isSelected
+                        ? 'border-[#006a68]/35 bg-[#006a68]/10 ring-1 ring-[#006a68]/20'
+                        : 'border-[rgba(196,198,207,0.45)] bg-white hover:bg-[#fbf9f3] hover:border-[rgba(196,198,207,0.65)]'
+                    }`}
                   >
                     <ProductThumbnail imageUrl={product.imageUrl} productName={product.item} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#1b1c19] truncate">{product.item}</p>
-                      <p className="text-xs text-[#74777f] mt-0.5">
-                        Paid {formatCurrency(product.paid)} · {status.label}
+                      <p className={`${typography.bodyStrong} line-clamp-1 text-[#1b1c19]`}>
+                        {product.item}
+                      </p>
+                      <p className={`${typography.caption} tabular-nums text-[#43474e] mt-0.5`}>
+                        Paid {product.paid != null ? formatCurrency(product.paid) : '—'}
+                        {diff != null && (
+                          <> · Difference {formatCurrency(diff)}</>
+                        )}
                       </p>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <span className={`${typography.captionStrong} ${
-                        confidence === 'high' ? 'bg-[#006a68]/15 text-[#006a68]'
-                          : confidence === 'medium' ? 'bg-amber-100 text-amber-800'
-                          : 'bg-[#eae8e2] text-[#74777f]'
-                      }`}>
-                        {confidence}
-                      </span>
-                      {amountDiff >= 0.01 && (
-                        <p className={`${typography.caption} text-[#74777f] mt-1`}>
-                          {amountDiff <= 5 ? `~${formatCurrency(amountDiff)} off band` : `${formatCurrency(amountDiff)} off band`}
-                        </p>
-                      )}
-                    </div>
+                    {isSelected && (
+                      <CheckIcon className="w-4 h-4 text-[#006a68] shrink-0" aria-hidden="true" />
+                    )}
                   </button>
                 );
               })}
             </div>
-          )}
-        </div>
+          </div>
+        )
       )}
     </div>
   );
 
   const body = (
-    <div>
-      {/* Selected summary bar */}
-      {tempSelectedIds.length > 0 && (
-        <div className="px-4 py-2.5 bg-[#006a68]/10 border-b border-[#006a68]/10 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-[#006a68]">
+    <div className="max-h-[45vh] overflow-y-auto py-2">
+      <p className={`${typography.label} text-[#74777f] px-4 sm:px-6 mb-1.5`}>
+        All eligible products
+      </p>
+      {filteredProducts.length > 0 ? (
+        <ul>
+          {filteredProducts.map((product) => (
+            <ProductRow key={product.id} product={product} />
+          ))}
+        </ul>
+      ) : searchTerm ? (
+        <div className="text-center py-10 px-4">
+          <p className={`${typography.body} text-[#74777f] mb-3`}>
+            No products match &ldquo;{searchTerm}&rdquo;
+          </p>
+          <button
+            type="button"
+            onClick={() => setSearchTerm('')}
+            className={`${typography.captionStrong} px-4 py-2 rounded-xl bg-[#eae8e2] text-[#43474e] hover:bg-[#e4e2dd]`}
+          >
+            Clear search
+          </button>
+        </div>
+      ) : (
+        <div className="text-center py-10 px-4">
+          <p className={`${typography.body} text-[#74777f]`}>No products available to link.</p>
+        </div>
+      )}
+    </div>
+  );
+
+  const handleUnlinkConfirm = async () => {
+    setShowUnlinkConfirm(false);
+    await onProductSelect([], { keepModalOpen: true });
+    setTempSelectedIds([]);
+  };
+
+  const unlinkConfirmMessage =
+    transactionLinkedProducts.length === 1
+      ? `Are you sure you want to unlink "${transactionLinkedProducts[0].item}" from this transaction? The product's received amount will be cleared. This action cannot be undone.`
+      : `Are you sure you want to unlink ${transactionLinkedProducts.length} products from this transaction? Their received amounts will be updated. This action cannot be undone.`;
+
+  const footer = (
+    <form onSubmit={handleSave} className="space-y-3 w-full">
+      {tempSelectedIds.length > 0 && transaction && (
+        <div className="px-1 space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className={`${typography.bodyStrong} text-[#1b1c19]`}>
               {tempSelectedIds.length} product{tempSelectedIds.length !== 1 ? 's' : ''} selected
-            </span>
+            </p>
             <button
+              type="button"
               onClick={() => setTempSelectedIds([])}
-              className="text-xs text-[#006a68] underline underline-offset-2 hover:text-[#022448]"
+              className={`${typography.caption} text-[#74777f] hover:text-[#1b1c19] underline`}
             >
               Clear all
             </button>
           </div>
+          <p className={`${typography.caption} tabular-nums text-[#43474e]`}>
+            Selected paid {formatCurrency(totalSelectedPaid)} · Net received{' '}
+            {formatCurrency(netReceived)} · Difference {formatCurrency(selectionDifference)}
+          </p>
+        </div>
+      )}
 
-          {tempSelectedIds.length === 2 && (
-            <label className="flex items-start gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={splitPrice}
-                onChange={(e) => setSplitPrice(e.target.checked)}
-                className="mt-0.5 rounded border-[#c4c6cf] text-[#006a68] focus:ring-[#006a68]/40"
-              />
-              <span className="text-sm text-[#43474e]">
-                <span className="font-medium text-[#1b1c19]">Split transaction amount</span>
-                <span className="block text-xs text-[#74777f] mt-0.5">
-                  {splitPrice && splitAmount != null
-                    ? `Each product receives ${formatCurrency(splitAmount)} (${formatCurrency(refundAmount)} ÷ 2)`
-                    : 'Each product will receive the full transaction amount'}
+      {tempSelectedIds.length >= 2 && (
+        <div className="px-1 space-y-2.5">
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={splitEnabled}
+              onChange={(e) => {
+                const enabled = e.target.checked;
+                setSplitEnabled(enabled);
+                if (enabled) {
+                  setSplitAmounts(equalSplitAmounts(tempSelectedIds, netReceived));
+                }
+              }}
+              className="mt-0.5 rounded border-[#c4c6cf] text-[#006a68] focus:ring-[#006a68]/40"
+            />
+            <span className={`${typography.caption} text-[#43474e]`}>
+              <span className={`${typography.bodyStrong} text-[#1b1c19]`}>
+                Split net received between products
+              </span>
+              {!splitEnabled && (
+                <span className="block mt-0.5">
+                  Each product will receive the full net received amount ({formatCurrency(netReceived)}).
                 </span>
-              </span>
-            </label>
-          )}
-
-          {tempSelectedIds.length > 2 && (
-            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              Each product will receive the full transaction amount. Split manually if this payment covers multiple products.
-            </p>
-          )}
-
-          {/* Refund preview */}
-          {transaction && tempSelectedIds.length === 1 && selectedProducts[0]?.paid != null && (
-            <div className="flex items-center gap-3 text-xs text-[#43474e] flex-wrap">
-              <span>Cost <span className="font-semibold text-[#ba1a1a]">{formatCurrency(selectedProducts[0].paid!)}</span></span>
-              <span className="text-[#c4c6cf]">→</span>
-              <span>Refund <span className="font-semibold text-[#006a68]">{formatCurrency(refundAmount)}</span></span>
-              {previewShortfall && previewShortfall.shortfall >= 0.01 && (
-                <>
-                  <span className="text-[#c4c6cf]">·</span>
-                  <span className="text-[#74777f]">
-                    Shortfall <span className="font-semibold text-[#43474e]">{formatCurrency(previewShortfall.shortfall)}</span>
-                    <span className={`${typography.caption}`}>({previewShortfall.label})</span>
-                  </span>
-                </>
               )}
-              {(isExactMatch || withinBand) && (
-                <>
-                  <span className="text-[#c4c6cf]">·</span>
-                  <span className="inline-flex items-center gap-1 text-[#006a68] font-semibold">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
-                    {isExactMatch ? 'Exact match' : 'Expected partial refund'}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
+            </span>
+          </label>
 
-          {transaction && tempSelectedIds.length === 2 && splitPrice && splitAmount != null && (
-            <div className="flex items-center gap-3 text-xs text-[#43474e] flex-wrap">
-              <span>Total cost <span className="font-semibold text-[#ba1a1a]">{formatCurrency(totalSelectedPaid)}</span></span>
-              <span className="text-[#c4c6cf]">·</span>
-              <span>Transaction <span className="font-semibold text-[#006a68]">{formatCurrency(refundAmount)}</span></span>
-              <span className="text-[#c4c6cf]">·</span>
-              <span className="inline-flex items-center gap-1 text-[#006a68] font-semibold">
-                {formatCurrency(splitAmount)} each
-              </span>
-            </div>
-          )}
-
-          {transaction && tempSelectedIds.length !== 1 && !(tempSelectedIds.length === 2 && splitPrice) && (
-            <div className="flex items-center gap-3 text-xs text-[#43474e] flex-wrap">
-              <span>Total cost <span className="font-semibold text-[#ba1a1a]">{formatCurrency(totalSelectedPaid)}</span></span>
-              <span className="text-[#c4c6cf]">·</span>
-              <span>Transaction <span className="font-semibold text-[#006a68]">{formatCurrency(refundAmount)}</span></span>
+          {splitEnabled && (
+            <div className="space-y-2 pl-7">
+              <div className="flex items-center justify-between gap-2">
+                <p className={`${typography.caption} text-[#74777f]`}>Custom amount per product</p>
+                <button
+                  type="button"
+                  onClick={() => setSplitAmounts(equalSplitAmounts(tempSelectedIds, netReceived))}
+                  className={`${typography.captionStrong} text-[#006a68] hover:text-[#022448] underline`}
+                >
+                  Split equally
+                </button>
+              </div>
+              {selectedProducts.map((product) => {
+                const id = product.id || '';
+                return (
+                  <div key={id} className="space-y-1">
+                    <label htmlFor={`split-${id}`} className={`${formLabelClass} line-clamp-1`}>
+                      {product.item}
+                    </label>
+                    <ProductFormCurrencyInput
+                      id={`split-${id}`}
+                      value={
+                        splitAmounts[id] != null && splitAmounts[id] !== ''
+                          ? parseFloat(splitAmounts[id])
+                          : null
+                      }
+                      onChange={(value) =>
+                        setSplitAmounts((prev) => ({ ...prev, [id]: value }))
+                      }
+                    />
+                  </div>
+                );
+              })}
+              <p
+                className={`${typography.caption} tabular-nums ${
+                  splitAmountsValid ? 'text-[#43474e]' : 'text-[#ba1a1a]'
+                }`}
+              >
+                Allocated {formatCurrency(allocatedSplitTotal)} / {formatCurrency(netReceived)}
+                {!splitAmountsValid && ' · amounts must equal net received'}
+              </p>
             </div>
           )}
         </div>
       )}
 
-      {/* Product list */}
-      <div className="max-h-[50vh] overflow-y-auto py-2">
-        {filteredProducts.length > 0 ? (
-          <ul className="space-y-0.5">
-            {filteredProducts.map(product => (
-              <ProductRow key={product.id} product={product} />
-            ))}
-          </ul>
-        ) : searchTerm ? (
-          <div className="text-center py-14">
-            <svg className="mx-auto mb-3 w-10 h-10 text-[#c4c6cf]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <p className="text-[#74777f] text-sm mb-3">No products match "<strong>{searchTerm}</strong>"</p>
-            <button onClick={() => setSearchTerm('')} className="text-xs px-4 py-2 rounded-full bg-[#eae8e2] text-[#43474e] hover:bg-[#e4e2dd] transition-colors">
-              Clear search
-            </button>
-          </div>
-        ) : (
-          <div className="text-center py-14">
-            <svg className="mx-auto mb-3 w-10 h-10 text-[#c4c6cf]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            <p className="text-[#74777f] text-sm">No products available to link.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const handleUnlink = () => {
-    onProductSelect([]);
-    closeModal();
-  };
-
-  const isAlreadyLinked = selectedProductIds.length > 0;
-
-  const footer = (
-    <form onSubmit={handleSave} className="space-y-3">
       {tempSelectedIds.length === 1 && !isAlreadyLinked && (
         <label className="flex items-start gap-2.5 px-1 cursor-pointer">
           <input
@@ -506,61 +689,60 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
             onChange={(e) => setCompleteWorkflow(e.target.checked)}
             className="mt-0.5 rounded border-[#c4c6cf] text-[#006a68] focus:ring-[#006a68]/40"
           />
-          <span className="text-sm text-[#43474e]">
-            <span className="font-medium text-[#1b1c19]">Accept refund &amp; finish</span>
-            <span className="block text-xs text-[#74777f] mt-0.5">
+          <span className={`${typography.caption} text-[#43474e]`}>
+            <span className={`${typography.bodyStrong} text-[#1b1c19]`}>Accept refund &amp; finish</span>
+            <span className="block mt-0.5">
               Mark workflow complete and set refund from this transaction
             </span>
           </span>
         </label>
       )}
+
       <div className="flex gap-3">
-      {isAlreadyLinked && (
-        <button
-          type="button"
-          onClick={handleUnlink}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-full border border-[#ba1a1a]/30 text-[#ba1a1a] bg-[#ba1a1a]/5 hover:bg-[#ba1a1a]/10 active:scale-95 transition-all"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-          </svg>
-          Unlink
+        {isAlreadyLinked && (
+          <button
+            type="button"
+            onClick={() => setShowUnlinkConfirm(true)}
+            className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl border border-[#ba1a1a]/30 text-[#ba1a1a] bg-[#ba1a1a]/5 hover:bg-[#ba1a1a]/10 transition-colors shrink-0"
+          >
+            Unlink
+          </button>
+        )}
+        <button type="button" onClick={closeModal} className={formFooterCancelClass}>
+          Cancel
         </button>
-      )}
-      <button
-        type="button"
-        onClick={closeModal}
-        className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-full border border-[rgba(196,198,207,0.4)] text-[#43474e] bg-[#fbf9f3] hover:bg-[#e4e2dd] transition-colors"
-      >
-        Cancel
-      </button>
-      <button
-        type="submit"
-        disabled={tempSelectedIds.length === 0}
-        className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-full bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white shadow-[0_4px_12px_rgba(2,36,72,0.15)] hover:shadow-[0_6px_16px_rgba(2,36,72,0.22)] active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-        </svg>
-        {tempSelectedIds.length > 0
-          ? `Link ${tempSelectedIds.length} Product${tempSelectedIds.length !== 1 ? 's' : ''}`
-          : 'Link Products'}
-      </button>
+        <button
+          type="submit"
+          disabled={tempSelectedIds.length === 0 || !splitAmountsValid}
+          className={formFooterPrimaryClass}
+        >
+          {linkButtonLabel}
+        </button>
       </div>
     </form>
   );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={closeModal}
-      header={header}
-      body={body}
-      footer={footer}
-      size="md"
-    />
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        header={header}
+        body={body}
+        footer={footer}
+        showCloseButton={false}
+        size="md"
+      />
+      <ConfirmDeleteModal
+        isOpen={showUnlinkConfirm}
+        title="Unlink Product"
+        message={unlinkConfirmMessage}
+        confirmLabel="Unlink"
+        onConfirm={handleUnlinkConfirm}
+        onCancel={() => setShowUnlinkConfirm(false)}
+      />
+    </>
   );
 };
 
 export default ProductLinkModal;
-

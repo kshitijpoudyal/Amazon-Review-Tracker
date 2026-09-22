@@ -4,6 +4,7 @@ import { Product, ProductLinkOptions } from '../../types/Product';
 import ProductLinkModal from '../ProductLinkModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
+import { ProductThumbnail } from '../common';
 import { 
   colors, 
   getFinancialColor, 
@@ -19,6 +20,52 @@ interface PayPalTransactionTableProps {
   productsLoading?: boolean;
   onUpdateProductLink?: (transactionId: string, productIds: string[], options?: ProductLinkOptions) => Promise<boolean>;
   onDeleteTransaction?: (transactionId: string) => Promise<boolean>;
+}
+
+function LinkedProductLinkContent({
+  linkedIds,
+  products,
+}: {
+  linkedIds: string[];
+  products: Product[];
+}) {
+  const linkedProducts = linkedIds
+    .map((id) => products.find((product) => product.id === id))
+    .filter((product): product is Product => product != null);
+
+  const firstProduct = linkedProducts[0];
+  const label =
+    linkedProducts.length <= 1
+      ? firstProduct?.item || 'Product linked'
+      : `${firstProduct?.item || 'Product linked'} + ${linkedProducts.length - 1} more`;
+
+  const thumbProducts = linkedProducts.slice(0, 3);
+  const overflowThumbCount = linkedProducts.length - 3;
+
+  return (
+    <div className="flex items-center gap-2 min-w-0 w-full px-1">
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {thumbProducts.map((product, index) => (
+          <ProductThumbnail
+            key={product.id || index}
+            imageUrl={product.imageUrl}
+            productName={product.item}
+            size="sm"
+            className="!w-10 !h-10"
+          />
+        ))}
+        {overflowThumbCount > 0 && (
+          <span
+            className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#eae8e2] text-[#43474e] text-xs font-medium flex-shrink-0"
+            aria-hidden="true"
+          >
+            +{overflowThumbCount}
+          </span>
+        )}
+      </div>
+      <span className="truncate text-sm font-medium text-[#43474e] min-w-0">{label}</span>
+    </div>
+  );
 }
 
 export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
@@ -72,6 +119,19 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
 
 
+  const openLinkModal = (transactionId: string) => {
+    setIsModalActive(true);
+    setActiveTransactionId(transactionId);
+  };
+
+  const getLinkedProductLabel = (linkedIds: string[]) => {
+    if (linkedIds.length === 1) {
+      const p = products.find((product) => product.id === linkedIds[0]);
+      return p?.item || 'Product linked';
+    }
+    return `${linkedIds.length} products linked`;
+  };
+
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -85,55 +145,66 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     }
   };
 
-  // Define table columns
+  // Define table columns — fixed widths on compact cols; Name absorbs remainder
   const columns: TableColumn[] = [
     {
       key: 'datetime',
       label: `Date/Time (${filteredAndSortedTransactions.length})`,
       align: 'left',
-      sortable: true
+      sortable: true,
+      width: 'w-32 lg:w-36',
     },
     {
       key: 'transactionId',
       label: 'Transaction ID',
-      align: 'left'
+      align: 'left',
+      width: 'w-40 lg:w-44',
     },
     {
       key: 'name',
       label: 'Name',
       align: 'left',
-      sortable: true
+      sortable: true,
+      width: 'w-36 lg:w-40',
+      className: 'min-w-0',
     },
     {
       key: 'amount',
       label: 'Amount',
-      align: 'center',
-      sortable: true
+      align: 'right',
+      sortable: true,
+      width: 'w-20 lg:w-24',
+      className: 'tabular-nums',
     },
     {
       key: 'fees',
       label: 'Fees',
-      align: 'center',
-      sortable: true
+      align: 'right',
+      sortable: true,
+      width: 'w-20 lg:w-24',
+      className: 'tabular-nums',
     },
     {
       key: 'netReceived',
       label: 'Net Received',
-      align: 'center',
-      sortable: true
+      align: 'right',
+      sortable: true,
+      width: 'w-24 lg:w-28',
+      className: 'tabular-nums',
     },
-    { 
-      key: 'productLink', 
+    {
+      key: 'productLink',
       label: 'Product Link',
-      align: 'center',
-      width: 'w-64 lg:w-84'
+      align: 'left',
+      width: 'w-80 lg:w-[24rem]',
+      className: 'min-w-0 pl-3 lg:pl-4',
     },
-    ...(onDeleteTransaction ? [{ 
-      key: 'actions', 
+    ...(onDeleteTransaction || onUpdateProductLink ? [{
+      key: 'actions',
       label: 'Actions',
       align: 'center' as const,
-      width: 'w-24'
-    }] : [])
+      width: 'w-24',
+    }] : []),
   ];
 
   // Transform transactions into table rows
@@ -143,7 +214,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     return {
       id: transaction.id || index,
       borderColor: isLinked ? 'border-l-[#0070BA]/30' : 'border-l-amber-500',
-      className: isLinked ? 'opacity-75' : '',
+      className: '',
       sortValues: {
         datetime: transaction.date || '',
         name: transaction.name || '',
@@ -159,15 +230,15 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           </div>
         ),
         transactionId: (
-          <span className={`${colors.text.muted} ${typography.caption} tabular-nums`}>
+          <span className={`${colors.text.muted} ${typography.caption} tabular-nums whitespace-nowrap`}>
             {transaction.transactionId}
           </span>
         ),
         name: (
-          <div className="flex flex-col ml-4">
-            <div className="font-medium">{transaction.name}</div>
+          <div className="flex flex-col min-w-0">
+            <div className="font-medium truncate">{transaction.name}</div>
             {transaction.itemTitle && (
-              <div className={`${colors.text.muted} text-xs truncate max-w-xs`}>
+              <div className={`${colors.text.muted} text-xs truncate`}>
                 {transaction.itemTitle}
               </div>
             )}
@@ -183,70 +254,44 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           </div>
         ),
         amount: (
-          <div className="flex flex-col">
-            <span className={`${typography.numericStrong} ${colors.financial.neutral}`}>
+          <span className={`${typography.numericStrong} ${colors.financial.neutral}`}>
             {formatCurrency(transaction.amount)}
           </span>
-          </div>
         ),
         fees: (
-          <div className="flex flex-col">
-            <span className={`${typography.numericStrong} ${colors.financial.negative}`}>
-              {formatCurrency(transaction.fees)}
-            </span>
-          </div>
+          <span className={`${typography.numericStrong} ${colors.financial.negative}`}>
+            {formatCurrency(transaction.fees)}
+          </span>
         ),
         netReceived: (
-          <div className="flex flex-col">
-            <span className={`${typography.numericStrong} ${getFinancialColor(transaction.total)}`}>
-              {formatCurrency(transaction.total)}
-            </span>
-          </div>
+          <span className={`${typography.numericStrong} ${getFinancialColor(transaction.total)}`}>
+            {formatCurrency(transaction.total)}
+          </span>
         ),
         productLink: (
-          <div className="flex flex-col ml-2 max-w-64 lg:max-w-84">
+          <div className="min-w-0 w-full">
             {onUpdateProductLink ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsModalActive(true);
-                  setActiveTransactionId(transaction.id || '');
-                }}
-                disabled={loading}
-                className={`group flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
-                } ${
-                  transaction.linkedProductIds?.length
-                    ? 'text-[#43474e] hover:text-[#1b1c19]'
-                    : 'bg-amber-500/10 text-amber-800 border border-amber-500/25 hover:bg-amber-500/15'
-                }`}
-              >
-                {/* Unlinked indicator */}
-                {!transaction.linkedProductIds?.length && (
+              isLinked ? (
+                <LinkedProductLinkContent
+                  linkedIds={transaction.linkedProductIds!}
+                  products={products}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => transaction.id && openLinkModal(transaction.id)}
+                  disabled={loading}
+                  className={`group flex items-center gap-2 min-w-0 w-full max-w-full px-3 py-2 rounded-full text-sm font-medium transition-all duration-150 bg-amber-500/10 text-amber-800 border border-amber-500/25 hover:bg-amber-500/15 ${
+                    loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
                   <span className="flex-shrink-0 text-base leading-none">○</span>
-                )}
-                {/* Label */}
-                <span className="truncate">
-                  {(() => {
-                    if (!transaction.linkedProductIds?.length) return 'Link product…';
-                    if (transaction.linkedProductIds.length === 1) {
-                      const p = products.find(p => p.id === transaction.linkedProductIds![0]);
-                      return p?.item || 'Product linked';
-                    }
-                    return `${transaction.linkedProductIds.length} products linked`;
-                  })()}
-                </span>
-                {/* Edit chevron when linked */}
-                {transaction.linkedProductIds?.length ? (
-                  <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                ) : (
+                  <span className="truncate min-w-0 flex-1 text-left">Link product…</span>
                   <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-40 group-hover:opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                )}
-              </button>
+                </button>
+              )
             ) : (
               <span className="text-sm text-[#74777f]">No link action available</span>
             )}
@@ -254,20 +299,34 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         ),
         actions: null // Will be handled by the actions array below
       },
-      actions: onDeleteTransaction ? [
-        {
-          label: 'Delete Transaction',
-          variant: 'danger' as const,
-          icon: (
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          ),
-          onClick: async () => {
-            setDeleteTarget(transaction);
-          }
-        }
-      ] : []
+      actions: (() => {
+        const rowActions = [
+          ...(onUpdateProductLink && isLinked ? [{
+            label: 'Edit link',
+            icon: (
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            ),
+            onClick: () => {
+              if (transaction.id) openLinkModal(transaction.id);
+            },
+          }] : []),
+          ...(onDeleteTransaction ? [{
+            label: 'Delete Transaction',
+            variant: 'danger' as const,
+            icon: (
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            ),
+            onClick: async () => {
+              setDeleteTarget(transaction);
+            },
+          }] : []),
+        ];
+        return rowActions.length > 0 ? rowActions : undefined;
+      })(),
     };
   });
 
@@ -276,7 +335,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     const isLinked = !!(transaction.linkedProductIds && transaction.linkedProductIds.length > 0);
 
     const headerContent = (
-      <div className={`space-y-3 ${isLinked ? 'opacity-75' : ''}`}>
+      <div className="space-y-3">
         {/* Status + Date */}
         <div className="flex items-center justify-between">
           {isLinked ? (
@@ -312,36 +371,33 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         </div>
 
         {/* Footer: product link + dots menu */}
-        <div className="flex items-center justify-between pt-1">
-          {onUpdateProductLink ? (
+        <div className="flex items-center justify-between pt-1 gap-3">
+          {onUpdateProductLink && !isLinked ? (
             <button
               type="button"
-              onClick={() => { setIsModalActive(true); setActiveTransactionId(transaction.id || ''); }}
+              onClick={() => transaction.id && openLinkModal(transaction.id)}
               disabled={loading}
-              className={`flex items-center gap-1.5 text-sm font-medium transition-colors truncate max-w-[75%] ${
+              className={`flex items-center gap-1.5 text-sm font-medium transition-colors truncate max-w-[75%] text-[#9e9e9e] hover:text-[#74777f] ${
                 loading ? 'opacity-50 cursor-not-allowed' : ''
-              } ${transaction.linkedProductIds?.length ? 'text-[#43474e]' : 'text-[#9e9e9e] hover:text-[#74777f]'}`}
+              }`}
             >
-              {!transaction.linkedProductIds?.length && <span>○</span>}
-              <span className="truncate">
-                {(() => {
-                  if (!transaction.linkedProductIds?.length) return 'Link product…';
-                  if (transaction.linkedProductIds.length === 1) {
-                    const p = products.find(p => p.id === transaction.linkedProductIds![0]);
-                    return p?.item || 'Product linked';
-                  }
-                  return `${transaction.linkedProductIds.length} products linked`;
-                })()}
-              </span>
+              <span>○</span>
+              <span className="truncate">Link product…</span>
               <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={transaction.linkedProductIds?.length
-                  ? "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                  : "M12 4v16m8-8H4"} />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </button>
-          ) : <span />}
+          ) : (
+            <span
+              className={`truncate text-sm font-medium min-w-0 ${
+                isLinked ? 'text-[#43474e]' : 'text-[#9e9e9e]'
+              }`}
+            >
+              {isLinked ? getLinkedProductLabel(transaction.linkedProductIds!) : 'Not linked'}
+            </span>
+          )}
 
-          {onDeleteTransaction && (
+          {(onDeleteTransaction || (onUpdateProductLink && isLinked)) && (
             <div className="relative dropdown-container flex-shrink-0">
               <button
                 onClick={() => setShowDropdown(showDropdown === index ? null : index)}
@@ -354,12 +410,26 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               </button>
               {showDropdown === index && (
                 <div className="absolute right-0 top-full mt-2 bg-[#fbf9f3] border border-[rgba(196,198,207,0.15)] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-50 min-w-[160px] py-2">
-                  <button
-                    onClick={() => { setDeleteTarget(transaction); setShowDropdown(null); }}
-                    className={`block w-full text-left px-4 py-2.5 text-sm ${colors.modal.danger} transition-colors`}
-                  >
-                    Delete
-                  </button>
+                  {onUpdateProductLink && isLinked && (
+                    <button
+                      onClick={() => {
+                        if (transaction.id) openLinkModal(transaction.id);
+                        setShowDropdown(null);
+                      }}
+                      disabled={loading}
+                      className="block w-full text-left px-4 py-2.5 text-sm text-[#1b1c19] hover:bg-[#eae8e2] transition-colors disabled:opacity-50"
+                    >
+                      Edit link
+                    </button>
+                  )}
+                  {onDeleteTransaction && (
+                    <button
+                      onClick={() => { setDeleteTarget(transaction); setShowDropdown(null); }}
+                      className={`block w-full text-left px-4 py-2.5 text-sm ${colors.modal.danger} transition-colors`}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -405,8 +475,10 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
             if (onUpdateProductLink && activeTransactionId) {
               await onUpdateProductLink(activeTransactionId, productIds, options);
             }
-            setIsModalActive(false);
-            setActiveTransactionId(null);
+            if (!options?.keepModalOpen) {
+              setIsModalActive(false);
+              setActiveTransactionId(null);
+            }
           }}
           linkedProductIds={linkedProductIds}
           transaction={transactions.find(t => t.id === activeTransactionId)}

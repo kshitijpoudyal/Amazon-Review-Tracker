@@ -274,7 +274,9 @@ export const TableView: React.FC<TableViewProps> = ({
                 {sortedRows.map((row) => (
                   <tr
                     key={row.id}
-                    className={`group hover:bg-[#eae8e2]/60 transition-colors duration-150 ${row.className || ''}`}
+                    className={`group hover:bg-[#eae8e2]/60 transition-colors duration-150 ${row.className || ''} ${
+                      activeDropdown === row.id ? 'relative z-30' : ''
+                    }`}
                   >
                     {columns.map((column, colIndex) => (
                       <td
@@ -299,7 +301,7 @@ export const TableView: React.FC<TableViewProps> = ({
                         
                         {/* Actions dropdown */}
                         {column.key === 'actions' && row.actions && (
-                          <div className="relative dropdown-container">
+                          <div className="relative dropdown-container flex justify-center py-4">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -313,7 +315,7 @@ export const TableView: React.FC<TableViewProps> = ({
                             />
 
                             {activeDropdown === row.id && (
-                              <div className="absolute right-0 top-10 w-52 bg-[#fbf9f3] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-20 py-2 border border-[rgba(196,198,207,0.15)]">
+                              <div className="absolute right-0 top-full mt-2 w-52 bg-[#fbf9f3] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-50 py-2 border border-[rgba(196,198,207,0.15)]">
                                 {row.actions.map((action, actionIndex) => (
                                   <button
                                     key={actionIndex}

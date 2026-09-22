@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { PayPalTransaction } from '../types/PayPalTransaction';
+import { getPayPalProductShare } from '../utils/paypalProductShare';
 
 export interface ProductPayPalLink {
   amount: number;
@@ -8,24 +10,14 @@ export interface ProductPayPalLink {
 }
 
 function getProductShareFromTransaction(
-  transaction: {
-    total?: number;
-    linkedProductIds?: string[];
-    splitPrice?: boolean;
-    transactionId?: string;
-  },
+  transaction: PayPalTransaction & { transactionId?: string },
   productId: string,
 ): ProductPayPalLink | null {
   const linkedIds = transaction.linkedProductIds || [];
   if (!linkedIds.includes(productId) || transaction.total == null) return null;
 
-  const amount =
-    transaction.splitPrice && linkedIds.length > 1
-      ? transaction.total / linkedIds.length
-      : transaction.total;
-
   return {
-    amount,
+    amount: getPayPalProductShare(transaction, productId),
     transactionId: transaction.transactionId || '',
   };
 }
@@ -60,7 +52,7 @@ export const useProductPayPalLinks = (userId?: string, productIds?: string[]) =>
 
             linkedIds.add(linkedId);
             const link = getProductShareFromTransaction(
-              { ...data, transactionId: data.transactionId || docSnap.id },
+              { ...(data as PayPalTransaction), transactionId: data.transactionId || docSnap.id },
               linkedId,
             );
             if (!link) return;

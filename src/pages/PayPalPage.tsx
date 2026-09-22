@@ -143,7 +143,8 @@ export const PayPalPage: React.FC = () => {
     if (success) {
       await refetch();
       const finished = options?.completeWorkflow ? ' — marked complete' : '';
-      const split = options?.splitPrice ? ' — amount split' : '';
+      const split =
+        options?.customSplitAmounts || options?.splitPrice ? ' — amount split' : '';
       showToast(
         productIds.length > 0
           ? `Linked ${productIds.length} product${productIds.length !== 1 ? 's' : ''}${finished}${split}`

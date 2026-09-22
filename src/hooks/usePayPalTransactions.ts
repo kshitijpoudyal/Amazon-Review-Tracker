@@ -15,6 +15,7 @@ import {
 import { db } from '../firebase/config';
 import { PayPalTransaction, PayPalTransactionData } from '../types/PayPalTransaction';
 import { ProductLinkOptions } from '../types/Product';
+import { getPayPalProductShare } from '../utils/paypalProductShare';
 
 // ─── Cache helpers ──────────────────────────────────────────────────────────
 const CACHE_VERSION = 'v1';
@@ -179,13 +180,21 @@ export const usePayPalTransactions = (userId?: string) => {
       const currentTransaction = transactionSnap.data() as PayPalTransaction | undefined;
       const previousLinkedProductIds = currentTransaction?.linkedProductIds || [];
 
-      const shouldSplit =
-        linkedProductIds.length === 2 && options?.splitPrice === true;
+      const hasCustomSplit =
+        linkedProductIds.length >= 2 &&
+        options?.customSplitAmounts != null &&
+        linkedProductIds.every((id) => options.customSplitAmounts![id] != null);
+
+      const shouldEqualSplit =
+        !hasCustomSplit &&
+        linkedProductIds.length >= 2 &&
+        options?.splitPrice === true;
 
       // Update the transaction link
       await updateDoc(transactionRef, {
         linkedProductIds: linkedProductIds.length > 0 ? linkedProductIds : null,
-        splitPrice: shouldSplit ? true : null,
+        splitPrice: shouldEqualSplit ? true : null,
+        productSplitAmounts: hasCustomSplit ? options!.customSplitAmounts! : null,
         updatedAt: serverTimestamp()
       });
       
@@ -258,12 +267,7 @@ export const usePayPalTransactions = (userId?: string) => {
         } else {
           const paid = productData.paid || 0;
           const totalReceived = linkedTransactions.reduce((sum, transaction) => {
-            const linkedIds = transaction.linkedProductIds || [];
-            const share =
-              transaction.splitPrice && linkedIds.length > 1
-                ? transaction.total / linkedIds.length
-                : transaction.total;
-            return sum + share;
+            return sum + getPayPalProductShare(transaction, productId);
           }, 0);
           const paypalTransactionIds = linkedTransactions.map((t) => t.transactionId);
           const refundReceivedAt =

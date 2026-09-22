@@ -39,6 +39,8 @@ export interface Product {
 export interface ProductLinkOptions {
   completeWorkflow?: boolean;
   splitPrice?: boolean;
+  customSplitAmounts?: Record<string, number>;
+  keepModalOpen?: boolean;
 }
 
 export interface ProductData {
