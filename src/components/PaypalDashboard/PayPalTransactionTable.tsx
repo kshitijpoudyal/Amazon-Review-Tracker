@@ -390,6 +390,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         loading={loading}
         activeDropdown={showDropdown}
         onDropdownToggle={(rowId) => setShowDropdown(prev => prev === rowId ? null : rowId as number)}
+        trailingSpacerRow
       />
       
       {/* Product Link Modal */}

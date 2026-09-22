@@ -20,9 +20,11 @@ export const MobileItemCard: React.FC<MobileItemCardProps> = ({
   noDividers = false,
 }) => {
   const divider = noDividers ? '' : 'border-t border-[#e4e2dd]';
+  const backgroundClass = className.includes('bg-') ? '' : 'bg-[#fbf9f3]';
+
   return (
     <div className={`
-      bg-[#fbf9f3]
+      ${backgroundClass}
       shadow-[0_4px_16px_rgba(2,36,72,0.07)]
       rounded-2xl
       border-l-4 ${borderColor}

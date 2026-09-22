@@ -113,7 +113,8 @@ export const colors = {
         dark: 'bg-[#022448]',
         muted: 'bg-[#eae8e2]',
         linkedRow: 'bg-[#006a68]/8',
-        unlinkedRow: 'bg-amber-50'
+        unlinkedRow: 'bg-amber-50',
+        voidRow: 'bg-[#9e9e9e]/15',
     },
 
     // Card

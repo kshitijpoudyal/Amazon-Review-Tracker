@@ -3,7 +3,7 @@ import { Product } from '../../types/Product';
 import EditProductModal from './EditProductModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { getProductStatus } from '../../utils/productStatus';
-import { useProductPayPalLinks } from '../../hooks/useProductPayPalLinks';
+import { useProductPayPalLinks, ProductPayPalLink } from '../../hooks/useProductPayPalLinks';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
 import { colors, getFinancialColor } from '../../utils/colors';
 import { useVendors } from '../../hooks/useVendors';
@@ -21,6 +21,9 @@ interface ProductTableProps {
   userId?: string;
 }
 
+const truncateItemName = (text: string, maxLength: number) =>
+  text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
   onUpdateProduct,
@@ -37,8 +40,71 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
   // Get product IDs for checking PayPal links
   const productIds = products.map(p => p.id).filter(Boolean) as string[];
-  const { isProductLinked, getLinkedAmount } = useProductPayPalLinks(userId, productIds);
-  
+  const { isProductLinked, getLinkedPayPalLinks } = useProductPayPalLinks(userId, productIds);
+
+  const renderItemName = (product: Product) => {
+    const tabletName = truncateItemName(product.item, 30);
+    const desktopName = truncateItemName(product.item, 80);
+    const baseClass = `min-w-0 font-medium ${colors.text.primary}`;
+
+    if (product.url) {
+      return (
+        <>
+          <a
+            href={product.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${baseClass} hover:${colors.text.link} transition-colors md:block lg:hidden`}
+            title={product.item}
+          >
+            {tabletName}
+          </a>
+          <a
+            href={product.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${baseClass} hover:${colors.text.link} transition-colors hidden lg:block`}
+            title={product.item}
+          >
+            {desktopName}
+          </a>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <span className={`${baseClass} md:block lg:hidden`} title={product.item}>
+          {tabletName}
+        </span>
+        <span className={`${baseClass} hidden lg:block`} title={product.item}>
+          {desktopName}
+        </span>
+      </>
+    );
+  };
+
+  const getRowClassName = (product: Product) => {
+    if (product.isVoid) return colors.background.voidRow;
+    if (product.id && isProductLinked(product.id)) return colors.background.linkedRow;
+    return '';
+  };
+
+  const renderPayPalBadges = (links: ProductPayPalLink[]) => {
+    if (links.length === 0) return null;
+    return links.map((link, index) => (
+      <span
+        key={link.transactionId || `paypal-${index}`}
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#006a68]/10 text-[#006a68] text-xs font-label font-semibold flex-shrink-0"
+      >
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+        {formatCurrency(link.amount)}
+      </span>
+    ));
+  };
+
   // Get vendor information
   const { getVendorName } = useVendors();
 
@@ -288,13 +354,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
   // Transform products into table rows
   const rows: TableRow[] = products.map((product, index) => {
     const status = getProductStatus(product);
-    const isLinked = product.id && isProductLinked(product.id);
-    const linkedAmount = product.id ? getLinkedAmount(product.id) : null;
+    const paypalLinks = product.id ? getLinkedPayPalLinks(product.id) : [];
     const storeBorderColor = getStoreBorderColor(product);
 
     return {
       id: product.id || index,
       borderColor: storeBorderColor,
+      className: getRowClassName(product),
       sortValues: {
         item: product.item || '',
         vendor: getVendorName(product.vendorId) || '',
@@ -306,39 +372,19 @@ const ProductTable: React.FC<ProductTableProps> = ({
       },
       data: {
         item: (
-          <div className='flex flex-col'>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <ProductThumbnail 
-                  imageUrl={product.imageUrl}
-                  productName={product.item}
-                  size="md"
-                />
-                {product.url ? (
-                  <a
-                    href={product.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`font-medium ${colors.text.primary} hover:${colors.text.link} transition-colors truncate`}
-                    title={product.item}
-                  >
-                    {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
-                  </a>
-                ) : (
-                  <span className={`font-medium ${colors.text.primary} truncate`} title={product.item}>
-                    {product.item.length > 80 ? `${product.item.substring(0, 80)}...` : product.item}
-                  </span>
-                )}
-                {isLinked && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#006a68]/10 text-[#006a68] text-xs font-label font-semibold flex-shrink-0">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                    {linkedAmount != null ? `PayPal ${formatCurrency(linkedAmount)}` : 'PayPal'}
-                  </span>
-                )}
+          <div className="flex items-center gap-3 min-w-0 w-full">
+            <ProductThumbnail
+              imageUrl={product.imageUrl}
+              productName={product.item}
+              size="md"
+              className="shrink-0"
+            />
+            {renderItemName(product)}
+            {paypalLinks.length > 0 && (
+              <div className="flex shrink-0 items-center justify-start gap-1.5">
+                {renderPayPalBadges(paypalLinks)}
               </div>
-            </div>
+            )}
           </div>
         ),
         vendor: (
@@ -508,14 +554,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
         {/* Footer: PayPal badge + dots menu */}
         <div className="flex items-center justify-between pt-1">
-          {product.id && isProductLinked(product.id) ? (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#006a68]/10 text-[#006a68] text-xs font-semibold">
-              {(() => {
-                const amt = getLinkedAmount(product.id!);
-                return amt != null ? `PayPal ${formatCurrency(amt)}` : 'PayPal';
-              })()}
-            </span>
-          ) : <span />}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {product.id ? renderPayPalBadges(getLinkedPayPalLinks(product.id)) : null}
+          </div>
           <div className="relative dropdown-container">
             <button
               onClick={() => setShowDropdown(showDropdown === index ? null : index)}
@@ -540,7 +581,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       financialContent,
       actionsContent,
       borderColor: storeBorderColor,
-      className: product.id && isProductLinked(product.id) ? colors.background.linkedRow : '',
+      className: getRowClassName(product),
       noDividers: true,
     };
   });
@@ -556,6 +597,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         activeDropdown={showDropdown}
         loading={loading}
         onDropdownToggle={(rowId) => setShowDropdown(prev => prev === rowId ? null : rowId)}
+        trailingSpacerRow
       />
 
       {/* Edit Product Modal */}

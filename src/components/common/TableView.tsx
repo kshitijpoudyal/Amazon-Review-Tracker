@@ -57,6 +57,9 @@ interface TableViewProps {
   // Dropdown state management
   activeDropdown?: string | number | null;
   onDropdownToggle?: (rowId: string | number | null) => void;
+
+  /** Adds a blank spacer row/card at the end of the list */
+  trailingSpacerRow?: boolean;
 }
 
 // Desktop Table Shimmer Loading Components
@@ -152,6 +155,7 @@ export const TableView: React.FC<TableViewProps> = ({
   loadingRows = 6,
   activeDropdown,
   onDropdownToggle,
+  trailingSpacerRow = false,
 }) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -221,6 +225,9 @@ export const TableView: React.FC<TableViewProps> = ({
             noDividers={card.noDividers}
           />
         ))}
+        {trailingSpacerRow && (mobileCards?.length ?? 0) > 0 && (
+          <div aria-hidden="true" className="h-16" />
+        )}
       </div>
 
       {/* Desktop Table Layout */}
@@ -272,9 +279,9 @@ export const TableView: React.FC<TableViewProps> = ({
                       >
                         {/* Status indicator bar for first column */}
                         {colIndex === 0 && row.borderColor && (
-                          <div className="flex items-center space-x-3">
-                            <div className={`h-12 flex-shrink-0 border-l-4 ${row.borderColor}`}></div>
-                            <div className="flex-1 min-w-0 my-4">
+                          <div className="flex items-stretch gap-3 my-4">
+                            <div className={`self-stretch min-h-12 w-0 flex-shrink-0 border-l-4 ${row.borderColor}`} />
+                            <div className="flex flex-1 min-w-0 items-center">
                               {row.data[column.key]}
                             </div>
                           </div>
@@ -331,6 +338,11 @@ export const TableView: React.FC<TableViewProps> = ({
                     ))}
                   </tr>
                 ))}
+                {trailingSpacerRow && sortedRows.length > 0 && (
+                  <tr aria-hidden="true" className="pointer-events-none">
+                    <td colSpan={columns.length} className="h-16" />
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
