@@ -1,6 +1,7 @@
 import React from 'react';
+import { PhotoIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import { Product } from '../../types/Product';
-import { typography } from '../../utils/typography';
+import { getReviewMediaBadgeClasses } from '../../utils/colors';
 
 interface ReviewMediaBadgeProps {
   reviewMediaType?: Product['reviewMediaType'];
@@ -13,11 +14,13 @@ export const ReviewMediaBadge: React.FC<ReviewMediaBadgeProps> = ({
 }) => {
   if (!show || !reviewMediaType || reviewMediaType === 'text') return null;
 
-  const label = reviewMediaType === 'photo' ? '📷 Photo' : '🎬 Video';
+  const isPhoto = reviewMediaType === 'photo';
+  const Icon = isPhoto ? PhotoIcon : VideoCameraIcon;
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${typography.captionStrong} bg-[#eae8e2] text-[#43474e]`}>
-      {label}
+    <span className={getReviewMediaBadgeClasses(reviewMediaType)}>
+      <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+      {isPhoto ? 'Photo' : 'Video'}
     </span>
   );
 };

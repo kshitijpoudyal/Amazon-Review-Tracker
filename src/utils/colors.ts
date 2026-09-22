@@ -252,6 +252,12 @@ export const getBadgeClasses = (type: StatusType) => {
     return `${baseClasses} ${s.bg} ${s.text} ${s.border}`;
 };
 
+export const getReviewMediaBadgeClasses = (type: 'photo' | 'video') => {
+    const baseClasses = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-caption font-medium border';
+    const s = type === 'photo' ? colors.status['add-review'] : colors.status['review-pending'];
+    return `${baseClasses} ${s.bg} ${s.text} ${s.border}`;
+};
+
 export const getActionButtonClasses = () => {
     return `flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#022448] to-[#1e3a5f] text-white rounded-full shadow-[0_4px_12px_rgba(2,36,72,0.15)] transition focus:outline-none focus:ring-2 focus:ring-[#022448]`;
 };
