@@ -4,6 +4,12 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: [
+    'bg-store-row-amazon',
+    'bg-store-row-walmart',
+    'bg-store-row-wayfair',
+    'bg-store-row-other',
+  ],
   theme: {
     extend: {
       screens: {
@@ -45,6 +51,18 @@ export default {
           DEFAULT: '#341f00',
           container: '#503300',
         },
+        store: {
+          amazon: '#FF9900',
+          walmart: '#0071DC',
+          wayfair: '#7B189F',
+          other: '#006a68',
+        },
+      },
+      backgroundColor: {
+        'store-row-amazon': 'rgb(255 153 0 / 0.12)',
+        'store-row-walmart': 'rgb(0 113 220 / 0.12)',
+        'store-row-wayfair': 'rgb(123 24 159 / 0.12)',
+        'store-row-other': 'rgb(0 106 104 / 0.10)',
       },
       fontFamily: {
         sans: ['Public Sans', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],

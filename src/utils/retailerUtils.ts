@@ -26,6 +26,17 @@ const STORE_BORDER_CLASSES: Record<StoreKey, string> = {
   other: 'border-[#006a68]',
 };
 
+const STORE_ROW_CLASSES: Record<StoreKey, string> = {
+  amazon: 'bg-store-row-amazon',
+  walmart: 'bg-store-row-walmart',
+  wayfair: 'bg-store-row-wayfair',
+  other: 'bg-store-row-other',
+};
+
 export function getStoreBorderColor(product: Pick<Product, 'url' | 'retailer'>): string {
   return STORE_BORDER_CLASSES[getStoreFromProduct(product)];
+}
+
+export function getStoreRowColor(product: Pick<Product, 'url' | 'retailer'>): string {
+  return STORE_ROW_CLASSES[getStoreFromProduct(product)];
 }

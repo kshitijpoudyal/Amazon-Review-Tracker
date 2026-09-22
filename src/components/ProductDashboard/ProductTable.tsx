@@ -40,7 +40,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
   // Get product IDs for checking PayPal links
   const productIds = products.map(p => p.id).filter(Boolean) as string[];
-  const { isProductLinked, getLinkedPayPalLinks } = useProductPayPalLinks(userId, productIds);
+  const { getLinkedPayPalLinks } = useProductPayPalLinks(userId, productIds);
 
   const renderItemName = (product: Product) => {
     const tabletName = truncateItemName(product.item, 30);
@@ -86,7 +86,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
   const getRowClassName = (product: Product) => {
     if (product.isVoid) return colors.background.voidRow;
-    if (product.id && isProductLinked(product.id)) return colors.background.linkedRow;
     return '';
   };
 
