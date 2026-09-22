@@ -8,6 +8,7 @@ import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/T
 import { colors, getFinancialColor } from '../../utils/colors';
 import { useVendors } from '../../hooks/useVendors';
 import { formatCurrency } from '../../utils/currency';
+import { getStoreBorderColor } from '../../utils/retailerUtils';
 import { ProductThumbnail, ReviewMediaBadge } from '../common';
 
 interface ProductTableProps {
@@ -289,10 +290,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
     const status = getProductStatus(product);
     const isLinked = product.id && isProductLinked(product.id);
     const linkedAmount = product.id ? getLinkedAmount(product.id) : null;
+    const storeBorderColor = getStoreBorderColor(product);
 
     return {
       id: product.id || index,
-      borderColor: colors.status[status.type].border,
+      borderColor: storeBorderColor,
       sortValues: {
         item: product.item || '',
         vendor: getVendorName(product.vendorId) || '',
@@ -438,6 +440,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
   // Mobile cards data
   const mobileCards: MobileCardContent[] = products.map((product, index) => {
     const status = getProductStatus(product);
+    const storeBorderColor = getStoreBorderColor(product);
 
     const headerContent = (
       <div className="space-y-3">
@@ -536,7 +539,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       headerContent,
       financialContent,
       actionsContent,
-      borderColor: colors.status[status.type].border,
+      borderColor: storeBorderColor,
       className: product.id && isProductLinked(product.id) ? colors.background.linkedRow : '',
       noDividers: true,
     };
