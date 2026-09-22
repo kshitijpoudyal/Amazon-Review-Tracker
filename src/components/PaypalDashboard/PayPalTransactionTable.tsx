@@ -9,6 +9,7 @@ import {
   getFinancialColor, 
   getBadgeClasses
 } from '../../utils/colors';
+import { typography } from '../../utils/typography';
 import { formatCurrency } from '../../utils/currency';
 
 interface PayPalTransactionTableProps {
@@ -158,7 +159,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
           </div>
         ),
         transactionId: (
-          <span className={`${colors.text.muted} font-mono text-sm`}>
+          <span className={`${colors.text.muted} ${typography.caption} tabular-nums`}>
             {transaction.transactionId}
           </span>
         ),
@@ -183,21 +184,21 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         ),
         amount: (
           <div className="flex flex-col">
-            <span className={`font-mono font-semibold ${colors.financial.neutral}`}>
+            <span className={`${typography.numericStrong} ${colors.financial.neutral}`}>
             {formatCurrency(transaction.amount)}
           </span>
           </div>
         ),
         fees: (
           <div className="flex flex-col">
-            <span className={`font-mono font-semibold ${colors.financial.negative}`}>
+            <span className={`${typography.numericStrong} ${colors.financial.negative}`}>
               {formatCurrency(transaction.fees)}
             </span>
           </div>
         ),
         netReceived: (
           <div className="flex flex-col">
-            <span className={`font-mono font-semibold ${getFinancialColor(transaction.total)}`}>
+            <span className={`${typography.numericStrong} ${getFinancialColor(transaction.total)}`}>
               {formatCurrency(transaction.total)}
             </span>
           </div>
@@ -291,14 +292,14 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
         {/* Amount + Name + Transaction ID */}
         <div>
           <p className={`text-sm ${colors.text.secondary} mt-0.5`}>{transaction.name}</p>
-          <p className={`text-xs font-mono ${colors.text.muted} mt-0.5`}>{transaction.transactionId}</p>
+          <p className={`${typography.caption} tabular-nums ${colors.text.muted} mt-0.5`}>{transaction.transactionId}</p>
         </div>
 
         {/* All prices on one line */}
         <div className="flex items-end gap-5">
           <div>
             <p className={`text-xs ${colors.text.muted} mb-0.5`}>Amount</p>
-            <p className={`text-sm font-bold font-mono ${getFinancialColor(transaction.amount)}`}>{formatCurrency(transaction.amount)}</p>
+            <p className={`${typography.numericStrong} ${getFinancialColor(transaction.amount)}`}>{formatCurrency(transaction.amount)}</p>
           </div>
           <div>
             <p className={`text-xs ${colors.text.muted} mb-0.5`}>Fees</p>

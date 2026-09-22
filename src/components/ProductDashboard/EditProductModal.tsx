@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../../types/Product';
+import { typography } from '../../utils/typography';
 import { colors } from '../../utils/colors';
 import { Modal, ProductThumbnail } from '../common';
 import { useVendors } from '../../hooks/useVendors';
@@ -120,15 +121,15 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           size="lg"
         />
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-bold text-[#1b1c19] line-clamp-2 leading-snug">
+          <h2 className={`${typography.sectionTitle} line-clamp-2 leading-snug`}>
             {editedProduct.item || 'Untitled Product'}
           </h2>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-label font-semibold uppercase tracking-wider ${colors.status[status.type].bg} ${colors.status[status.type].text}`}>
+            <span className={`inline-flex px-2 py-0.5 rounded-full ${typography.captionStrong} ${colors.status[status.type].bg} ${colors.status[status.type].text}`}>
               {status.label}
             </span>
             {vendorName && (
-              <span className="text-[11px] text-[#74777f]">{vendorName}</span>
+              <span className={`${typography.caption} text-[#74777f]`}>{vendorName}</span>
             )}
           </div>
         </div>

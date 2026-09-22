@@ -1,5 +1,6 @@
 import React from 'react';
 import { Product } from '../../types/Product';
+import { typography } from '../../utils/typography';
 
 interface ReviewMediaBadgeProps {
   reviewMediaType?: Product['reviewMediaType'];
@@ -15,7 +16,7 @@ export const ReviewMediaBadge: React.FC<ReviewMediaBadgeProps> = ({
   const label = reviewMediaType === 'photo' ? '📷 Photo' : '🎬 Video';
 
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#eae8e2] text-[#43474e]">
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${typography.captionStrong} bg-[#eae8e2] text-[#43474e]`}>
       {label}
     </span>
   );

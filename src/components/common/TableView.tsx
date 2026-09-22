@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { MobileItemCard, MobileCardSkeleton } from './MobileItemCard';
 import { colors } from '../../utils/colors';
+import { typography } from '../../utils/typography';
 import { Button } from './Button';
 
 export interface TableColumn {
@@ -118,7 +119,7 @@ const TableLoadingView: React.FC<{ columns: TableColumn[]; loadingRows?: number 
                 {columns.map((column) => (
                   <th
                     key={`header-${column.key}`}
-                    className={`px-4 py-3 lg:px-6 lg:py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
+                    className={`px-4 py-3 lg:px-6 lg:py-4 ${typography.tableHeader} ${
                       column.align === 'right' ? 'text-right' : 
                       column.align === 'center' ? 'text-center' : 'text-left'
                     } ${column.width || ''} ${column.className || ''}`}
@@ -242,7 +243,7 @@ export const TableView: React.FC<TableViewProps> = ({
                     <th
                       key={column.key}
                       onClick={column.sortable ? () => handleSortClick(column.key) : undefined}
-                      className={`px-4 py-3 lg:px-6 lg:py-4 text-white/90 font-label font-semibold text-xs uppercase tracking-wider ${
+                      className={`px-4 py-3 lg:px-6 lg:py-4 ${typography.tableHeader} ${
                         column.align === 'right' ? 'text-right' :
                         column.align === 'center' ? 'text-center' : 'text-left'
                       } ${column.width || ''} ${column.className || ''} ${column.sortable ? 'cursor-pointer select-none hover:text-white' : ''}`}

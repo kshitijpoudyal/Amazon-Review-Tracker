@@ -1,3 +1,4 @@
+import { typography } from '../../utils/typography';
 import React from 'react';
 import {
   getClipboardImportLabel,
@@ -55,7 +56,7 @@ export const ProductFormQuickImportSection: React.FC<ProductFormQuickImportSecti
                 rows={3}
                 placeholder="Paste bookmarklet data here…"
                 onPaste={onPasteBoxPaste}
-                className="w-full text-xs font-mono bg-white border border-[rgba(196,198,207,0.4)] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#022448]/30 text-[#1b1c19] placeholder:text-[#c4c6cf]"
+                className={`w-full ${typography.caption} tabular-nums bg-white border border-[rgba(196,198,207,0.4)] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#022448]/30 text-[#1b1c19] placeholder:text-[#c4c6cf]`}
               />
               <button
                 type="button"

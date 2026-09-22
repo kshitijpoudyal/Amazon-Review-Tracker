@@ -6,6 +6,7 @@ import { getProductStatus, isVoid, isRefundPending } from '../utils/productStatu
 import { formatCurrency } from '../utils/currency';
 import { getPayPalMatchSuggestions } from '../utils/paypalMatchSuggestions';
 import { classifyShortfall, isWithinRefundBand } from '../utils/refundUtils';
+import { typography } from '../utils/typography';
 
 interface ProductLinkModalProps {
   products: Product[];
@@ -170,7 +171,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
             }`}>
               {product.item}
             </p>
-            <span className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-label uppercase tracking-wider ${status.color}`}>
+            <span className={`${typography.captionStrong} ${status.color}`}>
               {status.label}
             </span>
           </div>
@@ -191,14 +192,14 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
           {/* Paid / Received / Delta */}
           <div className="flex items-center gap-3 mt-1.5">
             <div className="flex items-center gap-1">
-              <span className="text-[9px] font-label uppercase tracking-widest text-[#74777f]">Paid</span>
+              <span className={`${typography.statLabel}`}>Paid</span>
               <span className="text-xs font-semibold text-[#ba1a1a]">
                 {product.paid != null ? formatCurrency(product.paid) : '—'}
               </span>
             </div>
             <div className="w-px h-3 bg-[#c4c6cf]" />
             <div className="flex items-center gap-1">
-              <span className="text-[9px] font-label uppercase tracking-widest text-[#74777f]">Received</span>
+              <span className={`${typography.statLabel}`}>Received</span>
               <span className="text-xs font-semibold text-[#006a68]">
                 {product.received != null ? formatCurrency(product.received) : '—'}
               </span>
@@ -207,7 +208,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
               <>
                 <div className="w-px h-3 bg-[#c4c6cf]" />
                 <div className="flex items-center gap-1">
-                  <span className="text-[9px] font-label uppercase tracking-widest text-[#74777f]">Δ</span>
+                  <span className={`${typography.statLabel}`}>Δ</span>
                   <span className={`text-xs font-semibold ${product.delta >= 0 ? 'text-[#006a68]' : 'text-[#ba1a1a]'}`}>
                     {formatCurrency(product.delta)}
                   </span>
@@ -232,20 +233,20 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
         <div className="bg-[#006a68]/8 border border-[#006a68]/20 rounded-2xl px-4 py-3 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[10px] font-label uppercase tracking-widest text-[#006a68] mb-0.5">PayPal Transaction</p>
+              <p className={`${typography.overline} text-[#006a68] mb-0.5`}>PayPal Transaction</p>
               <p className="text-sm font-semibold text-[#1b1c19] truncate">{transaction.name}</p>
               {transaction.itemTitle && (
                 <p className="text-xs text-[#74777f] truncate mt-0.5">{transaction.itemTitle}</p>
               )}
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-lg font-bold text-[#006a68]">{formatCurrency(transaction.total)}</p>
-              <p className="text-[10px] text-[#74777f]">{transaction.date}</p>
+              <p className={`${typography.statValue} text-[#006a68]`}>{formatCurrency(transaction.total)}</p>
+              <p className={`${typography.caption} text-[#74777f]`}>{transaction.date}</p>
             </div>
           </div>
           {/* Gross / fees breakdown */}
           {transaction.fees !== 0 && (
-            <div className="flex items-center gap-3 text-[10px] text-[#74777f] border-t border-[#006a68]/10 pt-2">
+            <div className={`${typography.caption} text-[#74777f] border-t border-[#006a68]/10 pt-2`}>
               <span>Gross <span className="font-semibold text-[#43474e]">{formatCurrency(transaction.amount)}</span></span>
               <span>Fees <span className="font-semibold text-[#ba1a1a]">−{formatCurrency(Math.abs(transaction.fees))}</span></span>
               <span>Net <span className="font-semibold text-[#006a68]">{formatCurrency(transaction.total)}</span></span>
@@ -282,7 +283,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
         {linkedCount > 0 && (
           <button
             onClick={() => setHideLinked(v => !v)}
-            className={`text-xs font-label uppercase tracking-wider px-3 py-1 rounded-full transition-all ${
+            className={`${typography.captionStrong} px-3 py-1 rounded-full transition-all ${
               hideLinked ? 'bg-[#022448] text-white' : 'bg-[#eae8e2] text-[#43474e] hover:bg-[#e4e2dd]'
             }`}
           >
@@ -292,7 +293,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
         {voidCount > 0 && (
           <button
             onClick={() => setHideVoid(v => !v)}
-            className={`text-xs font-label uppercase tracking-wider px-3 py-1 rounded-full transition-all ${
+            className={`${typography.captionStrong} px-3 py-1 rounded-full transition-all ${
               hideVoid ? 'bg-[#022448] text-white' : 'bg-[#eae8e2] text-[#43474e] hover:bg-[#e4e2dd]'
             }`}
           >
@@ -310,7 +311,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
             className="w-full flex items-center justify-between gap-2 text-left group"
             aria-expanded={suggestionsExpanded}
           >
-            <p className="text-[10px] font-label uppercase tracking-widest text-[#74777f] group-hover:text-[#43474e] transition-colors">
+            <p className={`${typography.overline} group-hover:text-[#43474e] transition-colors`}>
               Suggested matches ({matchSuggestions.length})
             </p>
             <svg
@@ -342,7 +343,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                      <span className={`${typography.captionStrong} ${
                         confidence === 'high' ? 'bg-[#006a68]/15 text-[#006a68]'
                           : confidence === 'medium' ? 'bg-amber-100 text-amber-800'
                           : 'bg-[#eae8e2] text-[#74777f]'
@@ -350,7 +351,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                         {confidence}
                       </span>
                       {amountDiff >= 0.01 && (
-                        <p className="text-[10px] text-[#74777f] mt-1">
+                        <p className={`${typography.caption} text-[#74777f] mt-1`}>
                           {amountDiff <= 5 ? `~${formatCurrency(amountDiff)} off band` : `${formatCurrency(amountDiff)} off band`}
                         </p>
                       )}
@@ -418,7 +419,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                   <span className="text-[#c4c6cf]">·</span>
                   <span className="text-[#74777f]">
                     Shortfall <span className="font-semibold text-[#43474e]">{formatCurrency(previewShortfall.shortfall)}</span>
-                    <span className="ml-1 text-[10px]">({previewShortfall.label})</span>
+                    <span className={`${typography.caption}`}>({previewShortfall.label})</span>
                   </span>
                 </>
               )}

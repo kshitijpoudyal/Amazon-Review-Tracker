@@ -1,3 +1,4 @@
+import { typography } from '../../utils/typography';
 import React from 'react';
 import { Product } from '../../types/Product';
 import { ReviewMediaTypeSelector } from '../common';
@@ -50,10 +51,10 @@ export const ProductFormReviewJourneySection: React.FC<ProductFormReviewJourneyS
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                     </svg>
                   ) : (
-                    <span className="text-[10px] font-bold">{i + 1}</span>
+                    <span className={`${typography.captionStrong}`}>{i + 1}</span>
                   )}
                 </div>
-                <span className={`text-[9px] font-label uppercase tracking-wider text-center leading-tight transition-colors ${
+                <span className={`${typography.caption} text-center leading-tight transition-colors ${
                   done ? 'text-[#006a68] font-semibold' : 'text-[#74777f]'
                 }`}>
                   {step.label}

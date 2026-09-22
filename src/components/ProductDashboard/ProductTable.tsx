@@ -9,6 +9,7 @@ import { colors, getFinancialColor } from '../../utils/colors';
 import { useVendors } from '../../hooks/useVendors';
 import { formatCurrency } from '../../utils/currency';
 import { getStoreBorderColor } from '../../utils/retailerUtils';
+import { typography } from '../../utils/typography';
 import { ProductThumbnail, ReviewMediaBadge } from '../common';
 
 interface ProductTableProps {
@@ -43,7 +44,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const { getLinkedPayPalLinks } = useProductPayPalLinks(userId, productIds);
 
   const renderItemName = (product: Product) => {
-    const baseClass = `font-medium ${colors.text.primary}`;
+    const baseClass = `${typography.bodyStrong} ${colors.text.primary}`;
 
     if (product.url) {
       return (
@@ -76,7 +77,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     return links.map((link, index) => (
       <span
         key={link.transactionId || `paypal-${index}`}
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0070BA]/10 text-[#0070BA] text-xs font-label font-semibold flex-shrink-0"
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0070BA]/10 text-[#0070BA] ${typography.captionStrong} tabular-nums flex-shrink-0`}
       >
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -371,14 +372,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
         ),
         vendor: (
           <div className='flex flex-col'>
-            <span className={`text-sm ${colors.text.secondary} font-medium`}>
+            <span className={`${typography.tableCellStrong} ${colors.text.secondary}`}>
               {getVendorName(product.vendorId)}
             </span>
           </div>
         ),
         date: (
           <div className='flex flex-col'>
-            <span className={`text-sm ${colors.text.secondary} font-medium`}>
+            <span className={`${typography.tableCellStrong} ${colors.text.secondary}`}>
               {formatDate(product.orderDate)}
             </span>
           </div>
@@ -396,21 +397,21 @@ const ProductTable: React.FC<ProductTableProps> = ({
         ),
         paid: (
           <div className='flex flex-col'>
-            <span className={`font-label text-sm font-semibold ${colors.text.primary}`}>
+            <span className={`${typography.numeric} ${colors.text.primary}`}>
               {formatCurrency(product.paid)}
             </span>
           </div>
         ),
         received: (
           <div className='flex flex-col'>
-            <span className={`font-label text-sm font-semibold ${colors.text.primary}`}>
+            <span className={`${typography.numeric} ${colors.text.primary}`}>
               {formatCurrency(product.received)}
             </span>
           </div>
         ),
         delta: (
           <div className='flex flex-col'>
-            <span className={`font-mono text-sm font-semibold ${getDeltaClass(product.delta)}`}>
+            <span className={`${typography.numericStrong} ${getDeltaClass(product.delta)}`}>
               {formatCurrency(product.delta)}
             </span>
           </div>
@@ -476,7 +477,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         {/* Status, link pills, date, and actions */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
-            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
+            <span className={`px-2.5 py-1 rounded-full ${status.color}`}>
               {status.label}
             </span>
             <ReviewMediaBadge
@@ -486,7 +487,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             {paypalLinks.length > 0 && renderPayPalBadges(paypalLinks)}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`text-xs ${colors.text.muted}`}>{formatDate(product.orderDate) || '—'}</span>
+            <span className={`${typography.caption} ${colors.text.muted}`}>{formatDate(product.orderDate) || '—'}</span>
             {!readOnly && (
               <div className="relative dropdown-container">
                 <button
@@ -513,14 +514,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 title={product.item}
-                className={`block font-medium text-base leading-snug line-clamp-2 ${colors.text.primary} hover:${colors.text.link} transition-colors`}
+                className={`${typography.bodyStrong} text-section-title leading-snug line-clamp-2 ${colors.text.primary} hover:${colors.text.link} transition-colors`}
               >
                 {product.item}
               </a>
             ) : (
               <h3
                 title={product.item}
-                className={`font-medium text-base leading-snug line-clamp-2 ${colors.text.primary}`}
+                className={`${typography.bodyStrong} text-section-title leading-snug line-clamp-2 ${colors.text.primary}`}
               >
                 {product.item}
               </h3>
@@ -535,7 +536,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
         {/* Vendor */}
         {product.vendorId && (
-          <p className={`text-xs ${colors.text.muted}`}>
+          <p className={`${typography.caption}`}>
             <span className="font-medium">Vendor:</span> {getVendorName(product.vendorId)}
           </p>
         )}
@@ -543,16 +544,16 @@ const ProductTable: React.FC<ProductTableProps> = ({
         {/* Financials */}
         <div className="flex items-end gap-5">
           <div>
-            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Paid</p>
-            <p className={`text-sm font-semibold font-mono ${colors.financial.negative}`}>{formatCurrency(product.paid)}</p>
+            <p className={`${typography.caption} mb-0.5`}>Paid</p>
+            <p className={`${typography.numeric} ${colors.financial.negative}`}>{formatCurrency(product.paid)}</p>
           </div>
           <div>
-            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Received</p>
-            <p className={`text-sm font-semibold font-mono ${getFinancialColor(product.received)}`}>{formatCurrency(product.received)}</p>
+            <p className={`${typography.caption} mb-0.5`}>Received</p>
+            <p className={`${typography.numeric} ${getFinancialColor(product.received)}`}>{formatCurrency(product.received)}</p>
           </div>
           <div>
-            <p className={`text-xs ${colors.text.muted} mb-0.5`}>Delta</p>
-            <p className={`text-sm font-semibold font-mono ${getDeltaClass(product.delta)}`}>{formatCurrency(product.delta)}</p>
+            <p className={`${typography.caption} mb-0.5`}>Delta</p>
+            <p className={`${typography.numericStrong} ${getDeltaClass(product.delta)}`}>{formatCurrency(product.delta)}</p>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { typography } from '../../utils/typography';
 import { DEFAULT_REVIEW_MEDIA_TYPE, ReviewMediaType } from '../../types/Product';
 
 const REVIEW_MEDIA_OPTIONS: { value: ReviewMediaType; label: string }[] = [
@@ -20,7 +21,7 @@ export const ReviewMediaTypeSelector: React.FC<ReviewMediaTypeSelectorProps> = (
 
   return (
     <div>
-      <p className="text-[10px] font-label uppercase tracking-widest text-[#74777f] mb-2">
+      <p className={`${typography.label} mb-2`}>
         Review type required
       </p>
       <div className="flex gap-2">

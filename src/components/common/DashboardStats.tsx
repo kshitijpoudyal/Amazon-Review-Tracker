@@ -1,4 +1,5 @@
 import React from 'react';
+import { typography } from '../../utils/typography';
 
 interface StatItem {
   value: string | number;
@@ -29,10 +30,10 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
     <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(2,36,72,0.07)] hover:shadow-[0_6px_20px_rgba(2,36,72,0.11)] hover:-translate-y-0.5 transition-all duration-200">
       <div className="h-0.5 bg-[#e4e2dd]" />
       <div className="p-4">
-        <div className="text-[10px] font-semibold text-[#74777f] uppercase tracking-widest font-label mb-2.5">
+        <div className={`${typography.statLabel} mb-2`}>
           {label}
         </div>
-        <div className={`text-xl font-bold leading-tight ${className || 'text-[#1b1c19]'}`}>
+        <div className={`${typography.statValue} ${className || ''}`}>
           {value}
         </div>
       </div>

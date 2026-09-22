@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Product, DEFAULT_REVIEW_MEDIA_TYPE, ReviewMediaType } from "../../types/Product";
+import { typography } from '../../utils/typography';
 import { colors } from "../../utils/colors";
 import { Modal } from "../common";
 import { useVendors } from "../../hooks/useVendors";
@@ -125,7 +126,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
           </svg>
         </div>
-        <h2 className="text-base font-bold text-[#1b1c19]">Add Product</h2>
+        <h2 className={`${typography.sectionTitle}`}>Add Product</h2>
       </div>
       <button
         type="button"

@@ -62,9 +62,18 @@ export default {
         'store-row-other': 'rgb(0 106 104 / 0.10)',
       },
       fontFamily: {
-        sans: ['Public Sans', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        label: ['Work Sans', 'system-ui', 'sans-serif'],
-        mono: ['Work Sans', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+      },
+      fontSize: {
+        'page-title': ['1.5rem', { lineHeight: '2rem' }],
+        'modal-title': ['1.25rem', { lineHeight: '1.75rem' }],
+        'section-title': ['1rem', { lineHeight: '1.5rem' }],
+        body: ['0.875rem', { lineHeight: '1.3125rem' }],
+        label: ['0.8125rem', { lineHeight: '1.125rem' }],
+        caption: ['0.75rem', { lineHeight: '1rem' }],
+        'table-header': ['0.8125rem', { lineHeight: '1.125rem' }],
+        'stat-value': ['1.25rem', { lineHeight: '1.5rem' }],
+        'stat-label': ['0.75rem', { lineHeight: '1rem' }],
       },
       borderRadius: {
         squircle: '1.25rem',

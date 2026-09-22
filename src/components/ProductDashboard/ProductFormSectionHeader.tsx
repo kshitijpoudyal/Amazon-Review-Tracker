@@ -1,4 +1,5 @@
 import React from 'react';
+import { typography } from '../../utils/typography';
 
 interface ProductFormSectionHeaderProps {
   title: string;
@@ -9,7 +10,7 @@ export const ProductFormSectionHeader: React.FC<ProductFormSectionHeaderProps> =
   title,
   className = 'mb-4',
 }) => (
-  <p className={`text-[10px] font-label uppercase tracking-widest text-[#74777f] ${className}`}>
+  <p className={`${typography.overline} ${className}`}>
     {title}
   </p>
 );

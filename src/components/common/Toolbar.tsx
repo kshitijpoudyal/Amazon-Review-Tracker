@@ -1,6 +1,7 @@
 import { PlusIcon, ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import React, { useState } from 'react';
+import { typography } from '../../utils/typography';
 import { colors } from '../../utils/colors';
 
 export interface FilterOption {
@@ -47,8 +48,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const getButtonClasses = (variant: ActionButton['variant'] = 'primary') => {
-    const baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-    const sizeClasses = 'px-4 py-4 text-sm rounded-full shadow-[0_2px_8px_rgba(2,36,72,0.06)] hover:shadow-[0_4px_16px_rgba(2,36,72,0.10)]';
+    const baseClasses = `inline-flex items-center justify-center ${typography.button} transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`;
+    const sizeClasses = 'px-4 py-4 rounded-full shadow-[0_2px_8px_rgba(2,36,72,0.06)] hover:shadow-[0_4px_16px_rgba(2,36,72,0.10)]';
 
     switch (variant) {
       case 'secondary':
@@ -75,7 +76,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 placeholder={filter.placeholder || 'Search...'}
                 value={filter.value}
                 onChange={(e) => filter.onChange(e.target.value)}
-                className="block w-full pl-10 pr-4 py-4 text-sm rounded-full bg-[#e4e2dd] border-0 placeholder-[#74777f] text-[#1b1c19] focus:outline-none focus:ring-2 focus:ring-[#022448] transition-all duration-200 shadow-[0_2px_8px_rgba(2,36,72,0.04)]"
+                className={`block w-full pl-10 pr-4 py-4 ${typography.body} rounded-full bg-[#e4e2dd] border-0 placeholder-[#74777f] text-[#1b1c19] focus:outline-none focus:ring-2 focus:ring-[#022448] transition-all duration-200 shadow-[0_2px_8px_rgba(2,36,72,0.04)]`}
               />
               {filter.value && (
                 <button
@@ -95,7 +96,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         return (
           <div key={filter.key} className="flex-shrink-0">
             <Menu as="div" className="relative">
-              <MenuButton className="inline-flex items-center justify-center gap-x-2 px-4 py-4 text-sm font-medium text-[#1b1c19] bg-[#e4e2dd] border-0 rounded-full shadow-[0_2px_8px_rgba(2,36,72,0.04)] hover:bg-[#eae8e2] hover:shadow-[0_4px_16px_rgba(2,36,72,0.08)] focus:outline-none focus:ring-2 focus:ring-[#022448] focus:ring-offset-2 transition-all duration-200 min-w-[140px]">
+              <MenuButton className={`inline-flex items-center justify-center gap-x-2 px-4 py-4 ${typography.bodyStrong} text-[#1b1c19] bg-[#e4e2dd] border-0 rounded-full shadow-[0_2px_8px_rgba(2,36,72,0.04)] hover:bg-[#eae8e2] hover:shadow-[0_4px_16px_rgba(2,36,72,0.08)] focus:outline-none focus:ring-2 focus:ring-[#022448] focus:ring-offset-2 transition-all duration-200 min-w-[140px]`}>
                 <span className="truncate">
                   {selectedOption?.label || filter.label || 'Select...'}
                 </span>
@@ -109,7 +110,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                       <button
                         type="button"
                         onClick={() => filter.onChange(option.value)}
-                        className={`block w-full px-4 py-3 text-left text-sm transition-colors duration-150 ${colors.modal.menuItem} ${
+                        className={`block w-full px-4 py-3 text-left ${typography.body} transition-colors duration-150 ${colors.modal.menuItem} ${
                           option.value === filter.value
                             ? `${colors.modal.item.selected} font-medium`
                             : `${colors.text.primary} ${colors.modal.item.hover}`

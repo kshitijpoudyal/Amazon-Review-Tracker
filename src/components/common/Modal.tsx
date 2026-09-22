@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { colors } from '../../utils/colors';
+import { typography } from '../../utils/typography';
 
 interface ModalProps {
     isOpen: boolean;
@@ -96,7 +97,7 @@ const Modal: React.FC<ModalProps> = ({
                     <div className={`flex-shrink-0 p-4 sm:p-6 border-b ${colors.border.default}`}>
                         <div className="flex justify-between items-center">
                             {title && (
-                                <h2 className={`text-xl sm:text-2xl font-bold ${colors.text.primary}`}>
+                                <h2 className={`${typography.modalTitle} ${colors.text.primary}`}>
                                     {title}
                                 </h2>
                             )}

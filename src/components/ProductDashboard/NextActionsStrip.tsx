@@ -1,3 +1,4 @@
+import { typography } from '../../utils/typography';
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product, StatusFilter } from '../../types/Product';
@@ -121,7 +122,7 @@ export const NextActionsStrip: React.FC<NextActionsStripProps> = ({
           className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[#fbf9f3]/80 transition-colors"
         >
           <div className="min-w-0">
-            <p className="text-[10px] font-label uppercase tracking-widest text-[#74777f]">
+            <p className={`${typography.caption}`}>
               Overview
             </p>
             {!expanded && (

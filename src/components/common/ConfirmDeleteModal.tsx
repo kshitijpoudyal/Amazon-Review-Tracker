@@ -1,3 +1,4 @@
+import { typography } from '../../utils/typography';
 import React from 'react';
 
 interface ConfirmDeleteModalProps {
@@ -33,21 +34,21 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
               />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-[#1b1c19] mb-2">{title}</h2>
-          <p className="text-sm text-[#43474e] leading-relaxed">{message}</p>
+          <h2 className={`${typography.modalTitle} mb-2`}>{title}</h2>
+          <p className={`${typography.body} text-[#43474e]`}>{message}</p>
         </div>
 
         {/* Actions */}
         <div className="flex gap-3 px-6 pb-6">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 text-sm font-semibold rounded-full border border-[rgba(196,198,207,0.6)] text-[#43474e] bg-[#fbf9f3] hover:bg-[#e4e2dd] transition-colors"
+            className={`flex-1 py-2.5 ${typography.button} font-semibold rounded-full border border-[rgba(196,198,207,0.6)] text-[#43474e] bg-[#fbf9f3] hover:bg-[#e4e2dd] transition-colors`}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-2.5 text-sm font-semibold rounded-full bg-[#ba1a1a] text-white hover:bg-[#9e1515] active:scale-95 transition-all shadow-[0_4px_12px_rgba(186,26,26,0.25)]"
+            className={`flex-1 py-2.5 ${typography.button} font-semibold rounded-full bg-[#ba1a1a] text-white hover:bg-[#9e1515] active:scale-95 transition-all shadow-[0_4px_12px_rgba(186,26,26,0.25)]`}
           >
             Delete
           </button>

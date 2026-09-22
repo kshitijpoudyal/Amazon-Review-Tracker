@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { User } from 'firebase/auth';
+import { typography } from '../../utils/typography';
 import { colors } from '../../utils/colors';
 
 interface AppHeaderProps {
@@ -60,7 +61,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
             <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-6 lg:px-8">
                 {/* Brand + Nav */}
                 <div className="flex items-center gap-x-6">
-                    <span className="text-white font-bold text-sm tracking-tight select-none">
+                    <span className={`${typography.bodyStrong} text-white tracking-tight select-none`}>
                         📦 Review Tracker
                     </span>
                     <div className="hidden md:flex md:gap-x-1">
@@ -72,7 +73,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                                 <a
                                     key={item.name}
                                     href={item.href}
-                                    className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-all ${
+                                    className={`${typography.bodyStrong} px-3 py-1.5 rounded-full transition-all ${
                                         isActive 
                                             ? 'text-white bg-white/20' 
                                             : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -89,7 +90,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                         href="https://www.kshitijstudio.com"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-white hover:text-white/80 transition-colors tracking-wide"
+                        className={`${typography.caption} text-white hover:text-white/80 transition-colors`}
                     >
                         Powered by KshitijStudio
                     </a>
@@ -107,7 +108,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                     href="https://www.kshitijstudio.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-white hover:text-white/80 transition-colors tracking-wide"
+                    className={`${typography.caption} text-white hover:text-white/80 transition-colors`}
                   >
                     Powered by KshitijStudio
                   </a>
@@ -205,7 +206,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                                 href="https://www.kshitijstudio.com"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-white hover:text-white/80 transition-colors tracking-wide"
+                                className={`${typography.caption} text-white hover:text-white/80 transition-colors`}
                             >
                                 Powered by KshitijStudio
                             </a>

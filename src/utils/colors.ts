@@ -146,7 +146,7 @@ export const colors = {
             text: 'text-[#1b1c19]',
             placeholder: 'placeholder-[#74777f]'
         },
-        label: 'font-label text-[#43474e] font-medium uppercase tracking-wider text-xs',
+        label: 'text-label font-medium text-[#43474e]',
         checkbox: 'text-[#006a68] focus:ring-[#006a68]'
     },
 
@@ -247,7 +247,7 @@ export const getRowBackgroundColor = (isLinked: boolean) => {
 };
 
 export const getBadgeClasses = (type: StatusType) => {
-    const baseClasses = 'inline-block px-2.5 py-1 rounded-full text-center text-xs font-semibold tracking-wider font-label uppercase';
+    const baseClasses = 'inline-block px-2.5 py-1 rounded-full text-center text-caption font-medium';
     return `${baseClasses} ${colors.status[type].bg} ${colors.status[type].text}`;
 };
 

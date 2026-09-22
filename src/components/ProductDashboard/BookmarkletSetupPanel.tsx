@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { typography } from '../../utils/typography';
 import { colors } from '../../utils/colors';
 import {
   BOOKMARKLET_HREF,
@@ -104,12 +105,12 @@ export const BookmarkletSetupPanel: React.FC = () => {
                   value={href}
                   rows={3}
                   onFocus={e => e.target.select()}
-                  className={`w-full px-2 py-2 pr-16 text-xs font-mono rounded-lg border ${border} bg-white ${colors.text.muted} resize-none`}
+                  className={`w-full px-2 py-2 pr-16 ${typography.caption} tabular-nums rounded-lg border ${border} bg-white ${colors.text.muted} resize-none`}
                 />
                 <button
                   type="button"
                   onClick={() => copyText(href, setCopied)}
-                  className={`absolute top-7 right-2 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                  className={`absolute top-7 right-2 px-2 py-1 rounded ${typography.captionStrong} transition-colors ${
                     copied
                       ? 'bg-[#006a68]/10 text-[#006a68]'
                       : `${colors.background.secondary} ${colors.text.secondary} hover:bg-[#e4e2dd]`

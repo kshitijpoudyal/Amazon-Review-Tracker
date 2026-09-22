@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../../firebase/config';
 import { useAuth } from '../../hooks/useAuth';
+import { typography } from '../../utils/typography';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -182,16 +183,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
               <StarSVG filled size="sm" />
             </div>
-            <span className="text-xs font-label font-semibold uppercase tracking-widest text-white/55">
+            <span className="${typography.overline} text-white/55">
               Amazon Review Tracker
             </span>
           </div>
 
           {/* Headline */}
-          <h2 className="text-3xl font-bold leading-tight mb-3">
+          <h2 className="${typography.pageTitle} mb-3">
             Track every review.<br />Never miss feedback.
           </h2>
-          <p className="text-white/55 text-sm leading-relaxed mb-8">
+          <p className="${typography.body} text-white/55 mb-8">
             Monitor Amazon product reviews in real-time and turn customer feedback into actionable insights.
           </p>
 
@@ -227,14 +228,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <div className="space-y-1.5">
               {RATING_BARS.map(({ label, width, delay }) => (
                 <div key={label} className="flex items-center gap-2">
-                  <span className="text-white/40 text-[10px] w-5">{label}</span>
+                  <span className="${typography.caption} text-white/40 w-5">{label}</span>
                   <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-yellow-400/70 rounded-full"
                       style={{ width, transformOrigin: 'left', animation: `barGrow 1.2s ease-out ${delay} both` }}
                     />
                   </div>
-                  <span className="text-white/35 text-[10px] w-6 text-right">{width}</span>
+                  <span className="${typography.caption} text-white/35 w-6 text-right">{width}</span>
                 </div>
               ))}
             </div>
@@ -248,7 +249,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 className="bg-white/10 border border-white/10 rounded-xl p-3 flex items-start gap-3"
                 style={{ animation: `slideInFromRight 0.5s ease-out ${0.5 + i * 0.15}s both` }}
               >
-                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-[11px] font-bold">
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 ${typography.captionStrong}">
                   {r.name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -257,7 +258,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                     <div className="flex gap-0.5">
                       {Array.from({ length: r.rating }).map((_, j) => <StarSVG key={j} filled size="xs" />)}
                     </div>
-                    <span className="text-white/30 text-[10px] ml-auto flex-shrink-0">{r.time}</span>
+                    <span className="${typography.caption} text-white/30 ml-auto flex-shrink-0">{r.time}</span>
                   </div>
                   <p className="text-white/55 text-xs truncate">{r.text}</p>
                 </div>
@@ -305,11 +306,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <div className="gradient-bg rounded-2xl p-5 text-white text-center">
             <div className="flex items-center justify-center gap-2 mb-1.5">
               <StarSVG filled size="sm" />
-              <span className="text-[10px] font-label font-semibold uppercase tracking-widest text-white/55">
+              <span className="${typography.overline} text-white/55">
                 Review Tracker
               </span>
             </div>
-            <h1 className="text-xl font-bold">Amazon Review Tracker</h1>
+            <h1 className={`${typography.modalTitle}`}>Amazon Review Tracker</h1>
             <p className="text-white/55 text-xs mt-1">Track reviews. Stay ahead.</p>
           </div>
         </div>
@@ -317,7 +318,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         <div className="w-full max-w-sm">
           {/* Desktop heading */}
           <div className="hidden lg:block mb-8">
-            <h1 className="text-2xl font-bold text-[#022448]">
+            <h1 className={`${typography.pageTitle} text-[#022448]`}>
               {showForgotPassword ? 'Reset password' : isSignUp ? 'Create account' : 'Welcome back'}
             </h1>
             <p className="text-[#74777f] text-sm mt-1.5">
@@ -331,7 +332,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
           {/* Mobile heading */}
           <div className="lg:hidden mb-6 text-center">
-            <h2 className="text-xl font-bold text-[#022448]">
+            <h2 className={`${typography.modalTitle} text-[#022448]`}>
               {showForgotPassword ? 'Reset password' : isSignUp ? 'Create account' : 'Sign in'}
             </h2>
           </div>
@@ -339,7 +340,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           {showForgotPassword ? (
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div>
-                <label className="block text-xs font-label font-semibold text-[#43474e] uppercase tracking-wider mb-2">
+                <label className={`${typography.label} mb-2`}>
                   Email Address
                 </label>
                 <input
@@ -388,7 +389,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               {/* Form */}
               <form onSubmit={handleEmailAuth} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-label font-semibold text-[#43474e] uppercase tracking-wider mb-2">
+                  <label className={`${typography.label} mb-2`}>
                     Email Address
                   </label>
                   <input
@@ -403,7 +404,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-label font-semibold text-[#43474e] uppercase tracking-wider">
+                    <label className={`${typography.label}`}>
                       Password
                     </label>
                     {!isSignUp && (
@@ -449,7 +450,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               {/* Divider */}
               <div className="my-5 flex items-center gap-4">
                 <div className="flex-1 h-px bg-[rgba(196,198,207,0.4)]" />
-                <span className="text-[#74777f] text-xs font-label uppercase tracking-wider">or</span>
+                <span className="${typography.caption} text-[#74777f]">or</span>
                 <div className="flex-1 h-px bg-[rgba(196,198,207,0.4)]" />
               </div>
 
@@ -488,7 +489,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               href="https://www.kshitijstudio.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-[#74777f] hover:text-[#022448] transition-colors font-label uppercase tracking-wider"
+              className="inline-flex items-center gap-1.5 ${typography.caption} text-[#74777f] hover:text-[#022448] transition-colors"
             >
               <span>Powered by</span>
               <span className="font-semibold">KshitijStudio</span>

@@ -4,6 +4,7 @@ import { colors } from '../../utils/colors';
 import { formatCurrency } from '../../utils/currency';
 import { ReviewMediaTypeSelector } from '../common';
 import { ProductFormSectionHeader } from './ProductFormSectionHeader';
+import { typography } from '../../utils/typography';
 
 interface ProductFormFinancialsSectionProps {
   product: Product;
@@ -30,12 +31,12 @@ export const ProductFormFinancialsSection: React.FC<ProductFormFinancialsSection
     {mode === 'edit' && (
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-[#ffdad6]/40 rounded-xl p-3 text-center">
-          <p className="text-[9px] font-label uppercase tracking-widest text-[#74777f] mb-1">Paid</p>
-          <p className="text-lg font-bold text-[#ba1a1a]">{formatCurrency(product.paid)}</p>
+          <p className={`${typography.statLabel} mb-1`}>Paid</p>
+          <p className={`${typography.statValue} text-[#ba1a1a]`}>{formatCurrency(product.paid)}</p>
         </div>
         <div className="bg-[#006a68]/10 rounded-xl p-3 text-center">
-          <p className="text-[9px] font-label uppercase tracking-widest text-[#74777f] mb-1">Received</p>
-          <p className="text-lg font-bold text-[#006a68]">{formatCurrency(product.received)}</p>
+          <p className={`${typography.statLabel} mb-1`}>Received</p>
+          <p className={`${typography.statValue} text-[#006a68]`}>{formatCurrency(product.received)}</p>
         </div>
         <div className={`rounded-xl p-3 text-center ${
           product.delta === null
@@ -44,8 +45,8 @@ export const ProductFormFinancialsSection: React.FC<ProductFormFinancialsSection
               ? 'bg-[#006a68]/10'
               : 'bg-[#ba1a1a]/10'
         }`}>
-          <p className="text-[9px] font-label uppercase tracking-widest text-[#74777f] mb-1">Delta</p>
-          <p className={`text-lg font-bold ${
+          <p className={`${typography.statLabel} mb-1`}>Delta</p>
+          <p className={`${typography.statValue} ${
             product.delta === null
               ? 'text-[#74777f]'
               : product.delta >= 0
@@ -68,7 +69,7 @@ export const ProductFormFinancialsSection: React.FC<ProductFormFinancialsSection
           step="0.01"
           value={product.paid ?? ''}
           onChange={(e) => onPaidChange(e.target.value)}
-          className={`w-full px-3 py-2.5 ${colors.form.input.base} rounded-xl text-sm`}
+          className={`w-full px-3 py-2.5 ${colors.form.input.base} rounded-xl text-body`}
           placeholder="0.00"
           required={paidRequired}
         />
@@ -81,7 +82,7 @@ export const ProductFormFinancialsSection: React.FC<ProductFormFinancialsSection
             step="0.01"
             value={product.received ?? ''}
             onChange={(e) => onReceivedChange(e.target.value)}
-            className={`w-full px-3 py-2.5 ${colors.form.input.base} rounded-xl text-sm`}
+            className={`w-full px-3 py-2.5 ${colors.form.input.base} rounded-xl text-body`}
             placeholder="0.00"
           />
         </div>
@@ -92,7 +93,7 @@ export const ProductFormFinancialsSection: React.FC<ProductFormFinancialsSection
       <button
         type="button"
         onClick={onResetDelta}
-        className="text-xs text-[#74777f] hover:text-[#1b1c19] underline transition-colors"
+        className="text-caption text-[#74777f] hover:text-[#1b1c19] underline transition-colors"
       >
         Reset delta to null
       </button>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { colors } from '../../utils/colors';
+import { typography } from '../../utils/typography';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
@@ -28,12 +29,12 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   // Build CSS classes
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed';
+  const baseClasses = `inline-flex items-center justify-center ${typography.button} rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed`;
   
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm gap-1.5',
-    md: 'px-4 py-2.5 text-sm gap-2',
-    lg: 'px-6 py-3 text-base gap-2.5',
+    sm: 'px-3 py-1.5 gap-1.5',
+    md: 'px-4 py-2.5 gap-2',
+    lg: 'px-6 py-3 gap-2.5',
     icon: 'w-8 h-8 p-0'
   }[size];
 
