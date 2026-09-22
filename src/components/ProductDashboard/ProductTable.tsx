@@ -21,8 +21,8 @@ interface ProductTableProps {
   userId?: string;
 }
 
-const truncateItemName = (text: string, maxLength: number) =>
-  text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+const ITEM_NAME_CLASSES =
+  'min-w-0 flex-1 line-clamp-2 break-words leading-snug lg:line-clamp-none lg:truncate lg:max-w-[48ch] xl:max-w-none xl:truncate-none xl:whitespace-normal xl:break-words';
 
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
@@ -43,44 +43,26 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const { getLinkedPayPalLinks } = useProductPayPalLinks(userId, productIds);
 
   const renderItemName = (product: Product) => {
-    const tabletName = truncateItemName(product.item, 30);
-    const desktopName = truncateItemName(product.item, 80);
-    const baseClass = `min-w-0 font-medium ${colors.text.primary}`;
+    const baseClass = `font-medium ${colors.text.primary}`;
 
     if (product.url) {
       return (
-        <>
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${baseClass} hover:${colors.text.link} transition-colors md:block lg:hidden`}
-            title={product.item}
-          >
-            {tabletName}
-          </a>
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${baseClass} hover:${colors.text.link} transition-colors hidden lg:block`}
-            title={product.item}
-          >
-            {desktopName}
-          </a>
-        </>
+        <a
+          href={product.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={product.item}
+          className={`${baseClass} ${ITEM_NAME_CLASSES} hover:${colors.text.link} transition-colors`}
+        >
+          {product.item}
+        </a>
       );
     }
 
     return (
-      <>
-        <span className={`${baseClass} md:block lg:hidden`} title={product.item}>
-          {tabletName}
-        </span>
-        <span className={`${baseClass} hidden lg:block`} title={product.item}>
-          {desktopName}
-        </span>
-      </>
+      <span title={product.item} className={`${baseClass} ${ITEM_NAME_CLASSES}`}>
+        {product.item}
+      </span>
     );
   };
 
@@ -304,7 +286,8 @@ const ProductTable: React.FC<ProductTableProps> = ({
       key: 'item',
       label: `Item (${products.length})`,
       align: 'left',
-      sortable: true
+      sortable: true,
+      className: 'w-[48%] lg:w-[38%]',
     },
     {
       key: 'vendor',
@@ -371,7 +354,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       },
       data: {
         item: (
-          <div className="flex items-center gap-3 min-w-0 w-full">
+          <div className="flex items-start gap-3 min-w-0 w-full lg:items-center">
             <ProductThumbnail
               imageUrl={product.imageUrl}
               productName={product.item}
@@ -511,12 +494,16 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 href={product.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`block font-bold text-base leading-snug line-clamp-3 ${colors.text.link} hover:${colors.text.linkHover}`}
+                title={product.item}
+                className={`block font-bold text-base leading-snug line-clamp-2 ${colors.text.link} hover:${colors.text.linkHover}`}
               >
                 {product.item}
               </a>
             ) : (
-              <h3 className={`font-bold text-base leading-snug line-clamp-3 ${colors.text.primary}`}>
+              <h3
+                title={product.item}
+                className={`font-bold text-base leading-snug line-clamp-2 ${colors.text.primary}`}
+              >
                 {product.item}
               </h3>
             )}

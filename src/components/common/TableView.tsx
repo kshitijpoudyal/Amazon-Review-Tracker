@@ -111,7 +111,7 @@ const TableLoadingView: React.FC<{ columns: TableColumn[]; loadingRows?: number 
     <div className="hidden md:block">
       <div className="overflow-hidden border border-[rgba(196,198,207,0.15)] bg-[#fbf9f3] shadow-navy rounded-2xl">
         <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden pb-1">
-          <table className="w-full">
+          <table className="w-full table-fixed">
             {/* Table Header */}
             <thead className={`${colors.background.gradient} border-b border-[rgba(196,198,207,0.1)] sticky top-0 z-10`}>
               <tr>
@@ -234,7 +234,7 @@ export const TableView: React.FC<TableViewProps> = ({
       <div className="hidden md:block">
         <div className={`overflow-hidden border border-[rgba(196,198,207,0.15)] ${colors.background.primary} shadow-navy rounded-2xl`}>
           <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hidden pb-1">
-            <table className="w-full">
+            <table className="w-full table-fixed">
               {/* Table Header */}
               <thead className={`${colors.background.gradient} border-b border-[rgba(196,198,207,0.1)] sticky top-0 z-10`}>
                 <tr>
@@ -275,7 +275,7 @@ export const TableView: React.FC<TableViewProps> = ({
                         className={`${
                           column.align === 'right' ? 'text-right' : 
                           column.align === 'center' ? 'text-center' : 'text-left'
-                        }`}
+                        } ${column.width || ''} ${column.className || ''}`}
                       >
                         {/* Status indicator bar for first column */}
                         {colIndex === 0 && row.borderColor && (

@@ -12,9 +12,6 @@ export default {
   ],
   theme: {
     extend: {
-      screens: {
-        tablet: '834px',
-      },
       colors: {
         // HustleBooks "Synthetic Naturalist" palette
         primary: {
