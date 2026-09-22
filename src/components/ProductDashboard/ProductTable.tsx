@@ -76,7 +76,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     return links.map((link, index) => (
       <span
         key={link.transactionId || `paypal-${index}`}
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#006a68]/10 text-[#006a68] text-xs font-label font-semibold flex-shrink-0"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0070BA]/10 text-[#0070BA] text-xs font-label font-semibold flex-shrink-0"
       >
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l-1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -513,14 +513,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 title={product.item}
-                className={`block font-bold text-base leading-snug line-clamp-2 ${colors.text.link} hover:${colors.text.linkHover}`}
+                className={`block font-medium text-base leading-snug line-clamp-2 ${colors.text.primary} hover:${colors.text.link} transition-colors`}
               >
                 {product.item}
               </a>
             ) : (
               <h3
                 title={product.item}
-                className={`font-bold text-base leading-snug line-clamp-2 ${colors.text.primary}`}
+                className={`font-medium text-base leading-snug line-clamp-2 ${colors.text.primary}`}
               >
                 {product.item}
               </h3>
