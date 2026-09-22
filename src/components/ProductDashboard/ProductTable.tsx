@@ -469,12 +469,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const mobileCards: MobileCardContent[] = products.map((product, index) => {
     const status = getProductStatus(product);
     const storeBorderColor = getStoreBorderColor(product);
+    const paypalLinks = product.id ? getLinkedPayPalLinks(product.id) : [];
 
     const headerContent = (
       <div className="space-y-3">
-        {/* Status + Date */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Status, link pills, date, and actions */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
               {status.label}
             </span>
@@ -482,8 +483,25 @@ const ProductTable: React.FC<ProductTableProps> = ({
               reviewMediaType={product.reviewMediaType}
               show={status.type === 'add-review'}
             />
+            {paypalLinks.length > 0 && renderPayPalBadges(paypalLinks)}
           </div>
-          <span className={`text-xs ${colors.text.muted}`}>{formatDate(product.orderDate) || '—'}</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className={`text-xs ${colors.text.muted}`}>{formatDate(product.orderDate) || '—'}</span>
+            {!readOnly && (
+              <div className="relative dropdown-container">
+                <button
+                  onClick={() => setShowDropdown(showDropdown === index ? null : index)}
+                  className={`flex items-center justify-center w-8 h-8 ${colors.button.secondary} rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#022448]`}
+                  title="More actions"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+                  </svg>
+                </button>
+                {renderMobileDropdown(product, index)}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Title + Image */}
@@ -535,25 +553,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
           <div>
             <p className={`text-xs ${colors.text.muted} mb-0.5`}>Delta</p>
             <p className={`text-sm font-semibold font-mono ${getDeltaClass(product.delta)}`}>{formatCurrency(product.delta)}</p>
-          </div>
-        </div>
-
-        {/* Footer: PayPal badge + dots menu */}
-        <div className="flex items-center justify-between pt-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {product.id ? renderPayPalBadges(getLinkedPayPalLinks(product.id)) : null}
-          </div>
-          <div className="relative dropdown-container">
-            <button
-              onClick={() => setShowDropdown(showDropdown === index ? null : index)}
-              className={`flex items-center justify-center w-8 h-8 ${colors.button.secondary} rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#022448]`}
-              title="More actions"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 3a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 10a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-              </svg>
-            </button>
-            {renderMobileDropdown(product, index)}
           </div>
         </div>
       </div>
