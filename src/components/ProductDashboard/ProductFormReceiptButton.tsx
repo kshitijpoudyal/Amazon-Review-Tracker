@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useImageDataExtractor } from '../../hooks/useImageDataExtractor';
 import { getImportButtonClassName, ImportStatus } from './productFormUtils';
+import { importButtonLabelClass } from './productFormStyles';
 
 interface ProductFormReceiptButtonProps {
   onDataExtracted?: (data: unknown) => void;
@@ -53,8 +54,8 @@ export const ProductFormReceiptButton: React.FC<ProductFormReceiptButtonProps> =
         disabled={isLoading}
         className={getImportButtonClassName(displayStatus)}
       >
-        <span className="text-base">{label.icon}</span>
-        <span>{label.text}</span>
+        <span className="text-base shrink-0">{label.icon}</span>
+        <span className={importButtonLabelClass}>{label.text}</span>
       </button>
     </>
   );

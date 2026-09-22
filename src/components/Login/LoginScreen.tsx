@@ -183,16 +183,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
               <StarSVG filled size="sm" />
             </div>
-            <span className="${typography.overline} text-white/55">
+            <span className={`${typography.overline} text-white/55`}>
               Amazon Review Tracker
             </span>
           </div>
 
           {/* Headline */}
-          <h2 className="${typography.pageTitle} mb-3">
+          <h2 className={`${typography.pageTitle} mb-3`}>
             Track every review.<br />Never miss feedback.
           </h2>
-          <p className="${typography.body} text-white/55 mb-8">
+          <p className={`${typography.body} text-white/55 mb-8`}>
             Monitor Amazon product reviews in real-time and turn customer feedback into actionable insights.
           </p>
 
@@ -228,14 +228,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <div className="space-y-1.5">
               {RATING_BARS.map(({ label, width, delay }) => (
                 <div key={label} className="flex items-center gap-2">
-                  <span className="${typography.caption} text-white/40 w-5">{label}</span>
+                  <span className={`${typography.caption} text-white/40 w-5`}>{label}</span>
                   <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-yellow-400/70 rounded-full"
                       style={{ width, transformOrigin: 'left', animation: `barGrow 1.2s ease-out ${delay} both` }}
                     />
                   </div>
-                  <span className="${typography.caption} text-white/35 w-6 text-right">{width}</span>
+                  <span className={`${typography.caption} text-white/35 w-6 text-right`}>{width}</span>
                 </div>
               ))}
             </div>
@@ -249,7 +249,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 className="bg-white/10 border border-white/10 rounded-xl p-3 flex items-start gap-3"
                 style={{ animation: `slideInFromRight 0.5s ease-out ${0.5 + i * 0.15}s both` }}
               >
-                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 ${typography.captionStrong}">
+                <div className={`w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 ${typography.captionStrong}`}>
                   {r.name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -258,7 +258,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                     <div className="flex gap-0.5">
                       {Array.from({ length: r.rating }).map((_, j) => <StarSVG key={j} filled size="xs" />)}
                     </div>
-                    <span className="${typography.caption} text-white/30 ml-auto flex-shrink-0">{r.time}</span>
+                    <span className={`${typography.caption} text-white/30 ml-auto flex-shrink-0`}>{r.time}</span>
                   </div>
                   <p className="text-white/55 text-xs truncate">{r.text}</p>
                 </div>
@@ -306,7 +306,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <div className="gradient-bg rounded-2xl p-5 text-white text-center">
             <div className="flex items-center justify-center gap-2 mb-1.5">
               <StarSVG filled size="sm" />
-              <span className="${typography.overline} text-white/55">
+              <span className={`${typography.overline} text-white/55`}>
                 Review Tracker
               </span>
             </div>
@@ -450,7 +450,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               {/* Divider */}
               <div className="my-5 flex items-center gap-4">
                 <div className="flex-1 h-px bg-[rgba(196,198,207,0.4)]" />
-                <span className="${typography.caption} text-[#74777f]">or</span>
+                <span className={`${typography.caption} text-[#74777f]`}>or</span>
                 <div className="flex-1 h-px bg-[rgba(196,198,207,0.4)]" />
               </div>
 
@@ -489,7 +489,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               href="https://www.kshitijstudio.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 ${typography.caption} text-[#74777f] hover:text-[#022448] transition-colors"
+              className={`inline-flex items-center gap-1.5 ${typography.caption} text-[#74777f] hover:text-[#022448] transition-colors`}
             >
               <span>Powered by</span>
               <span className="font-semibold">KshitijStudio</span>

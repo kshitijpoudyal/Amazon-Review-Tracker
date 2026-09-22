@@ -19,9 +19,9 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   const StatCardSkeleton = () => (
     <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(2,36,72,0.07)]">
       <div className="h-0.5 bg-[#e4e2dd]" />
-      <div className="p-4 animate-pulse space-y-3">
+      <div className="p-3 animate-pulse space-y-2">
         <div className="h-3 bg-[#e4e2dd] rounded-full w-2/3"></div>
-        <div className="h-7 bg-[#eae8e2] rounded-full w-3/4"></div>
+        <div className="h-6 bg-[#eae8e2] rounded-full w-3/4"></div>
       </div>
     </div>
   );
@@ -29,8 +29,8 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   const StatCard = ({ value, label, className = '' }: StatItem) => (
     <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(2,36,72,0.07)] hover:shadow-[0_6px_20px_rgba(2,36,72,0.11)] hover:-translate-y-0.5 transition-all duration-200">
       <div className="h-0.5 bg-[#e4e2dd]" />
-      <div className="p-4">
-        <div className={`${typography.statLabel} mb-2`}>
+      <div className="p-3">
+        <div className={`${typography.statLabel} mb-1`}>
           {label}
         </div>
         <div className={`${typography.statValue} ${className || ''}`}>
@@ -42,8 +42,8 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 
   if (loading) {
     return (
-      <div className="px-4 sm:px-6 md:px-6 lg:px-8 py-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="px-4 sm:px-6 md:px-6 lg:px-8 py-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <StatCardSkeleton key={i} />
           ))}
@@ -53,8 +53,8 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   }
 
   return (
-    <div className="px-4 sm:px-6 md:px-6 lg:px-8 py-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="px-4 sm:px-6 md:px-6 lg:px-8 py-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2">
         {stats.map((stat, index) => (
           <StatCard
             key={index}

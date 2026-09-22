@@ -1,7 +1,6 @@
 import { typography } from '../../utils/typography';
 import React from 'react';
 import { Product } from '../../types/Product';
-import { ReviewMediaTypeSelector } from '../common';
 import { ProductFormSectionHeader } from './ProductFormSectionHeader';
 
 const REVIEW_STEPS: { field: keyof Product; label: string }[] = [
@@ -15,19 +14,17 @@ const REVIEW_STEPS: { field: keyof Product; label: string }[] = [
 interface ProductFormReviewJourneySectionProps {
   product: Product;
   onStepToggle: (field: keyof Product, newValue: boolean) => void;
-  onReviewMediaTypeChange: (value: NonNullable<Product['reviewMediaType']>) => void;
 }
 
 export const ProductFormReviewJourneySection: React.FC<ProductFormReviewJourneySectionProps> = ({
   product,
   onStepToggle,
-  onReviewMediaTypeChange,
 }) => {
   const allStepsDone = REVIEW_STEPS.every(s => !!product[s.field]);
 
   return (
     <div className="px-6 py-5">
-      <ProductFormSectionHeader title="Review Journey" />
+      <ProductFormSectionHeader title="Review journey" />
 
       <div className="flex items-start">
         {REVIEW_STEPS.map((step, i) => {
@@ -75,13 +72,6 @@ export const ProductFormReviewJourneySection: React.FC<ProductFormReviewJourneyS
           🎉 All steps complete!
         </p>
       )}
-
-      <div className="mt-5">
-        <ReviewMediaTypeSelector
-          value={product.reviewMediaType}
-          onChange={onReviewMediaTypeChange}
-        />
-      </div>
     </div>
   );
 };

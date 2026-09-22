@@ -3,6 +3,7 @@ import { Product } from '../../types/Product';
 import EditProductModal from './EditProductModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { getProductStatus } from '../../utils/productStatus';
+import { getBadgeClasses } from '../../utils/colors';
 import { useProductPayPalLinks, ProductPayPalLink } from '../../hooks/useProductPayPalLinks';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
 import { colors, getFinancialColor } from '../../utils/colors';
@@ -330,7 +331,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       key: 'actions', 
       label: 'Actions',
       align: 'center' as const,
-      width: 'w-16'
+      width: 'w-24'
     }])
   ];
 
@@ -386,7 +387,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         ),
         status: (
           <div className='flex flex-col items-center gap-1'>
-            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${colors.status[status.type].bg} ${colors.status[status.type].text} ${colors.status[status.type].border}`}>
+            <span className={getBadgeClasses(status.type)}>
               {status.label}
             </span>
             <ReviewMediaBadge
@@ -477,7 +478,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         {/* Status, link pills, date, and actions */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
-            <span className={`px-2.5 py-1 rounded-full ${status.color}`}>
+            <span className={getBadgeClasses(status.type)}>
               {status.label}
             </span>
             <ReviewMediaBadge

@@ -1,50 +1,88 @@
-import React from 'react';
+import React, { useId } from 'react';
+import {
+  CheckIcon,
+  DocumentTextIcon,
+  PhotoIcon,
+  VideoCameraIcon,
+} from '@heroicons/react/24/outline';
 import { typography } from '../../utils/typography';
 import { DEFAULT_REVIEW_MEDIA_TYPE, ReviewMediaType } from '../../types/Product';
 
-const REVIEW_MEDIA_OPTIONS: { value: ReviewMediaType; label: string }[] = [
-  { value: 'text', label: 'Text' },
-  { value: 'photo', label: 'Photo' },
-  { value: 'video', label: 'Video' },
+const REVIEW_MEDIA_OPTIONS: {
+  value: ReviewMediaType;
+  label: string;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+}[] = [
+  { value: 'text', label: 'Text', Icon: DocumentTextIcon },
+  { value: 'photo', label: 'Photo', Icon: PhotoIcon },
+  { value: 'video', label: 'Video', Icon: VideoCameraIcon },
 ];
 
 interface ReviewMediaTypeSelectorProps {
   value?: ReviewMediaType;
   onChange: (value: ReviewMediaType) => void;
+  /** Hide the legend when a parent section already provides context */
+  hideLabel?: boolean;
 }
 
 export const ReviewMediaTypeSelector: React.FC<ReviewMediaTypeSelectorProps> = ({
   value,
   onChange,
+  hideLabel = false,
 }) => {
+  const groupId = useId();
   const current = value ?? DEFAULT_REVIEW_MEDIA_TYPE;
 
   return (
-    <div>
-      <p className={`${typography.label} mb-2`}>
-        Review type required
-      </p>
-      <div className="flex gap-2">
-        {REVIEW_MEDIA_OPTIONS.map(({ value: optionValue, label }) => {
-          const isActive = current === optionValue;
+    <fieldset className="border-0 p-0 m-0 min-w-0">
+      <legend className={`${typography.label} mb-2 ${hideLabel ? 'sr-only' : ''}`}>
+        Review requirement
+      </legend>
+      <div className="flex w-full gap-1 p-1 rounded-xl bg-[#eae8e2]/80 border border-[rgba(196,198,207,0.45)]">
+        {REVIEW_MEDIA_OPTIONS.map(({ value: optionValue, label, Icon }) => {
+          const inputId = `${groupId}-${optionValue}`;
+          const isSelected = current === optionValue;
+
           return (
-            <button
+            <label
               key={optionValue}
-              type="button"
-              onClick={() => onChange(optionValue)}
-              className={`flex-1 px-3 py-2 rounded-full text-xs font-medium transition-colors ${
-                isActive
-                  ? 'bg-[#006a68] text-white'
-                  : 'bg-[#eae8e2] text-[#43474e] hover:bg-[#e4e2dd]'
-              }`}
+              htmlFor={inputId}
+              className="relative flex-1 min-w-0 cursor-pointer"
             >
-              {label}
-            </button>
+              <input
+                id={inputId}
+                type="radio"
+                name={groupId}
+                value={optionValue}
+                checked={isSelected}
+                onChange={() => onChange(optionValue)}
+                className="peer sr-only"
+              />
+              <span
+                className={`flex h-11 items-center justify-center gap-1.5 rounded-lg ${typography.button} transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-[#022448]/25 peer-focus-visible:ring-offset-1 ${
+                  isSelected
+                    ? 'bg-[#006a68] text-white font-semibold'
+                    : 'bg-transparent text-[#43474e] hover:bg-white/70'
+                }`}
+              >
+                {isSelected && (
+                  <CheckIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                )}
+                <Icon
+                  className={`w-4 h-4 shrink-0 ${isSelected ? 'opacity-90' : 'opacity-60'}`}
+                  aria-hidden={true}
+                />
+                <span>{label}</span>
+              </span>
+            </label>
           );
         })}
       </div>
-    </div>
+    </fieldset>
   );
 };
+
+/** Alias for product form usage */
+export const ReviewRequirementSelector = ReviewMediaTypeSelector;
 
 export default ReviewMediaTypeSelector;

@@ -16,17 +16,17 @@ export type StatusType =
     | 'unknown';
 
 export const colors = {
-    // Status badge colors — 4-stage pipeline: amber → navy → teal → gray
+    // Status badge colors — subtle tints mapped to lifecycle meaning
     status: {
         linked: {
-            bg: 'bg-[#006a68]',
-            border: 'border-[#006a68]',
-            text: 'text-white'
+            bg: 'bg-[#0070BA]/10',
+            border: 'border-[#0070BA]/25',
+            text: 'text-[#0070BA]'
         },
         unlinked: {
-            bg: 'bg-amber-500',
-            border: 'border-amber-500',
-            text: 'text-white'
+            bg: 'bg-amber-500/12',
+            border: 'border-amber-500/30',
+            text: 'text-amber-800'
         },
         error: {
             bg: 'bg-[#ffdad6]',
@@ -35,44 +35,44 @@ export const colors = {
             border: 'border-[rgba(186,26,26,0.2)]'
         },
         void: {
-            bg: 'bg-[#9e9e9e]',
-            border: 'border-[#9e9e9e]',
-            text: 'text-white'
+            bg: 'bg-[#9e9e9e]/15',
+            border: 'border-[#9e9e9e]/25',
+            text: 'text-[#74777f]'
         },
         complete: {
-            bg: 'bg-[#006a68]',
-            border: 'border-[#006a68]',
-            text: 'text-white'
+            bg: 'bg-[#006a68]/12',
+            border: 'border-[#006a68]/25',
+            text: 'text-[#006a68]'
         },
         'refund-pending': {
-            bg: 'bg-[#022448]',
-            text: 'text-white',
-            border: 'border-[#022448]'
+            bg: 'bg-amber-500/12',
+            text: 'text-amber-800',
+            border: 'border-amber-500/30'
         },
         'send-screenshot': {
-            bg: 'bg-[#022448]',
-            text: 'text-white',
-            border: 'border-[#022448]'
+            bg: 'bg-[#006a68]/12',
+            text: 'text-[#006a68]',
+            border: 'border-[#006a68]/25'
         },
         'review-pending': {
-            bg: 'bg-amber-500',
-            text: 'text-white',
-            border: 'border-amber-500'
+            bg: 'bg-[#6366f1]/10',
+            text: 'text-[#4338ca]',
+            border: 'border-[#6366f1]/25'
         },
         'add-review': {
-            bg: 'bg-amber-500',
-            text: 'text-white',
-            border: 'border-amber-500'
+            bg: 'bg-[#2563eb]/10',
+            text: 'text-[#1d4ed8]',
+            border: 'border-[#2563eb]/25'
         },
         'order-placed': {
-            bg: 'bg-amber-500',
-            text: 'text-white',
-            border: 'border-amber-500'
+            bg: 'bg-[#64748b]/10',
+            text: 'text-[#475569]',
+            border: 'border-[#64748b]/25'
         },
         unknown: {
-            bg: 'bg-[#9e9e9e]',
-            text: 'text-white',
-            border: 'border-[#9e9e9e]'
+            bg: 'bg-[#9e9e9e]/15',
+            text: 'text-[#74777f]',
+            border: 'border-[#9e9e9e]/25'
         }
     },
 
@@ -247,8 +247,9 @@ export const getRowBackgroundColor = (isLinked: boolean) => {
 };
 
 export const getBadgeClasses = (type: StatusType) => {
-    const baseClasses = 'inline-block px-2.5 py-1 rounded-full text-center text-caption font-medium';
-    return `${baseClasses} ${colors.status[type].bg} ${colors.status[type].text}`;
+    const baseClasses = 'inline-flex px-2.5 py-1 rounded-full text-caption font-medium border';
+    const s = colors.status[type];
+    return `${baseClasses} ${s.bg} ${s.text} ${s.border}`;
 };
 
 export const getActionButtonClasses = () => {

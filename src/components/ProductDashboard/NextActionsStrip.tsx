@@ -5,7 +5,7 @@ import { Product, StatusFilter } from '../../types/Product';
 import { getProductStatusType } from '../../utils/productStatus';
 import { formatCurrency } from '../../utils/currency';
 
-const OVERVIEW_EXPANDED_KEY = 'art_overview_expanded';
+const ATTENTION_EXPANDED_KEY = 'art_attention_expanded';
 
 interface NextActionsStripProps {
   products: Product[];
@@ -15,7 +15,7 @@ interface NextActionsStripProps {
   unlinkedPayPalAmount: number;
 }
 
-interface OverviewItem {
+interface AttentionItem {
   key: string;
   label: string;
   detail: string;
@@ -26,7 +26,7 @@ interface OverviewItem {
 
 function readExpandedPreference(): boolean {
   try {
-    return localStorage.getItem(OVERVIEW_EXPANDED_KEY) === 'true';
+    return localStorage.getItem(ATTENTION_EXPANDED_KEY) === 'true';
   } catch {
     return false;
   }
@@ -43,24 +43,68 @@ export const NextActionsStrip: React.FC<NextActionsStripProps> = ({
   const [expanded, setExpanded] = useState(readExpandedPreference);
 
   const counts = useMemo(() => {
-    let refundPending = 0;
-    let sendScreenshot = 0;
+    const result = {
+      addReview: 0,
+      reviewPending: 0,
+      sendScreenshot: 0,
+      refundPending: 0,
+      orderPlaced: 0,
+    };
     for (const p of products) {
       if (p.isVoid) continue;
       const status = getProductStatusType(p);
-      if (status === 'refund-pending') refundPending++;
-      if (status === 'send-screenshot') sendScreenshot++;
+      if (status === 'add-review') result.addReview++;
+      else if (status === 'review-pending') result.reviewPending++;
+      else if (status === 'send-screenshot') result.sendScreenshot++;
+      else if (status === 'refund-pending') result.refundPending++;
+      else if (status === 'order-placed') result.orderPlaced++;
     }
-    return { refundPending, sendScreenshot };
+    return result;
   }, [products]);
 
-  const items: OverviewItem[] = [
+  const toggleFilter = (filter: StatusFilter) => {
+    onStatusFilter(activeStatusFilter === filter ? '' : filter);
+  };
+
+  const items: AttentionItem[] = [
+    {
+      key: 'add-review',
+      label: 'Needs review',
+      detail: `${counts.addReview} product${counts.addReview !== 1 ? 's' : ''}`,
+      count: counts.addReview,
+      onClick: () => toggleFilter('add-review'),
+      active: activeStatusFilter === 'add-review',
+    },
+    {
+      key: 'send-screenshot',
+      label: 'Need screenshot',
+      detail: `${counts.sendScreenshot} product${counts.sendScreenshot !== 1 ? 's' : ''}`,
+      count: counts.sendScreenshot,
+      onClick: () => toggleFilter('send-screenshot'),
+      active: activeStatusFilter === 'send-screenshot',
+    },
+    {
+      key: 'order-placed',
+      label: 'Awaiting delivery',
+      detail: `${counts.orderPlaced} product${counts.orderPlaced !== 1 ? 's' : ''}`,
+      count: counts.orderPlaced,
+      onClick: () => toggleFilter('order-placed'),
+      active: activeStatusFilter === 'order-placed',
+    },
+    {
+      key: 'review-pending',
+      label: 'Awaiting approval',
+      detail: `${counts.reviewPending} product${counts.reviewPending !== 1 ? 's' : ''}`,
+      count: counts.reviewPending,
+      onClick: () => toggleFilter('review-pending'),
+      active: activeStatusFilter === 'review-pending',
+    },
     {
       key: 'refund-pending',
       label: 'Waiting for refund',
       detail: `${counts.refundPending} product${counts.refundPending !== 1 ? 's' : ''}`,
       count: counts.refundPending,
-      onClick: () => onStatusFilter(activeStatusFilter === 'refund-pending' ? '' : 'refund-pending'),
+      onClick: () => toggleFilter('refund-pending'),
       active: activeStatusFilter === 'refund-pending',
     },
     {
@@ -73,32 +117,18 @@ export const NextActionsStrip: React.FC<NextActionsStripProps> = ({
       count: unlinkedPayPalCount,
       onClick: () => navigate('/paypal'),
     },
-    {
-      key: 'send-screenshot',
-      label: 'Need screenshot',
-      detail: `${counts.sendScreenshot} product${counts.sendScreenshot !== 1 ? 's' : ''}`,
-      count: counts.sendScreenshot,
-      onClick: () => onStatusFilter(activeStatusFilter === 'send-screenshot' ? '' : 'send-screenshot'),
-      active: activeStatusFilter === 'send-screenshot',
-    },
   ].filter((item) => item.count > 0);
 
   if (items.length === 0) {
     return null;
   }
 
+  const totalCount = items.reduce((sum, item) => sum + item.count, 0);
+
   const collapsedSummary = items
     .map((item) => {
-      if (item.key === 'paypal' && unlinkedPayPalCount > 0) {
-        return `${unlinkedPayPalCount} unlinked PayPal`;
-      }
-      if (item.key === 'refund-pending') {
-        return `${counts.refundPending} waiting for refund`;
-      }
-      if (item.key === 'send-screenshot') {
-        return `${counts.sendScreenshot} need screenshot`;
-      }
-      return item.label;
+      if (item.key === 'paypal') return `${item.count} unlinked PayPal`;
+      return `${item.count} ${item.label.toLowerCase()}`;
     })
     .join(' · ');
 
@@ -106,28 +136,33 @@ export const NextActionsStrip: React.FC<NextActionsStripProps> = ({
     setExpanded((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem(OVERVIEW_EXPANDED_KEY, String(next));
+        localStorage.setItem(ATTENTION_EXPANDED_KEY, String(next));
       } catch {}
       return next;
     });
   };
 
   return (
-    <div className="px-4 sm:px-6 md:px-6 lg:px-8 mb-3">
-      <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(2,36,72,0.07)] overflow-hidden">
+    <div className="px-4 sm:px-6 md:px-6 lg:px-8 mb-2">
+      <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(2,36,72,0.07)] overflow-hidden border border-[#2563eb]/10">
         <button
           type="button"
           onClick={toggleExpanded}
           aria-expanded={expanded}
           className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[#fbf9f3]/80 transition-colors"
         >
-          <div className="min-w-0">
-            <p className={`${typography.caption}`}>
-              Overview
-            </p>
-            {!expanded && (
-              <p className="text-sm text-[#43474e] mt-0.5 truncate">{collapsedSummary}</p>
-            )}
+          <div className="min-w-0 flex items-center gap-2.5">
+            <span className="flex-shrink-0 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-[#2563eb]/10 text-[#1d4ed8] text-caption font-semibold tabular-nums">
+              {totalCount}
+            </span>
+            <div className="min-w-0">
+              <p className={`${typography.captionStrong} text-[#1b1c19]`}>
+                Needs attention
+              </p>
+              {!expanded && (
+                <p className="text-sm text-[#43474e] mt-0.5 truncate">{collapsedSummary}</p>
+              )}
+            </div>
           </div>
           <svg
             className={`w-5 h-5 text-[#74777f] flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
@@ -147,17 +182,26 @@ export const NextActionsStrip: React.FC<NextActionsStripProps> = ({
                 key={item.key}
                 type="button"
                 onClick={item.onClick}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors ${
+                className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors ${
                   item.active
                     ? 'bg-[#006a68]/8 hover:bg-[#006a68]/12'
                     : 'hover:bg-[#fbf9f3]'
                 }`}
               >
-                <div className="min-w-0">
-                  <p className={`text-sm font-medium ${item.active ? 'text-[#006a68]' : 'text-[#1b1c19]'}`}>
-                    {item.label}
-                  </p>
-                  <p className="text-xs text-[#74777f] mt-0.5 truncate">{item.detail}</p>
+                <div className="min-w-0 flex items-center gap-2.5">
+                  <span className={`flex-shrink-0 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full tabular-nums text-caption font-semibold ${
+                    item.key === 'paypal'
+                      ? 'bg-amber-500/12 text-amber-800'
+                      : 'bg-[#2563eb]/10 text-[#1d4ed8]'
+                  }`}>
+                    {item.count}
+                  </span>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium ${item.active ? 'text-[#006a68]' : 'text-[#1b1c19]'}`}>
+                      {item.label}
+                    </p>
+                    <p className={`${typography.caption} mt-0.5 truncate`}>{item.detail}</p>
+                  </div>
                 </div>
                 <svg
                   className={`w-4 h-4 flex-shrink-0 ${item.active ? 'text-[#006a68]' : 'text-[#74777f]'}`}

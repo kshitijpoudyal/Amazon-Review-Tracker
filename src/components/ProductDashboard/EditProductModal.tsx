@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../../types/Product';
 import { typography } from '../../utils/typography';
-import { colors } from '../../utils/colors';
+import { getBadgeClasses } from '../../utils/colors';
 import { Modal, ProductThumbnail } from '../common';
 import { useVendors } from '../../hooks/useVendors';
 import { getProductStatus } from '../../utils/productStatus';
@@ -16,6 +16,8 @@ import { ProductFormQuickImportSection } from './ProductFormQuickImportSection';
 import { ProductFormReviewJourneySection } from './ProductFormReviewJourneySection';
 import { ProductFormProductDetailsSection } from './ProductFormProductDetailsSection';
 import { ProductFormFinancialsSection } from './ProductFormFinancialsSection';
+import { ProductFormReviewRequirementSection } from './ProductFormReviewRequirementSection';
+import { formFooterCancelClass, formFooterPrimaryClass } from './productFormStyles';
 
 interface EditProductModalProps {
   product: Product;
@@ -113,7 +115,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const vendorName = getVendorName(editedProduct.vendorId);
 
   const modalHeader = (
-    <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-[rgba(196,198,207,0.15)]">
+    <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-[rgba(196,198,207,0.15)]">
       <div className="flex items-start gap-3 min-w-0 flex-1">
         <ProductThumbnail
           imageUrl={editedProduct.imageUrl}
@@ -121,15 +123,18 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           size="lg"
         />
         <div className="min-w-0 flex-1">
-          <h2 className={`${typography.sectionTitle} line-clamp-2 leading-snug`}>
+          <h2 className={`${typography.modalTitle} line-clamp-2 leading-snug`}>
             {editedProduct.item || 'Untitled Product'}
           </h2>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className={`inline-flex px-2 py-0.5 rounded-full ${typography.captionStrong} ${colors.status[status.type].bg} ${colors.status[status.type].text}`}>
+            <span className={getBadgeClasses(status.type)}>
               {status.label}
             </span>
             {vendorName && (
-              <span className={`${typography.caption} text-[#74777f]`}>{vendorName}</span>
+              <>
+                <span className={`${typography.caption} text-[#74777f]`} aria-hidden="true">·</span>
+                <span className={`${typography.caption} text-[#74777f]`}>{vendorName}</span>
+              </>
             )}
           </div>
         </div>
@@ -148,22 +153,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
   const modalBody = (
     <div className="divide-y divide-[rgba(196,198,207,0.12)]">
-      <ProductFormQuickImportSection
-        importStatus={importStatus}
-        onClipboardImport={handleClipboardImport}
-        showPasteBox={showPasteBox}
-        onPasteBoxPaste={handlePasteBoxPaste}
-        onPasteBoxClose={() => setShowPasteBox(false)}
-        showReceiptUpload
-        onReceiptDataExtracted={handleReceiptDataExtracted}
-      />
-
       {editedProduct.isVoid && (
-        <div className="mx-6 my-5 flex items-center gap-3 px-4 py-3 bg-[#9e9e9e]/10 border border-[#9e9e9e]/30 rounded-xl">
+        <div className="mx-6 my-4 flex items-center gap-3 px-4 py-3 bg-[#9e9e9e]/10 border border-[#9e9e9e]/30 rounded-xl">
           <svg className="w-4 h-4 text-[#74777f] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
           </svg>
-          <p className="text-sm text-[#43474e]">
+          <p className={`${typography.body} text-[#43474e]`}>
             This product is <strong>Void</strong>. Use the ⋮ menu in the table to un-void it.
           </p>
         </div>
@@ -173,41 +168,48 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         <ProductFormReviewJourneySection
           product={editedProduct}
           onStepToggle={handleStepToggle}
-          onReviewMediaTypeChange={(value) => handleInputChange('reviewMediaType', value)}
         />
       )}
+
+      <ProductFormReviewRequirementSection
+        value={editedProduct.reviewMediaType}
+        onChange={(value) => handleInputChange('reviewMediaType', value)}
+      />
 
       <ProductFormProductDetailsSection
         product={editedProduct}
         activeVendors={activeVendors}
         defaultVendorId={DEFAULT_VENDOR_ID}
         onChange={handleDetailsChange}
+        mode="edit"
       />
 
       <ProductFormFinancialsSection
         product={editedProduct}
-        mode="edit"
         onPaidChange={(value) => setEditedProduct(prev => updateProductNumbers(prev, 'paid', value))}
         onReceivedChange={(value) => setEditedProduct(prev => updateProductNumbers(prev, 'received', value))}
         onResetDelta={() => setEditedProduct(prev => ({ ...prev, delta: null, received: null }))}
+      />
+
+      <ProductFormQuickImportSection
+        variant="compact"
+        importStatus={importStatus}
+        onClipboardImport={handleClipboardImport}
+        showPasteBox={showPasteBox}
+        onPasteBoxPaste={handlePasteBoxPaste}
+        onPasteBoxClose={() => setShowPasteBox(false)}
+        showReceiptUpload
+        onReceiptDataExtracted={handleReceiptDataExtracted}
       />
     </div>
   );
 
   const modalFooter = (
-    <div className="flex gap-3">
-      <button
-        type="button"
-        onClick={onCancel}
-        className={`flex-1 px-4 py-3 ${colors.button.secondary} rounded-full font-medium text-sm`}
-      >
+    <div className="flex gap-3 w-full">
+      <button type="button" onClick={onCancel} className={formFooterCancelClass}>
         Cancel
       </button>
-      <button
-        type="button"
-        onClick={handleSave}
-        className={`flex-1 px-4 py-3 ${colors.button.primary} rounded-full font-medium text-sm`}
-      >
+      <button type="button" onClick={handleSave} className={formFooterPrimaryClass}>
         Update Product
       </button>
     </div>
@@ -221,7 +223,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       body={modalBody}
       footer={modalFooter}
       showCloseButton={false}
-      size="md"
+      size="lg"
     />
   );
 };

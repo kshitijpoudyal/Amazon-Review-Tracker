@@ -243,12 +243,18 @@ export const TableView: React.FC<TableViewProps> = ({
                     <th
                       key={column.key}
                       onClick={column.sortable ? () => handleSortClick(column.key) : undefined}
-                      className={`px-4 py-3 lg:px-6 lg:py-4 ${typography.tableHeader} ${
-                        column.align === 'right' ? 'text-right' :
-                        column.align === 'center' ? 'text-center' : 'text-left'
+                      className={`py-3 lg:py-4 ${typography.tableHeader} ${
+                        column.key === 'actions'
+                          ? 'px-3 lg:px-4 text-center'
+                          : `px-4 lg:px-6 ${
+                              column.align === 'right' ? 'text-right' :
+                              column.align === 'center' ? 'text-center' : 'text-left'
+                            }`
                       } ${column.width || ''} ${column.className || ''} ${column.sortable ? 'cursor-pointer select-none hover:text-white' : ''}`}
                     >
-                      {column.sortable ? (
+                      {column.key === 'actions' ? (
+                        <span className="block w-full text-center">{column.label}</span>
+                      ) : column.sortable ? (
                         <span className="inline-flex items-center gap-1">
                           {column.label}
                           <span className="opacity-60">

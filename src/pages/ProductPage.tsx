@@ -124,7 +124,7 @@ const ProductPage: React.FC = () => {
     {
       type: 'search',
       key: 'searchTerm',
-      placeholder: 'Search products...',
+      placeholder: 'Search product name, order #...',
       value: searchTerm,
       onChange: (value) => updateFilter('searchTerm', value)
     },
@@ -227,8 +227,17 @@ const ProductPage: React.FC = () => {
   return (
     <PullToRefresh onRefresh={refetch} disabled={displayLoading}>
     <DashboardContainer className="pb-24 md:pb-0">
-      {/* Stats Cards */}
+      {/* Compact financial summary */}
       <DashboardStats stats={statsData} loading={displayLoading} />
+
+      {/* Workflow queue */}
+      <NextActionsStrip
+        products={data?.products || []}
+        activeStatusFilter={statusFilter}
+        onStatusFilter={(filter) => updateFilter('statusFilter', filter)}
+        unlinkedPayPalCount={unlinkedPayPalStats.count}
+        unlinkedPayPalAmount={unlinkedPayPalStats.amount}
+      />
       
       {showAdminUtils && (
         <DashboardSection>
@@ -237,24 +246,12 @@ const ProductPage: React.FC = () => {
         </DashboardSection>
       )}
 
-      {/* Next actions + quick filters */}
-      <NextActionsStrip
-        products={data?.products || []}
-        activeStatusFilter={statusFilter}
-        onStatusFilter={(filter) => updateFilter('statusFilter', filter)}
-        unlinkedPayPalCount={unlinkedPayPalStats.count}
-        unlinkedPayPalAmount={unlinkedPayPalStats.amount}
+      <Toolbar
+        actions={actions}
+        filters={filterConfigs}
+        onClearFilters={clearAllFilters}
+        loading={displayLoading}
       />
-
-      {/* Filter Controls — sticky so it stays visible while scrolling */}
-      <div className="sticky top-0 z-30 bg-[#fbf9f3] pb-2 pt-1">
-        <Toolbar
-          actions={actions}
-          filters={filterConfigs}
-          onClearFilters={clearAllFilters}
-          loading={displayLoading}
-        />
-      </div>
 
       {/* Product Table */}
       <DashboardSection>

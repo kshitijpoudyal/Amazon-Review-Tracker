@@ -8,9 +8,9 @@ interface ProductFormSectionHeaderProps {
 
 export const ProductFormSectionHeader: React.FC<ProductFormSectionHeaderProps> = ({
   title,
-  className = 'mb-4',
+  className = 'mb-3',
 }) => (
-  <p className={`${typography.overline} ${className}`}>
+  <p className={`${typography.label} text-[#74777f] ${className}`}>
     {title}
   </p>
 );

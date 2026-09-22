@@ -1,6 +1,6 @@
 import { Product } from '../../types/Product';
 import { parseBookmarkletClipboard } from '../../utils/bookmarklet';
-import { colors } from '../../utils/colors';
+import { importButtonBaseClass } from './productFormStyles';
 
 export type ImportStatus = 'idle' | 'success' | 'url-only' | 'error';
 
@@ -25,11 +25,10 @@ export function formatDateForInput(dateString: string): string {
 }
 
 export function getImportButtonClassName(status: ImportStatus): string {
-  const base = 'w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-medium text-sm transition-colors';
-  if (status === 'success') return `${base} bg-[#006a68]/10 text-[#006a68]`;
-  if (status === 'url-only') return `${base} bg-amber-50 text-amber-700`;
-  if (status === 'error') return `${base} bg-[#ffdad6] text-[#ba1a1a]`;
-  return `${base} ${colors.background.secondary} ${colors.text.secondary} hover:bg-[#e4e2dd]`;
+  if (status === 'success') return `${importButtonBaseClass} bg-[#006a68]/10 text-[#006a68]`;
+  if (status === 'url-only') return `${importButtonBaseClass} bg-amber-50 text-amber-700`;
+  if (status === 'error') return `${importButtonBaseClass} bg-[#ffdad6] text-[#ba1a1a]`;
+  return `${importButtonBaseClass} bg-[#eae8e2] text-[#43474e] hover:bg-[#e4e2dd]`;
 }
 
 export function applyBookmarkletPayload(

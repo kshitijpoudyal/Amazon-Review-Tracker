@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Product, DEFAULT_REVIEW_MEDIA_TYPE, ReviewMediaType } from "../../types/Product";
 import { typography } from '../../utils/typography';
-import { colors } from "../../utils/colors";
 import { Modal } from "../common";
 import { useVendors } from "../../hooks/useVendors";
 import { parseBookmarkletClipboard } from "../../utils/bookmarklet";
@@ -13,7 +12,8 @@ import {
 import { ProductFormQuickImportSection } from "./ProductFormQuickImportSection";
 import { BookmarkletSetupPanel } from "./BookmarkletSetupPanel";
 import { ProductFormProductDetailsSection } from "./ProductFormProductDetailsSection";
-import { ProductFormFinancialsSection } from "./ProductFormFinancialsSection";
+import { ProductFormReviewRequirementSection } from "./ProductFormReviewRequirementSection";
+import { formFooterCancelClass, formFooterPrimaryClass } from "./productFormStyles";
 
 interface AddProductFormProps {
   isOpen: boolean;
@@ -119,15 +119,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
   };
 
   const modalHeader = (
-    <div className="flex items-center justify-between gap-4 px-6 py-5 border-b border-[rgba(196,198,207,0.15)]">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#022448] to-[#1e3a5f] flex items-center justify-center flex-shrink-0">
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-        </div>
-        <h2 className={`${typography.sectionTitle}`}>Add Product</h2>
-      </div>
+    <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-[rgba(196,198,207,0.15)]">
+      <h2 className={typography.modalTitle}>Add Product</h2>
       <button
         type="button"
         onClick={handleCancel}
@@ -155,39 +148,31 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
           footer={<BookmarkletSetupPanel />}
         />
 
+        <ProductFormReviewRequirementSection
+          value={newProduct.reviewMediaType}
+          onChange={(value: ReviewMediaType) => setNewProduct(prev => ({ ...prev, reviewMediaType: value }))}
+        />
+
         <ProductFormProductDetailsSection
           product={newProduct}
           activeVendors={activeVendors}
           defaultVendorId={DEFAULT_VENDOR_ID}
           onChange={handleDetailsChange}
-          nameRequired
-        />
-
-        <ProductFormFinancialsSection
-          product={newProduct}
           mode="add"
+          nameRequired
           paidRequired
           onPaidChange={(value) => handleInputChange('paid', value === '' ? null : parseFloat(value))}
-          onReviewMediaTypeChange={(value: ReviewMediaType) => setNewProduct(prev => ({ ...prev, reviewMediaType: value }))}
         />
       </div>
     </form>
   );
 
   const modalFooter = (
-    <div className="flex gap-3">
-      <button
-        type="button"
-        onClick={handleCancel}
-        className={`flex-1 px-4 py-3 ${colors.button.secondary} rounded-full font-medium text-sm`}
-      >
+    <div className="flex gap-3 w-full">
+      <button type="button" onClick={handleCancel} className={formFooterCancelClass}>
         Cancel
       </button>
-      <button
-        type="submit"
-        form="add-product-form"
-        className={`flex-1 px-4 py-3 ${colors.button.primary} rounded-full font-medium text-sm`}
-      >
+      <button type="submit" form="add-product-form" className={formFooterPrimaryClass}>
         Add Product
       </button>
     </div>

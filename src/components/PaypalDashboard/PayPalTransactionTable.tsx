@@ -132,7 +132,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
       key: 'actions', 
       label: 'Actions',
       align: 'center' as const,
-      width: 'w-16'
+      width: 'w-24'
     }] : [])
   ];
 
@@ -142,8 +142,8 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
 
     return {
       id: transaction.id || index,
-      borderColor: isLinked ? 'border-l-[#006a68]' : 'border-l-amber-500',
-      className: '',
+      borderColor: isLinked ? 'border-l-[#0070BA]/30' : 'border-l-amber-500',
+      className: isLinked ? 'opacity-75' : '',
       sortValues: {
         datetime: transaction.date || '',
         name: transaction.name || '',
@@ -218,7 +218,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
                 } ${
                   transaction.linkedProductIds?.length
                     ? 'text-[#43474e] hover:text-[#1b1c19]'
-                    : 'text-[#9e9e9e] hover:text-[#74777f]'
+                    : 'bg-amber-500/10 text-amber-800 border border-amber-500/25 hover:bg-amber-500/15'
                 }`}
               >
                 {/* Unlinked indicator */}
@@ -276,7 +276,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
     const isLinked = !!(transaction.linkedProductIds && transaction.linkedProductIds.length > 0);
 
     const headerContent = (
-      <div className="space-y-3">
+      <div className={`space-y-3 ${isLinked ? 'opacity-75' : ''}`}>
         {/* Status + Date */}
         <div className="flex items-center justify-between">
           {isLinked ? (

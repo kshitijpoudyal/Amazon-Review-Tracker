@@ -96,7 +96,7 @@ export const PayPalPage: React.FC = () => {
     {
       type: 'search',
       key: 'searchTerm',
-      placeholder: 'Search transactions...',
+      placeholder: 'Search name, transaction ID, type...',
       value: searchTerm,
       onChange: (value) => updateFilter('searchTerm', value)
     },
@@ -230,16 +230,13 @@ export const PayPalPage: React.FC = () => {
       {/* Summary Cards */}
       <DashboardStats stats={statsData} loading={displayLoading} />
 
-      {/* Filter Controls — sticky */}
-      <div className="sticky top-0 z-30 bg-[#fbf9f3] pb-2 pt-1">
-        <Toolbar
-          actions={actions}
-          filters={filterConfigs}
-          onClearFilters={clearAllFilters}
-          loading={displayLoading}
-          showClearButton={true}
-        />
-      </div>
+      <Toolbar
+        actions={actions}
+        filters={filterConfigs}
+        onClearFilters={clearAllFilters}
+        loading={displayLoading}
+        showClearButton={true}
+      />
 
       {/* Transactions Table */}
       <DashboardSection>

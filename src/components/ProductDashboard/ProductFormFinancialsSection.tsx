@@ -1,109 +1,70 @@
 import React from 'react';
-import { Product, ReviewMediaType } from '../../types/Product';
-import { colors } from '../../utils/colors';
+import { Product } from '../../types/Product';
 import { formatCurrency } from '../../utils/currency';
-import { ReviewMediaTypeSelector } from '../common';
 import { ProductFormSectionHeader } from './ProductFormSectionHeader';
+import { ProductFormCurrencyInput } from './ProductFormCurrencyInput';
+import { formLabelClass, FORM_CONTROL_HEIGHT } from './productFormStyles';
 import { typography } from '../../utils/typography';
 
 interface ProductFormFinancialsSectionProps {
   product: Product;
-  mode: 'add' | 'edit';
   onPaidChange: (value: string) => void;
-  onReceivedChange?: (value: string) => void;
+  onReceivedChange: (value: string) => void;
   onResetDelta?: () => void;
-  onReviewMediaTypeChange?: (value: ReviewMediaType) => void;
-  paidRequired?: boolean;
+}
+
+function deltaDisplayClass(delta: number | null): string {
+  if (delta === null) return `${typography.numericStrong} text-[#74777f] tabular-nums`;
+  if (delta < 0) return `${typography.numericStrong} text-[#ba1a1a] tabular-nums`;
+  if (delta > 0) return `${typography.numericStrong} text-[#006a68] tabular-nums`;
+  return `${typography.numericStrong} text-[#43474e] tabular-nums`;
 }
 
 export const ProductFormFinancialsSection: React.FC<ProductFormFinancialsSectionProps> = ({
   product,
-  mode,
   onPaidChange,
   onReceivedChange,
   onResetDelta,
-  onReviewMediaTypeChange,
-  paidRequired = false,
 }) => (
   <div className="px-6 py-5 space-y-4">
-    <ProductFormSectionHeader title={mode === 'add' ? 'Order & Review' : 'Financials'} />
+    <ProductFormSectionHeader title="Financials" />
 
-    {mode === 'edit' && (
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-[#ffdad6]/40 rounded-xl p-3 text-center">
-          <p className={`${typography.statLabel} mb-1`}>Paid</p>
-          <p className={`${typography.statValue} text-[#ba1a1a]`}>{formatCurrency(product.paid)}</p>
-        </div>
-        <div className="bg-[#006a68]/10 rounded-xl p-3 text-center">
-          <p className={`${typography.statLabel} mb-1`}>Received</p>
-          <p className={`${typography.statValue} text-[#006a68]`}>{formatCurrency(product.received)}</p>
-        </div>
-        <div className={`rounded-xl p-3 text-center ${
-          product.delta === null
-            ? 'bg-[#eae8e2]'
-            : product.delta >= 0
-              ? 'bg-[#006a68]/10'
-              : 'bg-[#ba1a1a]/10'
-        }`}>
-          <p className={`${typography.statLabel} mb-1`}>Delta</p>
-          <p className={`${typography.statValue} ${
-            product.delta === null
-              ? 'text-[#74777f]'
-              : product.delta >= 0
-                ? 'text-[#006a68]'
-                : 'text-[#ba1a1a]'
-          }`}>
-            {product.delta !== null ? formatCurrency(product.delta) : '—'}
-          </p>
-        </div>
-      </div>
-    )}
-
-    <div className={`grid gap-3 ${mode === 'edit' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-      <div>
-        <label className={`block ${colors.form.label} mb-1.5`}>
-          Amount Paid ($) {paidRequired && <span className="text-[#ba1a1a]">*</span>}
-        </label>
-        <input
-          type="number"
-          step="0.01"
-          value={product.paid ?? ''}
-          onChange={(e) => onPaidChange(e.target.value)}
-          className={`w-full px-3 py-2.5 ${colors.form.input.base} rounded-xl text-body`}
-          placeholder="0.00"
-          required={paidRequired}
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="min-w-0">
+        <label htmlFor="edit-amount-paid" className={formLabelClass}>Amount paid</label>
+        <ProductFormCurrencyInput
+          id="edit-amount-paid"
+          value={product.paid}
+          onChange={onPaidChange}
         />
       </div>
-      {mode === 'edit' && onReceivedChange && (
-        <div>
-          <label className={`block ${colors.form.label} mb-1.5`}>Amount Received ($)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={product.received ?? ''}
-            onChange={(e) => onReceivedChange(e.target.value)}
-            className={`w-full px-3 py-2.5 ${colors.form.input.base} rounded-xl text-body`}
-            placeholder="0.00"
-          />
+      <div className="min-w-0">
+        <label htmlFor="edit-amount-received" className={formLabelClass}>Amount received</label>
+        <ProductFormCurrencyInput
+          id="edit-amount-received"
+          value={product.received}
+          onChange={onReceivedChange}
+        />
+      </div>
+      <div className="min-w-0">
+        <p className={formLabelClass}>Delta</p>
+        <div
+          className={`${FORM_CONTROL_HEIGHT} flex items-center px-2 sm:px-3 rounded-xl bg-[#eae8e2]/50 border border-[rgba(196,198,207,0.35)] ${deltaDisplayClass(product.delta)}`}
+          aria-readonly="true"
+        >
+          {product.delta !== null ? formatCurrency(product.delta) : '—'}
         </div>
-      )}
+      </div>
     </div>
 
-    {mode === 'edit' && product.delta !== null && onResetDelta && (
+    {product.delta !== null && onResetDelta && (
       <button
         type="button"
         onClick={onResetDelta}
-        className="text-caption text-[#74777f] hover:text-[#1b1c19] underline transition-colors"
+        className={`${typography.caption} text-[#74777f] hover:text-[#1b1c19] underline transition-colors`}
       >
         Reset delta to null
       </button>
-    )}
-
-    {mode === 'add' && onReviewMediaTypeChange && (
-      <ReviewMediaTypeSelector
-        value={product.reviewMediaType}
-        onChange={onReviewMediaTypeChange}
-      />
     )}
   </div>
 );
