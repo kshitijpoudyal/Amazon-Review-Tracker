@@ -1,4 +1,6 @@
 export type Retailer = 'amazon' | 'walmart' | 'wayfair';
+export type ReviewMediaType = 'text' | 'photo' | 'video';
+export const DEFAULT_REVIEW_MEDIA_TYPE: ReviewMediaType = 'text';
 
 export interface Vendor {
   id: string;
@@ -20,6 +22,7 @@ export interface Product {
   reviewAdded: boolean;
   reviewLive: boolean;
   reviewSSSent: boolean;
+  reviewMediaType?: ReviewMediaType;
   paid: number | null;
   received: number | null;
   delta: number | null;

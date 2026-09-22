@@ -8,7 +8,7 @@ import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/T
 import { colors, getFinancialColor } from '../../utils/colors';
 import { useVendors } from '../../hooks/useVendors';
 import { formatCurrency } from '../../utils/currency';
-import { ProductThumbnail } from '../common';
+import { ProductThumbnail, ReviewMediaBadge } from '../common';
 
 interface ProductTableProps {
   products: Product[];
@@ -354,10 +354,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
           </div>
         ),
         status: (
-          <div className='flex flex-col items-center'>
+          <div className='flex flex-col items-center gap-1'>
             <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${colors.status[status.type].bg} ${colors.status[status.type].text} ${colors.status[status.type].border}`}>
               {status.label}
             </span>
+            <ReviewMediaBadge
+              reviewMediaType={product.reviewMediaType}
+              show={status.type === 'add-review'}
+            />
           </div>
         ),
         paid: (
@@ -439,9 +443,15 @@ const ProductTable: React.FC<ProductTableProps> = ({
       <div className="space-y-3">
         {/* Status + Date */}
         <div className="flex items-center justify-between">
-          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
-            {status.label}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${status.color}`}>
+              {status.label}
+            </span>
+            <ReviewMediaBadge
+              reviewMediaType={product.reviewMediaType}
+              show={status.type === 'add-review'}
+            />
+          </div>
           <span className={`text-xs ${colors.text.muted}`}>{formatDate(product.orderDate) || '—'}</span>
         </div>
 

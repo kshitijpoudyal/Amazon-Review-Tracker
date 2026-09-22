@@ -11,5 +11,7 @@ export type { ModalProps } from './Modal';
 export { Button } from './Button';
 export type { ButtonVariant, ButtonSize } from './Button';
 export { default as ProductThumbnail } from './ProductThumbnail';
+export { ReviewMediaBadge } from './ReviewMediaBadge';
+export { ReviewMediaTypeSelector } from './ReviewMediaTypeSelector';
 export { ToastProvider, useToast } from './Toast';
 export { PullToRefresh } from './PullToRefresh';
