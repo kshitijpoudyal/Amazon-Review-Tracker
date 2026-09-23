@@ -185,7 +185,11 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     let options: ProductLinkOptions | undefined;
-    if (tempSelectedIds.length === 1 && completeWorkflow) {
+    if (
+      tempSelectedIds.length === 1 &&
+      completeWorkflow &&
+      !selectedProducts[0]?.isVoid
+    ) {
       options = { completeWorkflow: true };
     } else if (tempSelectedIds.length >= 2 && splitEnabled) {
       const parsed = parseSplitAmountInputs(tempSelectedIds, splitAmounts);
@@ -681,7 +685,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
         </div>
       )}
 
-      {tempSelectedIds.length === 1 && !isAlreadyLinked && (
+      {tempSelectedIds.length === 1 && !isAlreadyLinked && !selectedProducts[0]?.isVoid && (
         <label className="flex items-start gap-2.5 px-1 cursor-pointer">
           <input
             type="checkbox"

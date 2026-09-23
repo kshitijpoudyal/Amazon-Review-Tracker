@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useGenericFilters } from '../hooks/useGenericFilters';
 import { useDashboardState } from '../hooks/useDashboardState';
@@ -7,6 +7,7 @@ import { useProductCrudFirebase } from '../hooks/useProductCrudFirebase';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { PayPalTransactionTable } from '../components/PaypalDashboard/PayPalTransactionTable';
 import { AddPayPalTransactionForm } from '../components/PaypalDashboard/AddPayPalTransactionForm';
+import { EditPayPalTransactionModal } from '../components/PaypalDashboard/EditPayPalTransactionModal';
 import {
   DashboardLayout,
   DashboardStats,
@@ -79,9 +80,12 @@ export const PayPalPage: React.FC = () => {
     importTransactions,
     addTransaction,
     deleteTransaction,
+    updateTransaction,
     updateProductLink,
     refetch
   } = usePayPalTransactions(user?.uid);
+
+  const [editingTransaction, setEditingTransaction] = useState<PayPalTransaction | null>(null);
 
   // Fetch products for mapping
   const { data: productData, loading: productsLoading } = useProductCrudFirebase(user?.uid);
@@ -183,6 +187,15 @@ export const PayPalPage: React.FC = () => {
     return success;
   };
 
+  const handleSaveTransaction = async (docId: string, transaction: PayPalTransaction) => {
+    const success = await updateTransaction(docId, transaction);
+    if (success) {
+      await refetch();
+      showToast('Transaction updated');
+    }
+    return success;
+  };
+
   // Calculate unlinked transactions from filtered data
   const unlinkedTransactionsCount = filteredTransactions.filter(
     transaction => !transaction.linkedProductIds || transaction.linkedProductIds.length === 0
@@ -267,6 +280,7 @@ export const PayPalPage: React.FC = () => {
           loading={displayLoading}
           productsLoading={displayProductsLoading}
           onDeleteTransaction={handleDeleteTransaction}
+          onEditTransaction={setEditingTransaction}
           onUpdateProductLink={handleUpdateProductLink}
         />
       </DashboardSection>
@@ -277,6 +291,14 @@ export const PayPalPage: React.FC = () => {
         onAddTransaction={handleAddTransaction}
         onImportTransactions={handleImport}
         onCancel={handleHideAddForm}
+      />
+
+      <EditPayPalTransactionModal
+        transaction={editingTransaction}
+        isOpen={!!editingTransaction}
+        onSave={handleSaveTransaction}
+        onClose={() => setEditingTransaction(null)}
+        isLoading={displayLoading}
       />
     </DashboardLayout>
     </PullToRefresh>

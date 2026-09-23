@@ -255,6 +255,16 @@ export const usePayPalTransactions = (userId?: string) => {
       
       if (productSnap.exists()) {
         const productData = productSnap.data();
+        const paid = productData.paid || 0;
+
+        if (productData.isVoid) {
+          await updateDoc(productRef, {
+            received: 0,
+            delta: paid !== 0 ? -paid : null,
+            updatedAt: serverTimestamp(),
+          });
+          return;
+        }
 
         if (linkedTransactions.length === 0) {
           await updateDoc(productRef, {
@@ -265,7 +275,6 @@ export const usePayPalTransactions = (userId?: string) => {
             updatedAt: serverTimestamp()
           });
         } else {
-          const paid = productData.paid || 0;
           const totalReceived = linkedTransactions.reduce((sum, transaction) => {
             return sum + getPayPalProductShare(transaction, productId);
           }, 0);
@@ -283,7 +292,7 @@ export const usePayPalTransactions = (userId?: string) => {
             updatedAt: serverTimestamp(),
           };
 
-          if (options?.completeWorkflow) {
+          if (options?.completeWorkflow && !productData.isVoid) {
             updates.orderPlaced = true;
             updates.orderDelivered = true;
             updates.reviewAdded = true;
@@ -296,6 +305,65 @@ export const usePayPalTransactions = (userId?: string) => {
       }
     } catch (err) {
       console.error('Error updating product received amount:', err);
+    }
+  };
+
+  const updateTransactionInFirebase = async (
+    docId: string,
+    transaction: PayPalTransaction
+  ): Promise<boolean> => {
+    if (!userId) return false;
+
+    try {
+      if (transaction.type === 'User Initiated Withdrawal') {
+        return false;
+      }
+
+      const existingQuery = query(
+        collection(db, 'users', userId, 'paypal_transactions'),
+        where('transactionId', '==', transaction.transactionId)
+      );
+      const existingSnap = await getDocs(existingQuery);
+      if (existingSnap.docs.some((d) => d.id !== docId)) {
+        setError('A transaction with this Transaction ID already exists');
+        return false;
+      }
+
+      const transactionRef = doc(db, 'users', userId, 'paypal_transactions', docId);
+      const currentSnap = await getDoc(transactionRef);
+      if (!currentSnap.exists()) return false;
+
+      const current = currentSnap.data() as PayPalTransaction;
+      const linkedProductIds = current.linkedProductIds || [];
+
+      await updateDoc(transactionRef, {
+        date: transaction.date,
+        time: transaction.time,
+        timeZone: transaction.timeZone,
+        name: transaction.name,
+        type: transaction.type,
+        currency: transaction.currency,
+        amount: transaction.amount,
+        fees: transaction.fees,
+        total: transaction.total,
+        transactionId: transaction.transactionId,
+        itemTitle: transaction.itemTitle || null,
+        receiptId: transaction.receiptId || null,
+        exchangeRate: transaction.exchangeRate || null,
+        updatedAt: serverTimestamp(),
+      });
+
+      await fetchTransactions();
+
+      for (const productId of linkedProductIds) {
+        await updateProductReceivedAmount(productId);
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Error updating PayPal transaction:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update transaction');
+      return false;
     }
   };
 
@@ -324,6 +392,7 @@ export const usePayPalTransactions = (userId?: string) => {
     refetch: fetchTransactions,
     addTransaction: addTransactionToFirebase,
     importTransactions: importTransactionsFromCSV,
+    updateTransaction: updateTransactionInFirebase,
     deleteTransaction: deleteTransactionFromFirebase,
     updateProductLink: updateTransactionProductLink
   };

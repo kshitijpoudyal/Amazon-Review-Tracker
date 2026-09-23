@@ -121,8 +121,19 @@ export const getProductStatus = (product: Product) => {
 };
 
 export const isVoid = (product: Product): boolean => {
-  return getProductStatusType(product) === 'void';
+  return product.isVoid === true;
 };
+
+/** Apply void state: zero out received and recalculate delta. Persists via existing product fields. */
+export function applyProductVoid(product: Product): Product {
+  const paid = product.paid ?? null;
+  return {
+    ...product,
+    isVoid: true,
+    received: 0,
+    delta: paid !== null ? 0 - paid : null,
+  };
+}
 
 export const isComplete = (product: Product): boolean => {
   return getProductStatusType(product) === 'complete';

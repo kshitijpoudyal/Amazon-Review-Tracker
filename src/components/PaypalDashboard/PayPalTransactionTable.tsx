@@ -19,6 +19,7 @@ interface PayPalTransactionTableProps {
   loading?: boolean;
   productsLoading?: boolean;
   onUpdateProductLink?: (transactionId: string, productIds: string[], options?: ProductLinkOptions) => Promise<boolean>;
+  onEditTransaction?: (transaction: PayPalTransaction) => void;
   onDeleteTransaction?: (transactionId: string) => Promise<boolean>;
 }
 
@@ -73,6 +74,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
   products = [],
   loading = false,
   onDeleteTransaction,
+  onEditTransaction,
   onUpdateProductLink
 }) => {
 
@@ -199,7 +201,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
       width: 'w-80 lg:w-[24rem]',
       className: 'min-w-0 pl-3 lg:pl-4',
     },
-    ...(onDeleteTransaction || onUpdateProductLink ? [{
+    ...(onDeleteTransaction || onUpdateProductLink || onEditTransaction ? [{
       key: 'actions',
       label: 'Actions',
       align: 'center' as const,
@@ -301,6 +303,15 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
       },
       actions: (() => {
         const rowActions = [
+          ...(onEditTransaction ? [{
+            label: 'Edit transaction',
+            icon: (
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.828 2.828 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            ),
+            onClick: () => onEditTransaction(transaction),
+          }] : []),
           ...(onUpdateProductLink && isLinked ? [{
             label: 'Edit link',
             icon: (
@@ -397,7 +408,7 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
             </span>
           )}
 
-          {(onDeleteTransaction || (onUpdateProductLink && isLinked)) && (
+          {(onDeleteTransaction || onEditTransaction || (onUpdateProductLink && isLinked)) && (
             <div className="relative dropdown-container flex-shrink-0">
               <button
                 onClick={() => setShowDropdown(showDropdown === index ? null : index)}
@@ -410,6 +421,17 @@ export const PayPalTransactionTable: React.FC<PayPalTransactionTableProps> = ({
               </button>
               {showDropdown === index && (
                 <div className="absolute right-0 top-full mt-2 bg-[#fbf9f3] border border-[rgba(196,198,207,0.15)] rounded-2xl shadow-[0_12px_32px_rgba(2,36,72,0.10)] z-50 min-w-[160px] py-2">
+                  {onEditTransaction && (
+                    <button
+                      onClick={() => {
+                        onEditTransaction(transaction);
+                        setShowDropdown(null);
+                      }}
+                      className="block w-full text-left px-4 py-2.5 text-sm text-[#1b1c19] hover:bg-[#eae8e2] transition-colors"
+                    >
+                      Edit transaction
+                    </button>
+                  )}
                   {onUpdateProductLink && isLinked && (
                     <button
                       onClick={() => {

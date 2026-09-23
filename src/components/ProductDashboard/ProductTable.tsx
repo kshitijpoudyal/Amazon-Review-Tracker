@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Product } from '../../types/Product';
 import EditProductModal from './EditProductModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
-import { getProductStatus } from '../../utils/productStatus';
+import { applyProductVoid, getProductStatus } from '../../utils/productStatus';
 import { getBadgeClasses } from '../../utils/colors';
 import { useProductPayPalLinks, ProductPayPalLink } from '../../hooks/useProductPayPalLinks';
 import { TableView, TableColumn, TableRow, MobileCardContent } from '../common/TableView';
@@ -273,7 +273,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         {/* Mark as Void (only for non-void products) */}
         {!product.isVoid && (
           <button
-            onClick={() => handleStatusUpdate(product, () => ({ ...product, isVoid: true }))}
+            onClick={() => handleStatusUpdate(product, () => applyProductVoid(product))}
             className="block w-full text-left px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors"
           >
             Mark as Void
@@ -458,7 +458,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           ),
-          onClick: () => handleStatusUpdate(product, () => ({ ...product, isVoid: true })),
+          onClick: () => handleStatusUpdate(product, () => applyProductVoid(product)),
           className: 'text-amber-700 hover:bg-amber-50'
         }] : []),
         {
