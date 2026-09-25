@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Product, DEFAULT_REVIEW_MEDIA_TYPE, ReviewMediaType } from "../../types/Product";
 import { typography } from '../../utils/typography';
 import { Modal } from "../common";
 import { useVendors } from "../../hooks/useVendors";
-import { parseBookmarkletClipboard } from "../../utils/bookmarklet";
+import { BookmarkletPayload, parseBookmarkletClipboard, bookmarkletPayloadToProductFields } from "../../utils/bookmarklet";
 import {
   applyBookmarkletPayload,
   formatDateForInput,
@@ -19,9 +19,17 @@ interface AddProductFormProps {
   isOpen: boolean;
   onAdd: (product: Product) => void;
   onCancel: () => void;
+  externalImport?: { payload: BookmarkletPayload; productIndex?: number } | null;
+  onExternalImportApplied?: () => void;
 }
 
-const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel }) => {
+const AddProductForm: React.FC<AddProductFormProps> = ({
+  isOpen,
+  onAdd,
+  onCancel,
+  externalImport,
+  onExternalImportApplied,
+}) => {
   const { activeVendors, DEFAULT_VENDOR_ID } = useVendors();
   const [importStatus, setImportStatus] = useState<ImportStatus>('idle');
   const [showPasteBox, setShowPasteBox] = useState(false);
@@ -87,13 +95,20 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ isOpen, onAdd, onCancel
     }
   };
 
-  const applyPayload = (data: ReturnType<typeof parseBookmarkletClipboard>) => {
-    setNewProduct(prev => applyBookmarkletPayload(prev, data));
-    const isUrlOnly = !data.productName && !data.orderDate && !!data.orderNumber;
+  const applyPayload = (data: ReturnType<typeof parseBookmarkletClipboard>, productIndex = 0) => {
+    const fields = bookmarkletPayloadToProductFields(data, productIndex);
+    setNewProduct(prev => applyBookmarkletPayload(prev, { ...data, ...fields }));
+    const isUrlOnly = !fields.productName && !data.orderDate && !!data.orderNumber;
     setImportStatus(isUrlOnly ? 'url-only' : 'success');
     setShowPasteBox(false);
     setTimeout(() => setImportStatus('idle'), 4000);
   };
+
+  useEffect(() => {
+    if (!isOpen || !externalImport?.payload) return;
+    applyPayload(externalImport.payload, externalImport.productIndex ?? 0);
+    onExternalImportApplied?.();
+  }, [isOpen, externalImport, onExternalImportApplied]);
 
   const handleClipboardImport = async () => {
     try {

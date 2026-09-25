@@ -1,6 +1,9 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import ProductTable from '../components/ProductDashboard/ProductTable';
 import AddProductForm from '../components/ProductDashboard/AddProductForm';
+import RetailerImportPreviewModal from '../components/ProductDashboard/RetailerImportPreviewModal';
+import { usePendingRetailerImport } from '../hooks/usePendingRetailerImport';
+import { BookmarkletPayload } from '../utils/bookmarklet';
 import { useAuth } from '../hooks/useAuth';
 import { useProductFilters } from '../hooks/useProductFilters';
 import { useGenericFilters } from '../hooks/useGenericFilters';
@@ -49,6 +52,11 @@ const ProductPage: React.FC = () => {
 
   // Dashboard state management
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
+  const { pendingImport, showPreview, dismissImport } = usePendingRetailerImport(!!user);
+  const [externalImport, setExternalImport] = useState<{
+    payload: BookmarkletPayload;
+    productIndex: number;
+  } | null>(null);
 
   // Filter state management
   const {
@@ -107,8 +115,15 @@ const ProductPage: React.FC = () => {
   const handleAddProduct = useCallback((product: Product) => {
     addProduct(product);
     handleHideAddForm();
+    setExternalImport(null);
     showToast('Product added');
   }, [addProduct, handleHideAddForm, showToast]);
+
+  const handleConfirmRetailerImport = useCallback((payload: BookmarkletPayload, productIndex: number) => {
+    dismissImport();
+    setExternalImport({ payload, productIndex });
+    handleShowAddForm();
+  }, [dismissImport, handleShowAddForm]);
 
   const handleUpdateProduct = useCallback((index: number, product: Product) => {
     updateProduct(index, product);
@@ -266,11 +281,23 @@ const ProductPage: React.FC = () => {
         />
       </DashboardSection>
 
+      <RetailerImportPreviewModal
+        isOpen={showPreview}
+        payload={pendingImport}
+        onConfirm={handleConfirmRetailerImport}
+        onDismiss={dismissImport}
+      />
+
       {/* Add Product Modal */}
       <AddProductForm
         isOpen={showAddForm}
         onAdd={handleAddProduct}
-        onCancel={handleHideAddForm}
+        onCancel={() => {
+          handleHideAddForm();
+          setExternalImport(null);
+        }}
+        externalImport={externalImport}
+        onExternalImportApplied={() => setExternalImport(null)}
       />
 
       {/* Mobile FAB — floating Add Product button */}

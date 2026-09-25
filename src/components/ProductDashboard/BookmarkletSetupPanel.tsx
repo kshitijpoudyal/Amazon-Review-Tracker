@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { typography } from '../../utils/typography';
 import { colors } from '../../utils/colors';
 import {
-  BOOKMARKLET_HREF,
-  WAYFAIR_BOOKMARKLET_HREF,
-  WALMART_BOOKMARKLET_HREF,
+  buildAmazonBookmarkletHref,
+  buildWayfairBookmarkletHref,
+  buildWalmartBookmarkletHref,
 } from '../../utils/bookmarklet';
+import { getAppOrigin } from '../../utils/importHandoff';
 
 export const BookmarkletSetupPanel: React.FC = () => {
   const [expanded, setExpanded] = useState(false);
   const [bookmarkletCopied, setBookmarkletCopied] = useState(false);
   const [wayfairBookmarkletCopied, setWayfairBookmarkletCopied] = useState(false);
   const [walmartBookmarkletCopied, setWalmartBookmarkletCopied] = useState(false);
+
+  const appOrigin = getAppOrigin();
+  const bookmarklets = useMemo(() => ({
+    amazon: buildAmazonBookmarkletHref(appOrigin),
+    wayfair: buildWayfairBookmarkletHref(appOrigin),
+    walmart: buildWalmartBookmarkletHref(appOrigin),
+  }), [appOrigin]);
 
   const copyText = (text: string, setter: (v: boolean) => void) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -40,45 +48,50 @@ export const BookmarkletSetupPanel: React.FC = () => {
 
       {expanded && (
         <div className={`mt-3 text-xs ${colors.text.muted} space-y-3 pl-4 border-l-2 border-[rgba(196,198,207,0.3)]`}>
+          <p className="leading-relaxed">
+            Shortcuts extract order data and <strong>open this app automatically</strong> with an import preview.
+            Manual copy/paste remains as fallback if redirect fails.
+          </p>
+
           <div className="hidden sm:block">
-            <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>🖥️ Desktop — drag to bookmarks bar</p>
+            <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>Desktop — drag to bookmarks bar</p>
             <ol className="list-decimal list-inside space-y-1 leading-relaxed">
               <li>Show bookmarks bar (Ctrl/⌘+Shift+B)</li>
               <li>Drag a button below to your bookmarks bar</li>
-              <li>On the matching order page, click it → data copies → come back and click Import</li>
-              <li className="text-[#74777f]">Wayfair: open <strong>View/Edit Details</strong> for the item first</li>
+              <li>On the matching order page, click it → app opens with import preview</li>
+              <li className="text-[#74777f]">Wayfair: open <strong>View/Edit Details</strong> for the item first (multi-order lists)</li>
               <li className="text-[#74777f]">Walmart: open <strong>Purchase history → Order details</strong></li>
             </ol>
             <div className="flex flex-wrap gap-2 mt-2">
               <a
-                href={BOOKMARKLET_HREF}
+                href={bookmarklets.amazon}
                 draggable
                 onClick={e => e.preventDefault()}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${colors.border.default} ${colors.text.secondary} text-xs font-medium cursor-grab active:cursor-grabbing select-none`}
               >
-                📦 Copy Amazon Order
+                📦 Import Amazon Order
               </a>
               <a
-                href={WAYFAIR_BOOKMARKLET_HREF}
+                href={bookmarklets.wayfair}
                 draggable
                 onClick={e => e.preventDefault()}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#7b189f]/30 text-[#7b189f] text-xs font-medium cursor-grab active:cursor-grabbing select-none"
               >
-                🛋️ Copy Wayfair Order
+                🛋️ Import Wayfair Order
               </a>
               <a
-                href={WALMART_BOOKMARKLET_HREF}
+                href={bookmarklets.walmart}
                 draggable
                 onClick={e => e.preventDefault()}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#0071dc]/30 text-[#0071dc] text-xs font-medium cursor-grab active:cursor-grabbing select-none"
               >
-                🛒 Copy Walmart Order
+                🛒 Import Walmart Order
               </a>
             </div>
           </div>
 
           <div className={`sm:border-t sm:${colors.border.default} sm:pt-2`}>
-            <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>📱 Android & iPhone — one-time setup</p>
+            <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>Android & iPhone — one-time setup</p>
             <ol className="list-decimal list-inside space-y-1 leading-relaxed mb-2">
               <li>Bookmark any page in your browser (create one per retailer)</li>
               <li>Open Bookmarks → long-press it → Edit</li>
@@ -86,17 +99,21 @@ export const BookmarkletSetupPanel: React.FC = () => {
             </ol>
             <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>Each time you add a product:</p>
             <ol className="list-decimal list-inside space-y-1 leading-relaxed mb-2">
-              <li>Walmart: Purchase history → order details → tap bookmark</li>
-              <li>Wayfair: My Orders → tap <strong>View Details</strong> → tap bookmark</li>
-              <li>Amazon: open order → tap bookmark</li>
-              <li>Long-press the text box → Select All → Copy</li>
-              <li>Come back here → tap Import → paste in the box that appears</li>
+              <li>Open the retailer order details page</li>
+              <li>
+                <strong>Android Chrome:</strong> tap the address bar → type the bookmark name → select the shortcut
+              </li>
+              <li>
+                <strong>iPhone Safari:</strong> tap the share/bookmarks icon → run your saved shortcut
+              </li>
+              <li>The app opens with an import preview — confirm to add the product</li>
+              <li className="text-[#74777f]">If redirect fails, use Copy JSON in the fallback overlay → Import from Clipboard</li>
             </ol>
 
             {[
-              { label: 'Amazon bookmark URL:', href: BOOKMARKLET_HREF, copied: bookmarkletCopied, setCopied: setBookmarkletCopied, border: colors.border.default },
-              { label: 'Wayfair bookmark URL:', href: WAYFAIR_BOOKMARKLET_HREF, copied: wayfairBookmarkletCopied, setCopied: setWayfairBookmarkletCopied, border: 'border-[#7b189f]/30' },
-              { label: 'Walmart bookmark URL:', href: WALMART_BOOKMARKLET_HREF, copied: walmartBookmarkletCopied, setCopied: setWalmartBookmarkletCopied, border: 'border-[#0071dc]/30' },
+              { label: 'Amazon bookmark URL:', href: bookmarklets.amazon, copied: bookmarkletCopied, setCopied: setBookmarkletCopied, border: colors.border.default },
+              { label: 'Wayfair bookmark URL:', href: bookmarklets.wayfair, copied: wayfairBookmarkletCopied, setCopied: setWayfairBookmarkletCopied, border: 'border-[#7b189f]/30' },
+              { label: 'Walmart bookmark URL:', href: bookmarklets.walmart, copied: walmartBookmarkletCopied, setCopied: setWalmartBookmarkletCopied, border: 'border-[#0071dc]/30' },
             ].map(({ label, href, copied, setCopied, border }) => (
               <div key={label} className="relative mb-3 last:mb-0">
                 <p className={`mb-1 text-xs ${colors.text.secondary}`}>{label}</p>

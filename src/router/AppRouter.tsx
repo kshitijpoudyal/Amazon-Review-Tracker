@@ -7,6 +7,7 @@ import ProductPage from '../pages/ProductPage';
 import { PayPalPage } from '../pages/PayPalPage';
 import DashboardPage from '../pages/DashboardPage';
 import NotFoundPage from '../components/NotFoundPage';
+import ImportHashCapture from '../components/ImportHashCapture';
 
 // Protected Route wrapper component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -32,6 +33,8 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const AppRouter: React.FC = () => {
   return (
+    <>
+    <ImportHashCapture />
     <Routes>
       {/* Public Routes */}
       <Route 
@@ -62,6 +65,7 @@ const AppRouter: React.FC = () => {
       {/* 404 Route */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </>
   );
 };
 
