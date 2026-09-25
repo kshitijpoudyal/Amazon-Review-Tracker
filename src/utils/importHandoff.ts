@@ -10,9 +10,13 @@ export const PENDING_IMPORT_STORAGE_KEY = 'pendingRetailerImport';
 export const MAX_IMPORT_URL_LENGTH = 7500;
 
 export function getAppOrigin(): string {
+  // In the browser, always use the page you're on — bookmarklets are generated client-side.
+  // VITE_APP_ORIGIN is only a build-time fallback (e.g. if env was set to localhost during deploy).
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return window.location.origin;
+  }
   const fromEnv = import.meta.env.VITE_APP_ORIGIN as string | undefined;
   if (fromEnv?.trim()) return fromEnv.replace(/\/$/, '');
-  if (typeof window !== 'undefined') return window.location.origin;
   return '';
 }
 

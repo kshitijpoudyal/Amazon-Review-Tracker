@@ -52,6 +52,12 @@ export const BookmarkletSetupPanel: React.FC = () => {
             Shortcuts extract order data and <strong>open this app automatically</strong> with an import preview.
             Manual copy/paste remains as fallback if redirect fails.
           </p>
+          {appOrigin ? (
+            <p className={`text-xs ${colors.text.secondary} leading-relaxed`}>
+              Redirects to:{' '}
+              <strong className="break-all">{appOrigin.replace(/\/$/, '')}/products</strong>
+            </p>
+          ) : null}
 
           <div className="hidden sm:block">
             <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>Desktop — drag to bookmarks bar</p>
