@@ -14,8 +14,8 @@ interface AppHeaderProps {
 export default function AppHeader({ user, onLogout }: AppHeaderProps) {
     const location = useLocation();
     const navigation = [
-        { name: 'Products', href: '/' },
-        { name: 'PayPal', href: '/paypal' }
+        { name: 'Products', href: '/products' },
+        { name: 'PayPal', href: '/paypal' },
     ]
 
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -66,9 +66,8 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                     </span>
                     <div className="hidden md:flex md:gap-x-1">
                         {navigation.map((item) => {
-                            const isActive = item.href === '/' 
-                                ? location.pathname === '/' 
-                                : location.pathname.startsWith(item.href);
+                            const isActive = location.pathname === item.href ||
+                                location.pathname.startsWith(item.href);
                             return (
                                 <a
                                     key={item.name}
@@ -164,9 +163,8 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                         <div className={`-my-6 divide-y ${colors.header.mobile.divider}`}>
                             <div className="space-y-2 py-6">
                                 {navigation.map((item) => {
-                                    const isActive = item.href === '/' 
-                                ? location.pathname === '/' 
-                                : location.pathname.startsWith(item.href);
+                                    const isActive = location.pathname === item.href ||
+                                location.pathname.startsWith(item.href);
                                     return (
                                         <a
                                             key={item.name}

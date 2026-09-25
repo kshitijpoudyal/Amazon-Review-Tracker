@@ -43,8 +43,9 @@ const ProductPage: React.FC = () => {
   const { activeVendors } = useVendors();
   const { showToast } = useToast();
   
-  // Show admin utils when URL contains ?admin=true
-  const showAdminUtils = new URLSearchParams(window.location.search).get('admin') === 'true';
+  const urlParams = new URLSearchParams(window.location.search);
+  const showAdminUtils = urlParams.get('admin') === 'true';
+  const urlStatus = urlParams.get('status') ?? '';
 
   // Dashboard state management
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
@@ -57,7 +58,7 @@ const ProductPage: React.FC = () => {
   } = useGenericFilters({
     initialFilters: {
       searchTerm: '',
-      statusFilter: '',
+      statusFilter: urlStatus,
       deltaFilter: '',
       vendorFilter: ''
     }

@@ -5,6 +5,7 @@ import App from '../App';
 import LoginPage from '../pages/LoginPage';
 import ProductPage from '../pages/ProductPage';
 import { PayPalPage } from '../pages/PayPalPage';
+import DashboardPage from '../pages/DashboardPage';
 import NotFoundPage from '../components/NotFoundPage';
 
 // Protected Route wrapper component
@@ -53,6 +54,7 @@ const AppRouter: React.FC = () => {
       >
         {/* Nested routes within the App layout */}
         <Route index element={<Navigate to="/products" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="products" element={<ProductPage />} />
         <Route path="paypal" element={<PayPalPage />} />
       </Route>

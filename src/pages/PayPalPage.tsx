@@ -56,6 +56,8 @@ export const PayPalPage: React.FC = () => {
   const { showToast } = useToast();
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
 
+  const urlLinkFilter = new URLSearchParams(window.location.search).get('link') ?? '';
+
   // Filter state management
   const {
     updateFilter,
@@ -65,7 +67,7 @@ export const PayPalPage: React.FC = () => {
     initialFilters: {
       searchTerm: '',
       typeFilter: '',
-      linkFilter: ''
+      linkFilter: urlLinkFilter
     }
   });
 
