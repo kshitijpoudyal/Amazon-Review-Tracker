@@ -74,7 +74,11 @@ function __rtHandoff(p,accent){
     return;
   }
   try{
-    location.assign(url);
+    var tab=window.open(url,'_blank','noopener,noreferrer');
+    if(!tab){
+      __rtShowOverlay(j,p,accent,'Popup blocked. Allow popups for this site, or copy the JSON below.');
+      return;
+    }
   }catch(e){
     __rtShowOverlay(j,p,accent,'Could not open the import page automatically.');
   }

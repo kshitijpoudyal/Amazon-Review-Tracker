@@ -169,6 +169,15 @@ function findOrderCardForProduct(hint){
   }
   return cards[0]||null;
 }
+function normalizeProductUrl(href){
+  if(!href)return '';
+  var pdp=href.match(/wayfair\\.com(\\/[^?#]*~[^/?#]+)/i);
+  if(pdp)return 'https://www.wayfair.com'+pdp[1];
+  var path=href.match(/(\\/pdp\\/[^?#]+)/i);
+  if(path)return 'https://www.wayfair.com'+path[1];
+  if(/wayfair\\.com/i.test(href))return href.split('?')[0].split('#')[0];
+  return href.split('?')[0].split('#')[0];
+}
 function extractProduct(scope){
   var productName='',productUrl='',imageUrl='',orderTotal=null,products=[];
   var blocks=[],seen=new Set();
@@ -198,7 +207,7 @@ function extractProduct(scope){
     for(var k=0;k<links.length;k++){
       var a=links[k],href=a.href||'';
       if(href.indexOf('wayfair.com')>-1&&(href.indexOf('/pdp/')>-1||href.indexOf('~')>-1||/view details/i.test(a.textContent))){
-        purl=href.split('?')[0];
+        purl=normalizeProductUrl(href);
         if(!pname&&a.textContent.trim().length>15)pname=a.textContent.trim().replace(/\\s+/g,' ');
         break;
       }
@@ -224,7 +233,7 @@ function extractProduct(scope){
       for(var u=0;u<6&&par;u++){if(SKIP.test(par.innerText||'')){par=null;break;}par=par.parentElement;}
       if(par===null)return;
       productName=lk.textContent.trim().replace(/\\s+/g,' ');
-      productUrl=lk.href.split('?')[0];
+      productUrl=normalizeProductUrl(lk.href||'');
       products=[{productName:productName,productUrl:productUrl,imageUrl:'',price:null}];
     });
   }
@@ -277,6 +286,14 @@ if(!drawer&&orderCount>1){
 /** Walmart order details — mobile-friendly data-testid selectors. */
 export const WALMART_EXTRACTOR_BODY = `
 var ACCENT='#0071dc';
+function normalizeProductUrl(href){
+  if(!href)return '';
+  var ip=href.match(/walmart\\.com(\\/ip\\/[^?#]+)/i);
+  if(ip)return 'https://www.walmart.com'+ip[1];
+  var path=href.match(/(\\/ip\\/[^?#]+)/i);
+  if(path)return 'https://www.walmart.com'+path[1];
+  return href.split('?')[0].split('#')[0];
+}
 function parseNextData(){
   var el=document.getElementById('__NEXT_DATA__');
   if(!el||!el.textContent)return null;
@@ -346,7 +363,7 @@ function extractProductsFromDom(){
       var nameEl=tile.querySelector('[data-testid="productName"]');
       var pn=nameEl?(nameEl.textContent||'').trim().replace(/\\s+/g,' '):'';
       var linkEl=tile.querySelector('a[href*="/ip/"]');
-      var pu=linkEl?linkEl.href.split('?')[0]:'';
+      var pu=linkEl?normalizeProductUrl(linkEl.href||''):'';
       if(!pn&&linkEl){var aria=linkEl.getAttribute('aria-label');if(aria&&aria.trim().length>10)pn=aria.trim();}
       var img=tile.querySelector('img[data-testid="productTileImage"],img[src*="walmartimages"]');
       var iu=img&&isProductImage(img.src)?img.src:'';
@@ -357,7 +374,7 @@ function extractProductsFromDom(){
     var nameEl=orderCard.querySelector('[data-testid="productName"]');
     var pn=nameEl?(nameEl.textContent||'').trim().replace(/\\s+/g,' '):'';
     var linkEl=orderCard.querySelector('[data-testid="itemtile-stack"] a[href*="/ip/"],a[href*="/ip/"]');
-    var pu=linkEl?linkEl.href.split('?')[0]:'';
+    var pu=linkEl?normalizeProductUrl(linkEl.href||''):'';
     var tileImg=orderCard.querySelector('img[data-testid="productTileImage"]');
     var iu=tileImg&&tileImg.src&&isProductImage(tileImg.src)?tileImg.src:'';
     if(!iu){
