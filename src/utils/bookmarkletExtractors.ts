@@ -7,10 +7,21 @@ var oe=document.querySelector('[data-component="orderId"] span');
 var on=oe?oe.textContent.trim():'';
 if(!on){var hm=location.href.match(/orderID=(\\d{3}-\\d{7}-\\d{7})/);if(hm)on=hm[1];}
 if(!on){var bm=document.body.innerText.match(/\\b(\\d{3}-\\d{7}-\\d{7})\\b/);if(bm)on=bm[1];}
+function extractOrderTotal(){
+  var patterns=[/Grand Total[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/Order total[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/Order Total[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i];
+  function fromText(text){
+    if(!text)return null;
+    for(var i=0;i<patterns.length;i++){var m=text.match(patterns[i]);if(m)return parseFloat(m[1].replace(/,/g,''));}
+    return null;
+  }
+  var totalEl=document.querySelector('[data-component="grandTotal"] span,[data-component="orderTotal"] span,[data-component="totalPrice"] span');
+  if(totalEl){var dm=(totalEl.textContent||'').match(/([\\d,]+\\.\\d{2})/);if(dm)return parseFloat(dm[1].replace(/,/g,''));}
+  var summary=document.querySelector('[data-component="chargeSummary"],[data-component="orderSummary"],[data-component="orderInfo"]');
+  if(summary){var st=fromText(summary.innerText||'');if(st!=null)return st;}
+  return fromText(document.body.innerText||'');
+}
+var ot=extractOrderTotal();
 var scope=document.querySelector('[data-component="orderCard"]')||document.querySelector('.order-card')||document;
-var scopeText=scope.innerText||document.body.innerText;
-var tm=scopeText.match(/Grand Total[:\\s]+\\$?([\\d,]+\\.\\d{2})/i);
-var ot=tm?parseFloat(tm[1].replace(/,/g,'')):null;
 var products=[];
 var titleLinks=scope.querySelectorAll('[data-component="itemTitle"] a, .yohtmlc-item a[href*="/dp/"]');
 for(var i=0;i<titleLinks.length;i++){
