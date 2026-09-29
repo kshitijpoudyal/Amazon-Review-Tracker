@@ -11,6 +11,7 @@ export const useDataSource = (userId: string | undefined) => {
       error: privateData.error,
       updateProduct: privateData.updateProduct,
       addProduct: privateData.addProduct,
+      importProductsFromCSV: privateData.importProductsFromCSV,
       deleteProduct: privateData.deleteProduct,
       refetch: privateData.refreshFromFirebase,
       userProfile: null,

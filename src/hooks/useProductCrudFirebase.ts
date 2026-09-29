@@ -13,6 +13,7 @@ export const useProductCrudFirebase = (userId?: string) => {
     addProduct: addToFirebase,
     deleteProduct: deleteFromFirebase,
     updateSummary: updateSummaryFirebase,
+    importProductsFromCSV: importToFirebase,
     mutateLocal,
     refetch
   } = useFirebaseData(userId);
@@ -107,6 +108,19 @@ export const useProductCrudFirebase = (userId?: string) => {
     }
   }, [addToFirebase, refetch]);
 
+  const importProductsFromCSV = useCallback(async (products: Product[]) => {
+    setIsSaving(true);
+    try {
+      const result = await importToFirebase(products);
+      if (result.added > 0) {
+        await refetch();
+      }
+      return result;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [importToFirebase, refetch]);
+
   const deleteProduct = useCallback(async (productId: string): Promise<boolean> => {
     // Instant optimistic removal
     mutateLocal(products => products.filter(p => p.id !== productId));
@@ -135,6 +149,7 @@ export const useProductCrudFirebase = (userId?: string) => {
     error,
     updateProduct,
     addProduct,
+    importProductsFromCSV,
     deleteProduct,
     resetToOriginal: resetToFirebase,
     saveToFirebase: () => Promise.resolve(true), // No longer needed since we save directly

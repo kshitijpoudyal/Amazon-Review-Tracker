@@ -17,6 +17,8 @@ import { usePayPalTransactions } from '../hooks/usePayPalTransactions';
 import { StatusFilter, DeltaFilter, VendorFilter, Product } from '../types/Product';
 import { VendorAdminUtils } from '../components/VendorAdminUtils';
 import NextActionsStrip from '../components/ProductDashboard/NextActionsStrip';
+import GettingStartedPanel from '../components/ProductDashboard/GettingStartedPanel';
+import { ParsedProductImport } from '../utils/productCSVParser';
 import {
   DashboardContainer,
   DashboardStats,
@@ -85,6 +87,7 @@ const ProductPage: React.FC = () => {
     error,
     updateProduct,
     addProduct,
+    importProductsFromCSV,
     deleteProduct,
     refetch,
   } = useDataSource(user?.uid);
@@ -134,6 +137,17 @@ const ProductPage: React.FC = () => {
     deleteProduct(productId);
     showToast('Product deleted', 'error');
   }, [deleteProduct, showToast]);
+
+  const handleImportProducts = useCallback(async (products: ParsedProductImport[]) => {
+    const result = await importProductsFromCSV(products as Product[]);
+    if (result.added > 0) {
+      showToast(`Imported ${result.added} product${result.added === 1 ? '' : 's'}`);
+    }
+    return result;
+  }, [importProductsFromCSV, showToast]);
+
+  const totalProductCount = data?.products.length ?? 0;
+  const showGettingStarted = !displayLoading && totalProductCount === 0;
 
   // Configure filter controls
   const filterConfigs: FilterControlConfig[] = [
@@ -269,6 +283,12 @@ const ProductPage: React.FC = () => {
         loading={displayLoading}
       />
 
+      {showGettingStarted && (
+        <GettingStartedPanel
+          onImportProducts={handleImportProducts}
+        />
+      )}
+
       {/* Product Table */}
       <DashboardSection>
         <ProductTable
@@ -278,6 +298,7 @@ const ProductPage: React.FC = () => {
           onClearFilters={clearAllFilters}
           loading={displayLoading}
           userId={user?.uid}
+          hasAnyProducts={totalProductCount > 0}
         />
       </DashboardSection>
 

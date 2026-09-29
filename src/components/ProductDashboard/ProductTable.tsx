@@ -21,6 +21,7 @@ interface ProductTableProps {
   readOnly?: boolean;
   loading?: boolean;
   userId?: string;
+  hasAnyProducts?: boolean;
 }
 
 const ITEM_NAME_CLASSES =
@@ -34,6 +35,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
   readOnly = false,
   loading = false,
   userId,
+  hasAnyProducts = true,
 }) => {
   const [showDropdown, setShowDropdown] = useState<string | number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -589,7 +591,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
         columns={columns}
         rows={rows}
         mobileCards={mobileCards}
-        emptyMessage="No products found matching your criteria."
+        emptyMessage={
+          hasAnyProducts
+            ? 'No products found matching your criteria.'
+            : 'No products yet. Use Getting Started above to import your list or add your first product.'
+        }
         onClearFilters={onClearFilters}
         activeDropdown={showDropdown}
         loading={loading}

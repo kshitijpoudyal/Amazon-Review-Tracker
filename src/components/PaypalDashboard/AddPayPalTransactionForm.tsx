@@ -10,6 +10,7 @@ interface AddPayPalTransactionFormProps {
   onImportTransactions?: (transactions: PayPalTransaction[]) => Promise<{ added: number; skipped: number; withdrawalSkipped?: number }>;
   onCancel: () => void;
   isLoading?: boolean;
+  hasTransactions?: boolean;
 }
 
 export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> = ({
@@ -17,7 +18,8 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
   onAddTransaction,
   onImportTransactions,
   onCancel,
-  isLoading = false
+  isLoading = false,
+  hasTransactions = true,
 }) => {
   const [activeTab, setActiveTab] = useState<'manual' | 'import'>('import');
   const [formData, setFormData] = useState({
@@ -319,6 +321,7 @@ export const AddPayPalTransactionForm: React.FC<AddPayPalTransactionFormProps> =
           <div className="space-y-4">
             <PayPalCSVImporter
               onImportComplete={handleImportComplete}
+              showExportHint={!hasTransactions}
             />
           </div>
         )

@@ -293,6 +293,7 @@ export const PayPalPage: React.FC = () => {
         onAddTransaction={handleAddTransaction}
         onImportTransactions={handleImport}
         onCancel={handleHideAddForm}
+        hasTransactions={(data?.transactions.length ?? 0) > 0}
       />
 
       <EditPayPalTransactionModal

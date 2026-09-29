@@ -199,6 +199,28 @@ export const useFirebaseData = (userId?: string) => {
     }
   };
 
+  const importProductsFromCSV = async (products: Product[]): Promise<{ added: number; skipped: number }> => {
+    if (!userId) return { added: 0, skipped: products.length };
+
+    let added = 0;
+    let skipped = 0;
+
+    for (const product of products) {
+      const success = await addProductToFirebase(product);
+      if (success) {
+        added++;
+      } else {
+        skipped++;
+      }
+    }
+
+    if (added > 0) {
+      await fetchData();
+    }
+
+    return { added, skipped };
+  };
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -212,6 +234,7 @@ export const useFirebaseData = (userId?: string) => {
     saveProduct: saveProductToFirebase,
     addProduct: addProductToFirebase,
     deleteProduct: deleteProductFromFirebase,
-    updateSummary: updateSummaryInFirebase
+    updateSummary: updateSummaryInFirebase,
+    importProductsFromCSV,
   };
 };

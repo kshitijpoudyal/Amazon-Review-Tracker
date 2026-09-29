@@ -5,11 +5,13 @@ import { PayPalTransaction } from '../../types/PayPalTransaction';
 interface PayPalCSVImporterProps {
   onImportComplete: (transactions: PayPalTransaction[]) => Promise<{ added: number; skipped: number; withdrawalSkipped?: number }>;
   isLoading?: boolean;
+  showExportHint?: boolean;
 }
 
 export const PayPalCSVImporter: React.FC<PayPalCSVImporterProps> = ({
   onImportComplete,
-  isLoading = false
+  isLoading = false,
+  showExportHint = false,
 }) => {
   const [dragOver, setDragOver] = useState(false);
   const [importStatus, setImportStatus] = useState<{
@@ -143,6 +145,11 @@ export const PayPalCSVImporter: React.FC<PayPalCSVImporterProps> = ({
 
   return (
     <div className="space-y-4">
+      {showExportHint && (
+        <p className="text-sm text-gray-600">
+          Download from PayPal: <strong>Activity → Statements → Activity download → CSV</strong>
+        </p>
+      )}
       {/* File Drop Zone */}
       <div
         className={`
