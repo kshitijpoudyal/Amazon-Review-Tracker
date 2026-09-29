@@ -273,7 +273,7 @@ function extractTotalPrice(scope){
 function extractOrderTax(scope){
   if(!scope)return null;
   var text=scope===document?document.body.innerText:scope.innerText;
-  var patterns=[/Estimated tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/Sales tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/(?:^|\\n)\\s*Tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/im];
+  var patterns=[/Estimated tax(?:es)?[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/Sales tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/(?:^|\\n)\\s*Tax(?:es)?[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/im];
   for(var i=0;i<patterns.length;i++){
     var m=text.match(patterns[i]);
     if(m)return parseFloat(m[1].replace(/,/g,''));
@@ -341,9 +341,11 @@ function extractOrderMetaFromNextData(data){
     var total=node.orderTotal||node.grandTotal||node.total;
     if(typeof total==='number'&&total>0)result.orderTotal=total;
     if(total&&typeof total==='object'){if(typeof total.value==='number')result.orderTotal=total.value;if(typeof total.displayValue==='string'){var tm=total.displayValue.match(/([\\d,]+\\.\\d{2})/);if(tm)result.orderTotal=parseFloat(tm[1].replace(/,/g,''));}}
-    var tax=node.tax||node.salesTax||node.estimatedTax||node.orderTax;
+    var tax=node.tax||node.salesTax||node.estimatedTax||node.orderTax||node.taxTotal||node.estimatedTaxes;
     if(typeof tax==='number'&&tax>0)result.tax=tax;
-    if(tax&&typeof tax==='object'){if(typeof tax.value==='number')result.tax=tax.value;if(typeof tax.displayValue==='string'){var txm=tax.displayValue.match(/([\\d,]+\\.\\d{2})/);if(txm)result.tax=parseFloat(txm[1].replace(/,/g,''));}}
+    if(tax&&typeof tax==='object'){if(typeof tax.value==='number')result.tax=tax.value;if(typeof tax.amount==='number')result.tax=tax.amount;if(typeof tax.displayValue==='string'){var txm=tax.displayValue.match(/([\\d,]+\\.\\d{2})/);if(txm)result.tax=parseFloat(txm[1].replace(/,/g,''));}}
+    var taxAmount=node.taxAmount;
+    if(taxAmount&&typeof taxAmount==='object'&&typeof taxAmount.amount==='number'&&taxAmount.amount>0)result.tax=taxAmount.amount;
     return false;
   },0);
   return result;
@@ -357,7 +359,7 @@ function extractOrderMetaFromDom(){
   if(idEl){var im=(idEl.textContent||'').match(/(\\d{7}-\\d{8})/);if(im)orderNumber=im[1];}
   var totalEl=root.querySelector('.bill-order-total-payment,[data-testid="orderTotal"]');
   if(totalEl){var tm=(totalEl.textContent||'').match(/\\$([\\d,]+\\.\\d{2})/);if(tm)orderTotal=parseFloat(tm[1].replace(/,/g,''));}
-  var taxEl=root.querySelector('[data-testid="orderTax"],[data-automation-id="order-tax"]');
+  var taxEl=root.querySelector('[data-testid="orderTax"],[data-automation-id="order-tax"],.bill-tax,[data-automation-id="tax-total"]');
   if(taxEl){var txm=(taxEl.textContent||'').match(/\\$([\\d,]+\\.\\d{2})/);if(txm)orderTax=parseFloat(txm[1].replace(/,/g,''));}
   return {orderDate:orderDate,orderNumber:orderNumber,orderTotal:orderTotal,tax:orderTax};
 }
@@ -371,8 +373,8 @@ function extractFromText(text){
   if(!orderNumber){var um=location.href.match(/order[=\\/](\\d{7}-\\d{8})/i);if(um)orderNumber=um[1];}
   var totals=[...text.matchAll(/(?:^|\\n)\\s*Total\\s*\\$?\\s*([\\d,]+\\.\\d{2})/gim)];
   if(totals.length){orderTotal=parseFloat(totals[totals.length-1][1].replace(/,/g,''));}
-  var taxm=text.match(/(?:^|\\n)\\s*Tax\\s*\\$?\\s*([\\d,]+\\.\\d{2})/im);
-  if(taxm){orderTax=parseFloat(taxm[1].replace(/,/g,''));}
+  var taxPatterns=[/(?:^|\\n)\\s*Tax(?:es)?\\s*\\$?\\s*([\\d,]+\\.\\d{2})/im,/(?:^|\\n)\\s*Estimated taxes\\s*\\$?\\s*([\\d,]+\\.\\d{2})/im];
+  for(var ti=0;ti<taxPatterns.length;ti++){var taxm=text.match(taxPatterns[ti]);if(taxm){orderTax=parseFloat(taxm[1].replace(/,/g,''));break;}}
   return {orderDate:orderDate,orderNumber:orderNumber,orderTotal:orderTotal,tax:orderTax};
 }
 function isProductImage(src){

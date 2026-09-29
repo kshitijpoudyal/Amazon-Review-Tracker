@@ -49,15 +49,16 @@ export const BookmarkletSetupPanel: React.FC = () => {
       {expanded && (
         <div className={`mt-3 text-xs ${colors.text.muted} space-y-3 pl-4 border-l-2 border-[rgba(196,198,207,0.3)]`}>
           <p className="leading-relaxed">
-            Shortcuts extract order data and <strong>open this app automatically</strong> with an import preview.
-            Order JSON is copied to your clipboard automatically when you run a bookmark.
+            Shortcuts extract order data (including tax), copy JSON to your clipboard, and{' '}
+            <strong>open this app with the Add Product form pre-filled</strong>.
+            No popup appears on the retailer page.
           </p>
           <div className="hidden sm:block">
             <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>Desktop — drag to bookmarks bar</p>
             <ol className="list-decimal list-inside space-y-1 leading-relaxed">
               <li>Show bookmarks bar (Ctrl/⌘+Shift+B)</li>
               <li>Drag a button below to your bookmarks bar</li>
-              <li>On the matching order page, click it → app opens with import preview</li>
+              <li>On the matching order page, click it → app opens with Add Product form</li>
               <li className="text-[#74777f]">Wayfair: open <strong>View/Edit Details</strong> for the item first (multi-order lists)</li>
               <li className="text-[#74777f]">Walmart: open <strong>Purchase history → Order details</strong></li>
             </ol>
@@ -105,7 +106,8 @@ export const BookmarkletSetupPanel: React.FC = () => {
               <li>
                 <strong>iPhone Safari:</strong> tap the share/bookmarks icon → run your saved shortcut
               </li>
-              <li>The app opens with an import preview — confirm to add the product</li>
+              <li>The app opens with Add Product form pre-filled — review and save</li>
+              <li className="text-[#74777f]">Re-copy bookmark URLs below if you still see an old on-page popup</li>
               <li className="text-[#74777f]">If redirect fails, use Import from Clipboard in the app (JSON is copied automatically)</li>
             </ol>
 

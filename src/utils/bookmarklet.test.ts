@@ -12,11 +12,24 @@ describe('retailer bookmarklets', () => {
     ['amazon', buildAmazonBookmarkletHref],
     ['wayfair', buildWayfairBookmarkletHref],
     ['walmart', buildWalmartBookmarkletHref],
-  ])('%s embeds prod app origin and opens a new tab', (_retailer, buildHref) => {
+  ])('%s copies JSON, redirects to app, and skips on-page overlay', (_retailer, buildHref) => {
     const href = buildHref(PROD_ORIGIN);
     expect(href.startsWith('javascript:')).toBe(true);
     expect(href).toContain(PROD_ORIGIN);
     expect(href).toContain('/products#import=');
+    expect(href).toContain('__rtCopyJson');
+    expect(href).toContain('__rtHandoff');
     expect(href).toContain("window.open(url,'_blank'");
+    expect(href).not.toContain('__rtShowOverlay');
+  });
+
+  it.each([
+    ['amazon', buildAmazonBookmarkletHref, 'extractOrderTax'],
+    ['wayfair', buildWayfairBookmarkletHref, 'extractOrderTax'],
+    ['walmart', buildWalmartBookmarkletHref, 'orderTax'],
+  ])('%s extracts tax into payload', (_retailer, buildHref, taxMarker) => {
+    const href = buildHref(PROD_ORIGIN);
+    expect(href).toContain(taxMarker);
+    expect(href).toContain('tax:');
   });
 });
