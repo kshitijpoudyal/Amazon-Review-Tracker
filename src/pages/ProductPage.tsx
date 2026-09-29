@@ -1,7 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ProductTable from '../components/ProductDashboard/ProductTable';
 import AddProductForm from '../components/ProductDashboard/AddProductForm';
-import RetailerImportPreviewModal from '../components/ProductDashboard/RetailerImportPreviewModal';
 import { usePendingRetailerImport } from '../hooks/usePendingRetailerImport';
 import { BookmarkletPayload } from '../utils/bookmarklet';
 import { useAuth } from '../hooks/useAuth';
@@ -54,11 +53,18 @@ const ProductPage: React.FC = () => {
 
   // Dashboard state management
   const { showAddForm, handleShowAddForm, handleHideAddForm } = useDashboardState();
-  const { pendingImport, showPreview, dismissImport } = usePendingRetailerImport(!!user);
+  const { pendingImport, dismissImport } = usePendingRetailerImport(!!user);
   const [externalImport, setExternalImport] = useState<{
     payload: BookmarkletPayload;
     productIndex: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (!pendingImport) return;
+    setExternalImport({ payload: pendingImport, productIndex: 0 });
+    handleShowAddForm();
+    dismissImport();
+  }, [pendingImport, handleShowAddForm, dismissImport]);
 
   // Filter state management
   const {
@@ -121,12 +127,6 @@ const ProductPage: React.FC = () => {
     setExternalImport(null);
     showToast('Product added');
   }, [addProduct, handleHideAddForm, showToast]);
-
-  const handleConfirmRetailerImport = useCallback((payload: BookmarkletPayload, productIndex: number) => {
-    dismissImport();
-    setExternalImport({ payload, productIndex });
-    handleShowAddForm();
-  }, [dismissImport, handleShowAddForm]);
 
   const handleUpdateProduct = useCallback((index: number, product: Product) => {
     updateProduct(index, product);
@@ -301,13 +301,6 @@ const ProductPage: React.FC = () => {
           hasAnyProducts={totalProductCount > 0}
         />
       </DashboardSection>
-
-      <RetailerImportPreviewModal
-        isOpen={showPreview}
-        payload={pendingImport}
-        onConfirm={handleConfirmRetailerImport}
-        onDismiss={dismissImport}
-      />
 
       {/* Add Product Modal */}
       <AddProductForm
