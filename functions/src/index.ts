@@ -803,7 +803,9 @@ export const gmailOAuthStart = onRequest(
 
         const url = gmailOAuthClient().generateAuthUrl({
             access_type: "offline",
-            prompt: "consent",
+            // "select_account" forces Google's account chooser instead of silently
+            // reusing whatever account is already signed into the device/browser.
+            prompt: "select_account consent",
             scope: ["https://www.googleapis.com/auth/gmail.readonly"],
             state: uid,
         });
