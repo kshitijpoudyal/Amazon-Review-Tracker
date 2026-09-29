@@ -85,7 +85,7 @@ export const PayPalPage: React.FC = () => {
     updateTransaction,
     updateProductLink,
     refetch
-  } = usePayPalTransactions(user?.uid);
+  } = usePayPalTransactions();
 
   const [editingTransaction, setEditingTransaction] = useState<PayPalTransaction | null>(null);
 
@@ -151,9 +151,10 @@ export const PayPalPage: React.FC = () => {
   };
 
   const handleAddTransaction = async (transaction: any) => {
+    // The PayPal context already updates its local state on success —
+    // no separate refetch needed.
     const success = await addTransaction(transaction);
     if (success) {
-      await refetch();
       handleHideAddForm();
       showToast('Transaction added');
     }
@@ -167,7 +168,6 @@ export const PayPalPage: React.FC = () => {
   ) => {
     const success = await updateProductLink(transactionId, productIds, options);
     if (success) {
-      await refetch();
       const finished = options?.completeWorkflow ? ' — marked complete' : '';
       const split =
         options?.customSplitAmounts || options?.splitPrice ? ' — amount split' : '';
@@ -183,7 +183,6 @@ export const PayPalPage: React.FC = () => {
   const handleDeleteTransaction = async (transactionId: string) => {
     const success = await deleteTransaction(transactionId);
     if (success) {
-      await refetch();
       showToast('Transaction deleted', 'error');
     }
     return success;
@@ -192,7 +191,6 @@ export const PayPalPage: React.FC = () => {
   const handleSaveTransaction = async (docId: string, transaction: PayPalTransaction) => {
     const success = await updateTransaction(docId, transaction);
     if (success) {
-      await refetch();
       showToast('Transaction updated');
     }
     return success;

@@ -47,7 +47,7 @@ export const DashboardPage: React.FC = () => {
     loading: paypalLoading,
     error: paypalError,
     refetch: refetchPayPal,
-  } = usePayPalTransactions(user?.uid);
+  } = usePayPalTransactions();
 
   const { vendors } = useVendors();
 

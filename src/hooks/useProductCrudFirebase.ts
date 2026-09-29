@@ -86,40 +86,30 @@ export const useProductCrudFirebase = (userId?: string) => {
   const addProduct = useCallback(async (newProduct: Product) => {
     setIsSaving(true);
     try {
-      console.log('🔄 Adding product:', newProduct.item);
-      
-      // Add directly to Firebase using the correct function
-      const success = await addToFirebase(newProduct);
-      console.log('✅ Product added to Firebase:', success);
-      
-      if (success) {
-        console.log('🔄 Refreshing data from Firebase...');
-        // Refresh data from Firebase
-        await refetch();
-        console.log('✅ Data refreshed from Firebase');
+      // addToFirebase returns the created product (with its Firestore id) on
+      // success, so we can update local state directly without a refetch.
+      const created = await addToFirebase(newProduct);
+      if (created) {
+        mutateLocal(products => [...products, created]);
       }
-      
-      return success;
+      return !!created;
     } catch (error) {
       console.error('❌ Error adding product:', error);
       return false;
     } finally {
       setIsSaving(false);
     }
-  }, [addToFirebase, refetch]);
+  }, [addToFirebase, mutateLocal]);
 
   const importProductsFromCSV = useCallback(async (products: Product[]) => {
     setIsSaving(true);
     try {
-      const result = await importToFirebase(products);
-      if (result.added > 0) {
-        await refetch();
-      }
-      return result;
+      // importToFirebase already updates local state (via mutateLocal) on success.
+      return await importToFirebase(products);
     } finally {
       setIsSaving(false);
     }
-  }, [importToFirebase, refetch]);
+  }, [importToFirebase]);
 
   const deleteProduct = useCallback(async (productId: string): Promise<boolean> => {
     // Instant optimistic removal

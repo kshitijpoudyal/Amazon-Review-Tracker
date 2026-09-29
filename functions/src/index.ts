@@ -12,6 +12,7 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 import sgMail from "@sendgrid/mail";
 import webpush from "web-push";
+import { OAuth2Client } from "google-auth-library";
 
 // Initialize Firebase Admin
 initializeApp();
@@ -41,6 +42,20 @@ const fromEmail = defineSecret("FROM_EMAIL");
 const vapidPublicKey = defineSecret("VAPID_PUBLIC_KEY");
 const vapidPrivateKey = defineSecret("VAPID_PRIVATE_KEY");
 const vapidSubject = defineSecret("VAPID_SUBJECT");
+
+// Define secrets for Gmail OAuth (review-live watcher)
+const gmailOAuthClientId = defineSecret("GMAIL_OAUTH_CLIENT_ID");
+const gmailOAuthClientSecret = defineSecret("GMAIL_OAUTH_CLIENT_SECRET");
+const gmailOAuthRedirectUri = defineSecret("GMAIL_OAUTH_REDIRECT_URI");
+// Base URL of the deployed frontend, e.g. https://your-app.vercel.app — used to
+// build the redirect target after the OAuth callback completes.
+const appBaseUrl = defineSecret("APP_BASE_URL");
+
+// Gmail search query per retailer — tune these once real subject lines are confirmed.
+// `after:` (epoch seconds) is appended at query time based on lastCheckedAt.
+const RETAILER_EMAIL_PATTERNS: Record<string, string> = {
+    amazon: "from:(amazon.com) subject:(review)",
+};
 
 export interface EmailRequest {
     to: string;
@@ -627,32 +642,31 @@ function configureWebPush(): void {
     webPushConfigured = true;
 }
 
-// Sends the stuck-status push to every device the user has subscribed on.
-// Returns false (without erroring) if the user has no active subscriptions yet.
-async function sendStuckStatusPush(
+interface PushPayload {
+    title: string;
+    body: string;
+    url?: string;
+    tag?: string;
+}
+
+// Sends a push to every device the user has subscribed on, cleaning up dead
+// subscriptions along the way. Returns false (without erroring) if the user
+// has no active subscriptions yet — that's a normal "not opted in" case, not
+// a failure.
+async function sendPushToAllSubscriptions(
     db: Firestore,
     userId: string,
-    productRef: FirebaseFirestore.DocumentReference,
-    product: any,
-    status: string,
-    days: number
+    payload: PushPayload
 ): Promise<boolean> {
     const subsSnapshot = await db.collection("users").doc(userId).collection("pushSubscriptions").get();
     if (subsSnapshot.empty) return false;
 
-    const statusLabel = STATUS_LABELS[status] ?? status;
-    const payload = JSON.stringify({
-        title: `⏰ Stuck in "${statusLabel}"`,
-        body: `${product.item} has been in "${statusLabel}" for ${days} days.`,
-        url: "/products",
-        tag: `stuck-${productRef.id}`,
-    });
-
+    const serialized = JSON.stringify(payload);
     let sent = 0;
     for (const subDoc of subsSnapshot.docs) {
         const sub = subDoc.data() as { endpoint: string; keys: { p256dh: string; auth: string } };
         try {
-            await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
+            await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, serialized);
             sent++;
         } catch (err: any) {
             if (err?.statusCode === 404 || err?.statusCode === 410) {
@@ -663,10 +677,31 @@ async function sendStuckStatusPush(
         }
     }
 
-    if (sent > 0) {
+    return sent > 0;
+}
+
+// Sends the stuck-status push to every device the user has subscribed on.
+// Returns false (without erroring) if the user has no active subscriptions yet.
+async function sendStuckStatusPush(
+    db: Firestore,
+    userId: string,
+    productRef: FirebaseFirestore.DocumentReference,
+    product: any,
+    status: string,
+    days: number
+): Promise<boolean> {
+    const statusLabel = STATUS_LABELS[status] ?? status;
+    const wasSent = await sendPushToAllSubscriptions(db, userId, {
+        title: `⏰ Stuck in "${statusLabel}"`,
+        body: `${product.item} has been in "${statusLabel}" for ${days} days.`,
+        url: "/products",
+        tag: `stuck-${productRef.id}`,
+    });
+
+    if (wasSent) {
         await productRef.set({ lastStuckNotifiedAt: new Date().toISOString() }, { merge: true });
     }
-    return sent > 0;
+    return wasSent;
 }
 
 // Helper function to send return window email
@@ -740,3 +775,203 @@ Amazon Review Tracker`;
 
     await sgMail.send(msg);
 }
+
+// ─── Gmail "review is live" watcher ───────────────────────────────────────
+// Watches each connected user's Gmail for retailer emails that look like a
+// review confirmation, and pushes a notification when one shows up. This is
+// notify-only by design — it never tries to auto-match the email to a
+// specific product, since matching by name from email text is too fragile
+// to trust unattended.
+
+function gmailOAuthClient(): OAuth2Client {
+    return new OAuth2Client(
+        gmailOAuthClientId.value(),
+        gmailOAuthClientSecret.value(),
+        gmailOAuthRedirectUri.value()
+    );
+}
+
+// Redirect the user's browser here (with ?uid=<uid>) to start the Gmail OAuth flow.
+export const gmailOAuthStart = onRequest(
+    { secrets: [gmailOAuthClientId, gmailOAuthClientSecret, gmailOAuthRedirectUri] },
+    async (request, response) => {
+        const uid = String(request.query.uid || "");
+        if (!uid) {
+            response.status(400).send("Missing uid");
+            return;
+        }
+
+        const url = gmailOAuthClient().generateAuthUrl({
+            access_type: "offline",
+            prompt: "consent",
+            scope: ["https://www.googleapis.com/auth/gmail.readonly"],
+            state: uid,
+        });
+
+        response.redirect(url);
+    }
+);
+
+// Handles Google's redirect back after consent, exchanges the code for
+// tokens, and stores them for the scheduled checker to use.
+export const gmailOAuthCallback = onRequest(
+    { secrets: [gmailOAuthClientId, gmailOAuthClientSecret, gmailOAuthRedirectUri, appBaseUrl] },
+    async (request, response) => {
+        const code = String(request.query.code || "");
+        const uid = String(request.query.state || "");
+        const settingsUrl = `${appBaseUrl.value()}/settings`;
+
+        if (!code || !uid) {
+            response.redirect(`${settingsUrl}?gmail=error`);
+            return;
+        }
+
+        try {
+            const { tokens } = await gmailOAuthClient().getToken(code);
+
+            if (!tokens.refresh_token) {
+                // Google only returns a refresh_token on the first consent for a given
+                // account/client. `prompt: "consent"` should force a fresh one each
+                // time, but guard in case Google ever omits it anyway.
+                logger.error(`Gmail OAuth: no refresh_token returned for uid ${uid}`);
+                response.redirect(`${settingsUrl}?gmail=error`);
+                return;
+            }
+
+            const db = getFirestore();
+            const integrations = db.collection("users").doc(uid).collection("integrations");
+            await integrations.doc("gmailSecret").set({ refreshToken: tokens.refresh_token }, { merge: true });
+            await integrations.doc("gmailStatus").set(
+                { connected: true, connectedAt: new Date().toISOString(), lastCheckedAt: null },
+                { merge: true }
+            );
+
+            response.redirect(`${settingsUrl}?gmail=connected`);
+        } catch (err) {
+            logger.error(`Gmail OAuth callback failed for uid ${uid}:`, err);
+            response.redirect(`${settingsUrl}?gmail=error`);
+        }
+    }
+);
+
+async function getGmailAccessToken(refreshToken: string): Promise<string> {
+    const client = gmailOAuthClient();
+    client.setCredentials({ refresh_token: refreshToken });
+    const { token } = await client.getAccessToken();
+    if (!token) throw new Error("Failed to obtain Gmail access token");
+    return token;
+}
+
+interface GmailMessageListResponse {
+    messages?: { id: string; threadId: string }[];
+}
+
+async function countGmailMatches(accessToken: string, query: string): Promise<number> {
+    const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?${new URLSearchParams({
+        q: query,
+        maxResults: "10",
+    })}`;
+
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+
+    if (!res.ok) {
+        const err = new Error(`Gmail API error ${res.status}`) as Error & { statusCode: number };
+        err.statusCode = res.status;
+        throw err;
+    }
+
+    const data = (await res.json()) as GmailMessageListResponse;
+    return data.messages?.length ?? 0;
+}
+
+// Checks every connected user's Gmail for new retailer "review is live"
+// emails since their last check, and pushes a notification if any are found.
+async function runGmailReviewCheck(db: Firestore): Promise<{ checked: number; notified: number; reauthNeeded: number }> {
+    let checked = 0;
+    let notified = 0;
+    let reauthNeeded = 0;
+
+    const usersSnapshot = await db.collection("users").get();
+
+    for (const userDoc of usersSnapshot.docs) {
+        const integrations = db.collection("users").doc(userDoc.id).collection("integrations");
+        const statusRef = integrations.doc("gmailStatus");
+        const status = (await statusRef.get()).data();
+        if (!status || status.connected !== true) continue;
+
+        const refreshToken = (await integrations.doc("gmailSecret").get()).data()?.refreshToken;
+        if (!refreshToken) continue;
+
+        checked++;
+
+        try {
+            const accessToken = await getGmailAccessToken(refreshToken);
+            const lastCheckedAt = status.lastCheckedAt ? new Date(status.lastCheckedAt) : new Date(0);
+            const afterEpoch = Math.floor(lastCheckedAt.getTime() / 1000);
+
+            let matches = 0;
+            for (const pattern of Object.values(RETAILER_EMAIL_PATTERNS)) {
+                matches += await countGmailMatches(accessToken, `${pattern} after:${afterEpoch}`);
+            }
+
+            if (matches > 0) {
+                const wasSent = await sendPushToAllSubscriptions(db, userDoc.id, {
+                    title: "📝 A review may be live",
+                    body: `Found ${matches} new email${matches === 1 ? "" : "s"} that look like a review confirmation — check your inbox and update the tracker.`,
+                    url: "/products",
+                    tag: "gmail-review-live",
+                });
+                if (wasSent) notified++;
+            }
+
+            await statusRef.set({ lastCheckedAt: new Date().toISOString() }, { merge: true });
+        } catch (err: any) {
+            if (err?.statusCode === 401 || String(err?.message).includes("invalid_grant")) {
+                reauthNeeded++;
+                await statusRef.set({ connected: false }, { merge: true });
+                await sendPushToAllSubscriptions(db, userDoc.id, {
+                    title: "🔌 Reconnect Gmail",
+                    body: "Your Gmail connection expired — reconnect it in Settings to keep getting review alerts.",
+                    url: "/settings",
+                    tag: "gmail-reconnect",
+                });
+                logger.warn(`Gmail token expired for user ${userDoc.id}, marked disconnected`);
+            } else {
+                logger.error(`Gmail check failed for user ${userDoc.id}:`, err);
+            }
+        }
+    }
+
+    return { checked, notified, reauthNeeded };
+}
+
+// Runs the Gmail review-live check hourly for every connected user.
+export const checkGmailForReviewLive = onSchedule(
+    {
+        schedule: "0 * * * *", // every hour on the hour
+        secrets: [gmailOAuthClientId, gmailOAuthClientSecret, gmailOAuthRedirectUri, vapidPublicKey, vapidPrivateKey, vapidSubject],
+    },
+    async () => {
+        const db = getFirestore();
+        configureWebPush();
+        const result = await runGmailReviewCheck(db);
+        logger.info(`Gmail review check: ${result.checked} users checked, ${result.notified} notified, ${result.reauthNeeded} need reauth`);
+    }
+);
+
+// Manual trigger for testing — POST /triggerGmailCheck (remove before production)
+export const triggerGmailCheck = onRequest(
+    {
+        secrets: [gmailOAuthClientId, gmailOAuthClientSecret, gmailOAuthRedirectUri, vapidPublicKey, vapidPrivateKey, vapidSubject],
+    },
+    async (request, response) => {
+        if (request.method !== "POST") {
+            response.status(405).json({ error: "Use POST" });
+            return;
+        }
+        const db = getFirestore();
+        configureWebPush();
+        const result = await runGmailReviewCheck(db);
+        response.status(200).json(result);
+    }
+);

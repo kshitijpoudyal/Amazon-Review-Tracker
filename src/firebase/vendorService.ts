@@ -23,23 +23,25 @@ export const vendorService = {
     try {
       console.log('Initializing default vendors...');
       
-      // Create each default vendor with specific document IDs in user's subcollection
+      // Only create default vendors that don't already exist for this user
+      const existingVendors = await this.getVendors(userId);
+      const existingIds = new Set(existingVendors.map(v => v.id));
+
       for (const vendor of DEFAULT_VENDORS) {
+        if (existingIds.has(vendor.id)) {
+          continue;
+        }
         try {
           const vendorDocRef = doc(db, `users/${userId}/vendors`, vendor.id);
-          
-          // Prepare clean vendor data
+
           const vendorData = {
             name: String(vendor.name),
-            createdAt: new Date().toISOString(), // Always use fresh timestamp
+            createdAt: new Date().toISOString(),
             isActive: Boolean(vendor.isActive)
           };
-          
-          console.log(`Creating vendor with data:`, vendorData);
-          
-          // Use setDoc with merge to create or update the vendor document
-          await setDoc(vendorDocRef, vendorData, { merge: true });
-          
+
+          await setDoc(vendorDocRef, vendorData);
+
           console.log(`✓ Initialized vendor: ${vendor.name} (ID: ${vendor.id})`);
         } catch (vendorError) {
           console.error(`Failed to create vendor ${vendor.name}:`, vendorError);

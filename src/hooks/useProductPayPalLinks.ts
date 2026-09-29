@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { useMemo } from 'react';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { getPayPalProductShare } from '../utils/paypalProductShare';
+import { usePayPalTransactions } from './usePayPalTransactions';
 
 export interface ProductPayPalLink {
   amount: number;
@@ -10,7 +9,7 @@ export interface ProductPayPalLink {
 }
 
 function getProductShareFromTransaction(
-  transaction: PayPalTransaction & { transactionId?: string },
+  transaction: PayPalTransaction,
   productId: string,
 ): ProductPayPalLink | null {
   const linkedIds = transaction.linkedProductIds || [];
@@ -22,59 +21,38 @@ function getProductShareFromTransaction(
   };
 }
 
-export const useProductPayPalLinks = (userId?: string, productIds?: string[]) => {
-  const [linkedProductIds, setLinkedProductIds] = useState<Set<string>>(new Set());
-  const [linkedPayPalByProduct, setLinkedPayPalByProduct] = useState<Map<string, ProductPayPalLink[]>>(new Map());
-  const [loading, setLoading] = useState(false);
+// Derives per-product PayPal links from the already-fetched, shared transactions
+// list (see PayPalTransactionsProvider) instead of independently re-reading the
+// whole paypal_transactions collection every time a product table mounts.
+export const useProductPayPalLinks = (_userId?: string, productIds?: string[]) => {
+  const { data, loading } = usePayPalTransactions();
 
-  useEffect(() => {
-    if (!userId || !productIds || productIds.length === 0) {
-      setLinkedProductIds(new Set());
-      setLinkedPayPalByProduct(new Map());
-      return;
+  const { linkedProductIds, linkedPayPalByProduct } = useMemo(() => {
+    const linkedIds = new Set<string>();
+    const linksMap = new Map<string, ProductPayPalLink[]>();
+
+    if (!productIds || productIds.length === 0 || !data?.transactions) {
+      return { linkedProductIds: linkedIds, linkedPayPalByProduct: linksMap };
     }
 
-    const fetchLinkedProducts = async () => {
-      setLoading(true);
-      try {
-        const transactionsRef = collection(db, 'users', userId, 'paypal_transactions');
-        const transactionsSnapshot = await getDocs(transactionsRef);
+    for (const transaction of data.transactions) {
+      const linkedIdsOnTransaction = transaction.linkedProductIds;
+      if (!linkedIdsOnTransaction || !Array.isArray(linkedIdsOnTransaction)) continue;
 
-        const linkedIds = new Set<string>();
-        const linksMap = new Map<string, ProductPayPalLink[]>();
+      for (const linkedId of linkedIdsOnTransaction) {
+        if (!productIds.includes(linkedId)) continue;
 
-        transactionsSnapshot.docs.forEach(docSnap => {
-          const data = docSnap.data();
-          if (!data.linkedProductIds || !Array.isArray(data.linkedProductIds)) return;
+        linkedIds.add(linkedId);
+        const link = getProductShareFromTransaction(transaction, linkedId);
+        if (!link) continue;
 
-          data.linkedProductIds.forEach((linkedId: string) => {
-            if (!productIds.includes(linkedId)) return;
-
-            linkedIds.add(linkedId);
-            const link = getProductShareFromTransaction(
-              { ...(data as PayPalTransaction), transactionId: data.transactionId || docSnap.id },
-              linkedId,
-            );
-            if (!link) return;
-
-            const existing = linksMap.get(linkedId) || [];
-            linksMap.set(linkedId, [...existing, link]);
-          });
-        });
-
-        setLinkedProductIds(linkedIds);
-        setLinkedPayPalByProduct(linksMap);
-      } catch (error) {
-        console.error('Error fetching linked products:', error);
-        setLinkedProductIds(new Set());
-        setLinkedPayPalByProduct(new Map());
-      } finally {
-        setLoading(false);
+        const existing = linksMap.get(linkedId) || [];
+        linksMap.set(linkedId, [...existing, link]);
       }
-    };
+    }
 
-    fetchLinkedProducts();
-  }, [userId, productIds?.join(',')]);
+    return { linkedProductIds: linkedIds, linkedPayPalByProduct: linksMap };
+  }, [data?.transactions, productIds?.join(',')]);
 
   const isProductLinked = (productId: string): boolean => linkedProductIds.has(productId);
   const getLinkedPayPalLinks = (productId: string): ProductPayPalLink[] =>

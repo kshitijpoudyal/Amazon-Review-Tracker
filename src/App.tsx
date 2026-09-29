@@ -2,6 +2,8 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import AppHeader from './components/Header/AppHeader';
+import { VendorsProvider } from './contexts/VendorsContext';
+import { PayPalTransactionsProvider } from './contexts/PayPalTransactionsContext';
 
 /**
  * App Layout Component
@@ -23,12 +25,16 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbf9f3]">
-      <AppHeader user={user} onLogout={logout} />
-      <main>
-        <Outlet />
-      </main>
-    </div>
+    <VendorsProvider userId={user.uid}>
+      <PayPalTransactionsProvider userId={user.uid}>
+        <div className="min-h-screen bg-[#fbf9f3]">
+          <AppHeader user={user} onLogout={logout} />
+          <main>
+            <Outlet />
+          </main>
+        </div>
+      </PayPalTransactionsProvider>
+    </VendorsProvider>
   );
 };
 

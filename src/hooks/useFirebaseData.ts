@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  collection, 
-  getDocs, 
-  doc, 
-  setDoc, 
-  updateDoc, 
-  addDoc, 
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  writeBatch,
+  addDoc,
   deleteDoc,
   serverTimestamp
 } from 'firebase/firestore';
@@ -138,31 +138,31 @@ export const useFirebaseData = (userId?: string) => {
     }
   };
 
-  const addProductToFirebase = async (product: Product): Promise<boolean> => {
-    if (!userId) return false;
+  // Returns the created product (with its Firestore-assigned id) so callers can
+  // update local state directly instead of re-reading the whole collection.
+  const addProductToFirebase = async (product: Product): Promise<Product | null> => {
+    if (!userId) return null;
 
     try {
       const initialStatus = getProductStatusType(product);
+      const statusChangedAt = new Date().toISOString();
       const productData = omitUndefined({
         ...product,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         lastStatus: initialStatus,
-        statusChangedAt: new Date().toISOString(),
+        statusChangedAt,
       });
 
+      // A single write — the document's own id is already `doc.id`, so there's
+      // no need for a second write just to duplicate it into the data.
       const docRef = await addDoc(collection(db, 'users', userId, 'products'), productData);
-      
-      // Update the document with its own ID
-      await updateDoc(docRef, {
-        id: docRef.id
-      });
 
-      return true;
+      return { ...product, id: docRef.id, lastStatus: initialStatus, statusChangedAt };
     } catch (err) {
       console.error('Error adding product to Firebase:', err);
       setError(err instanceof Error ? err.message : 'Failed to add product');
-      return false;
+      return null;
     }
   };
 
@@ -199,26 +199,51 @@ export const useFirebaseData = (userId?: string) => {
     }
   };
 
+  // Firestore batched writes cap at 500 operations; chunk to stay under that.
+  const BATCH_CHUNK_SIZE = 450;
+
   const importProductsFromCSV = async (products: Product[]): Promise<{ added: number; skipped: number }> => {
     if (!userId) return { added: 0, skipped: products.length };
 
-    let added = 0;
+    const productsCollection = collection(db, 'users', userId, 'products');
+    const added: Product[] = [];
     let skipped = 0;
 
-    for (const product of products) {
-      const success = await addProductToFirebase(product);
-      if (success) {
-        added++;
-      } else {
-        skipped++;
+    for (let i = 0; i < products.length; i += BATCH_CHUNK_SIZE) {
+      const chunk = products.slice(i, i + BATCH_CHUNK_SIZE);
+      const batch = writeBatch(db);
+      const chunkProducts: Product[] = [];
+
+      for (const product of chunk) {
+        const initialStatus = getProductStatusType(product);
+        const statusChangedAt = new Date().toISOString();
+        const productData = omitUndefined({
+          ...product,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          lastStatus: initialStatus,
+          statusChangedAt,
+        });
+
+        const docRef = doc(productsCollection);
+        batch.set(docRef, productData);
+        chunkProducts.push({ ...product, id: docRef.id, lastStatus: initialStatus, statusChangedAt });
+      }
+
+      try {
+        await batch.commit();
+        added.push(...chunkProducts);
+      } catch (err) {
+        console.error('Error batch-importing products:', err);
+        skipped += chunk.length;
       }
     }
 
-    if (added > 0) {
-      await fetchData();
+    if (added.length > 0) {
+      mutateLocal(existing => [...existing, ...added]);
     }
 
-    return { added, skipped };
+    return { added: added.length, skipped };
   };
 
   useEffect(() => {

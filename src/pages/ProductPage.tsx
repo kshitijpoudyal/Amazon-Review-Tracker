@@ -98,7 +98,7 @@ const ProductPage: React.FC = () => {
     refetch,
   } = useDataSource(user?.uid);
 
-  const { data: paypalData } = usePayPalTransactions(user?.uid);
+  const { data: paypalData } = usePayPalTransactions();
 
   const unlinkedPayPalStats = useMemo(() => {
     const unlinked = (paypalData?.transactions || []).filter(
