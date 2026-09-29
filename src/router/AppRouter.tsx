@@ -6,6 +6,7 @@ import LoginPage from '../pages/LoginPage';
 import ProductPage from '../pages/ProductPage';
 import { PayPalPage } from '../pages/PayPalPage';
 import DashboardPage from '../pages/DashboardPage';
+import SettingsPage from '../pages/SettingsPage';
 import NotFoundPage from '../components/NotFoundPage';
 import ImportHashCapture from '../components/ImportHashCapture';
 
@@ -60,6 +61,7 @@ const AppRouter: React.FC = () => {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="products" element={<ProductPage />} />
         <Route path="paypal" element={<PayPalPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
       
       {/* 404 Route */}

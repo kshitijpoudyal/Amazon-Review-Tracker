@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { vendorService } from '../firebase/vendorService';
 import { backfillProductsWithVendor } from '../utils/migrations/productVendorMigration';
-import { backfillProductsReviewMediaType } from '../utils/migrations/productReviewMediaTypeMigration';
 import { useAuth } from '../hooks/useAuth';
 import { colors } from '../utils/colors';
 
@@ -19,64 +18,6 @@ export const VendorAdminUtils: React.FC = () => {
     setMessage(msg);
     setMessageType(type);
     setTimeout(() => setMessage(''), 5000);
-  };
-
-  const handleInitializeVendors = async () => {
-    if (!user?.uid) {
-      showMessage('Please log in to initialize vendors.', 'error');
-      return;
-    }
-    try {
-      setLoading(true);
-      await vendorService.initializeVendors(user.uid);
-      showMessage('Vendors initialized successfully!', 'success');
-    } catch (error) {
-      console.error('Error initializing vendors:', error);
-      showMessage('Failed to initialize vendors. Check console for details.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBackfillProducts = async () => {
-    if (!user?.uid) {
-      showMessage('Please log in to run the migration.', 'error');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await backfillProductsWithVendor(user.uid);
-      showMessage('Products backfilled successfully!', 'success');
-    } catch (error) {
-      console.error('Error backfilling products:', error);
-      showMessage('Failed to backfill products. Check console for details.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBackfillReviewMediaType = async () => {
-    if (!user?.uid) {
-      showMessage('Please log in to run the migration.', 'error');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const { updated } = await backfillProductsReviewMediaType(user.uid);
-      showMessage(
-        updated > 0
-          ? `Updated ${updated} product${updated === 1 ? '' : 's'} to Text review type. Refresh the page to reload data.`
-          : 'All products already have Text review type.',
-        'success',
-      );
-    } catch (error) {
-      console.error('Error backfilling review types:', error);
-      showMessage('Failed to backfill review types. Check console for details.', 'error');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleRunFullSetup = async () => {
@@ -129,44 +70,17 @@ export const VendorAdminUtils: React.FC = () => {
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-semibold text-gray-900 mb-2">What these tools do:</h3>
           <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-            <li><strong>Initialize Vendors:</strong> Creates default vendors (MD Bro, Snow Cloud) in the database</li>
-            <li><strong>Backfill Products:</strong> Adds vendor information to existing products (defaults to MD Bro)</li>
-            <li><strong>Run Full Setup:</strong> Does both vendor operations in sequence</li>
-            <li><strong>Backfill Review Types to Text:</strong> Sets reviewMediaType to Text on all existing products</li>
+            <li><strong>Run Full Setup:</strong> Initializes default vendors and backfills vendor info on existing products</li>
           </ul>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          <button
-            onClick={handleInitializeVendors}
-            disabled={loading}
-            className={`${colors.button.primary} px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {loading ? 'Processing...' : 'Initialize Vendors Only'}
-          </button>
-
-          <button
-            onClick={handleBackfillProducts}
-            disabled={loading || !user}
-            className={`${colors.button.secondary} px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {loading ? 'Processing...' : 'Backfill Products Only'}
-          </button>
-
           <button
             onClick={handleRunFullSetup}
             disabled={loading || !user}
             className={`${colors.button.indigo} px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {loading ? 'Processing...' : 'Run Full Setup (Recommended)'}
-          </button>
-
-          <button
-            onClick={handleBackfillReviewMediaType}
-            disabled={loading || !user}
-            className={`${colors.button.secondary} px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {loading ? 'Processing...' : 'Backfill Review Types to Text'}
           </button>
         </div>
 

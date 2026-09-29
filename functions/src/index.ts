@@ -9,8 +9,9 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, Firestore } from "firebase-admin/firestore";
 import sgMail from "@sendgrid/mail";
+import webpush from "web-push";
 
 // Initialize Firebase Admin
 initializeApp();
@@ -35,6 +36,11 @@ const THRESHOLDS = {
 // Define secrets for SendGrid
 const sendgridApiKey = defineSecret("SENDGRID_API_KEY");
 const fromEmail = defineSecret("FROM_EMAIL");
+
+// Define secrets for Web Push (VAPID)
+const vapidPublicKey = defineSecret("VAPID_PUBLIC_KEY");
+const vapidPrivateKey = defineSecret("VAPID_PRIVATE_KEY");
+const vapidSubject = defineSecret("VAPID_SUBJECT");
 
 export interface EmailRequest {
     to: string;
@@ -286,7 +292,7 @@ Amazon Review Tracker`;
 
 // Manual trigger for testing — POST /triggerStatusCheck (remove before production)
 export const triggerStatusCheck = onRequest(
-    { secrets: [sendgridApiKey, fromEmail] },
+    { secrets: [sendgridApiKey, fromEmail, vapidPublicKey, vapidPrivateKey, vapidSubject] },
     async (request, response) => {
         if (request.method !== "POST") {
             response.status(405).json({ error: "Use POST" });
@@ -294,8 +300,11 @@ export const triggerStatusCheck = onRequest(
         }
 
         const db = getFirestore();
+        configureWebPush();
         let totalEmailsSent = 0;
         let totalEmailsFailed = 0;
+        let totalPushSent = 0;
+        let totalPushFailed = 0;
 
         const usersSnapshot = await db.collection("users").get();
 
@@ -320,21 +329,23 @@ export const triggerStatusCheck = onRequest(
                     }
                 } else {
                     const stuck = daysStuckInStatus(product);
-                    if (stuck) {
+                    if (stuck && shouldNotifyStuckStatus(product)) {
                         try {
-                            await sendStatusStuckEmail(userEmail, product, stuck.status, stuck.days);
-                            totalEmailsSent++;
-                            logger.info(`✅ [test] Sent stuck alert for ${(product as any).item}`);
+                            const wasSent = await sendStuckStatusPush(db, userDoc.id, productDoc.ref, product, stuck.status, stuck.days);
+                            if (wasSent) {
+                                totalPushSent++;
+                                logger.info(`✅ [test] Sent stuck push for ${(product as any).item}`);
+                            }
                         } catch (err) {
-                            totalEmailsFailed++;
-                            logger.error(`❌ [test] Failed for ${(product as any).item}:`, err);
+                            totalPushFailed++;
+                            logger.error(`❌ [test] Failed stuck push for ${(product as any).item}:`, err);
                         }
                     }
                 }
             }
         }
 
-        response.status(200).json({ totalEmailsSent, totalEmailsFailed });
+        response.status(200).json({ totalEmailsSent, totalEmailsFailed, totalPushSent, totalPushFailed });
     }
 );
 
@@ -343,14 +354,17 @@ export const dailyReturnWindowCheck = onSchedule(
     {
         schedule: "0 14 * * *", // 9 AM EST = 2 PM UTC (14:00)
         timeZone: "America/New_York", // EST timezone
-        secrets: [sendgridApiKey, fromEmail],
+        secrets: [sendgridApiKey, fromEmail, vapidPublicKey, vapidPrivateKey, vapidSubject],
     },
     async (event) => {
         logger.info("🕘 Daily return window check started at 9 AM EST");
 
         const db = getFirestore();
+        configureWebPush();
         let totalEmailsSent = 0;
         let totalEmailsFailed = 0;
+        let totalPushSent = 0;
+        let totalPushFailed = 0;
 
         try {
             // Get all users from Firestore
@@ -385,22 +399,19 @@ export const dailyReturnWindowCheck = onSchedule(
                     continue;
                 }
 
-                const products = productsSnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
+                logger.info(`Checking ${productsSnapshot.size} products for user ${userEmail}`);
+
+                // Check each product for return window alerts and stuck-status alerts
+                for (const productDoc of productsSnapshot.docs) {
+                    const data = productDoc.data();
+                    const product = {
+                        id: productDoc.id,
                         item: data.item || 'Unknown Product',
                         orderDate: data.orderDate,
                         isVoid: data.isVoid,
                         reviewLive: data.reviewLive,
                         ...data
                     };
-                });
-
-                logger.info(`Checking ${products.length} products for user ${userEmail}`);
-
-                // Check each product for return window alerts and stuck-status alerts
-                for (const product of products) {
                     if (needsReturnWindowReminder(product)) {
                         try {
                             await sendReturnWindowEmail(userEmail, product);
@@ -424,21 +435,23 @@ export const dailyReturnWindowCheck = onSchedule(
                         }
                     } else {
                         const stuck = daysStuckInStatus(product);
-                        if (stuck) {
+                        if (stuck && shouldNotifyStuckStatus(product)) {
                             try {
-                                await sendStatusStuckEmail(userEmail, product, stuck.status, stuck.days);
-                                totalEmailsSent++;
-                                logger.info(`✅ Sent stuck-status alert for ${product.item} (${stuck.status}, ${stuck.days}d) to ${userEmail}`);
+                                const wasSent = await sendStuckStatusPush(db, userDoc.id, productDoc.ref, product, stuck.status, stuck.days);
+                                if (wasSent) {
+                                    totalPushSent++;
+                                    logger.info(`✅ Sent stuck-status push for ${product.item} (${stuck.status}, ${stuck.days}d) to ${userEmail}`);
+                                }
                             } catch (error) {
-                                totalEmailsFailed++;
-                                logger.error(`❌ Failed to send stuck-status alert for ${product.item}:`, error);
+                                totalPushFailed++;
+                                logger.error(`❌ Failed to send stuck-status push for ${product.item}:`, error);
                             }
                         }
                     }
                 }
             }
 
-            logger.info(`🎯 Daily check completed: ${totalEmailsSent} emails sent, ${totalEmailsFailed} failed`);
+            logger.info(`🎯 Daily check completed: ${totalEmailsSent} emails sent, ${totalEmailsFailed} failed, ${totalPushSent} pushes sent, ${totalPushFailed} failed`);
 
         } catch (error) {
             logger.error("❌ Error in daily return window check:", error);
@@ -592,57 +605,68 @@ const STATUS_LABELS: Record<string, string> = {
     "refund-pending": "Refund Pending",
 };
 
-async function sendStatusStuckEmail(userEmail: string, product: any, status: string, days: number): Promise<void> {
-    const apiKey = sendgridApiKey.value();
-    const senderEmail = fromEmail.value();
+// True if this stuck period hasn't been push-notified yet (i.e. no notification
+// since the status last changed) — keeps stuck alerts to once per stuck period.
+function shouldNotifyStuckStatus(product: any): boolean {
+    if (!product.statusChangedAt) return true;
+    if (!product.lastStuckNotifiedAt) return true;
+    return new Date(product.lastStuckNotifiedAt).getTime() < new Date(product.statusChangedAt).getTime();
+}
 
-    if (!apiKey) throw new Error("SendGrid API key not configured");
+let webPushConfigured = false;
+function configureWebPush(): void {
+    if (webPushConfigured) return;
+    const subject = vapidSubject.value();
+    const publicKey = vapidPublicKey.value();
+    const privateKey = vapidPrivateKey.value();
+    if (!subject || !publicKey || !privateKey) {
+        logger.warn("VAPID secrets not configured — push notifications will fail to send");
+        return;
+    }
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+    webPushConfigured = true;
+}
 
-    sgMail.setApiKey(apiKey);
+// Sends the stuck-status push to every device the user has subscribed on.
+// Returns false (without erroring) if the user has no active subscriptions yet.
+async function sendStuckStatusPush(
+    db: Firestore,
+    userId: string,
+    productRef: FirebaseFirestore.DocumentReference,
+    product: any,
+    status: string,
+    days: number
+): Promise<boolean> {
+    const subsSnapshot = await db.collection("users").doc(userId).collection("pushSubscriptions").get();
+    if (subsSnapshot.empty) return false;
 
     const statusLabel = STATUS_LABELS[status] ?? status;
-    const threshold = THRESHOLDS.statusStuck[status];
-    const subject = `⏰ Item stuck in "${statusLabel}" — ${product.item}`;
-
-    const text = `A product has been sitting in the same status for too long.
-
-Product: ${product.item}
-Current Status: ${statusLabel}
-Days in Status: ${days} (threshold: ${threshold} days)
-Order Date: ${product.orderDate ?? "N/A"}
-
-Please log in to Amazon Review Tracker and update this product's status.
-
-Best regards,
-Amazon Review Tracker`;
-
-    const html = `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    <h2 style="color: #d97706; margin-top: 0;">⏰ Status Alert</h2>
-    <div style="background-color: #fef3c7; border-left: 4px solid #d97706; padding: 15px; margin: 20px 0; border-radius: 5px;">
-      <strong>This product has been stuck in the same status for ${days} days.</strong>
-    </div>
-    <h3 style="color: #2d3748;">Product Details:</h3>
-    <ul style="background-color: #f7fafc; padding: 15px 15px 15px 30px; border-radius: 5px; margin: 15px 0;">
-      <li><strong>Product:</strong> ${product.item}</li>
-      <li><strong>Current Status:</strong> ${statusLabel}</li>
-      <li><strong>Days in Status:</strong> ${days} (alert after ${threshold} days)</li>
-      <li><strong>Order Date:</strong> ${product.orderDate ?? "N/A"}</li>
-    </ul>
-    <p style="text-align: center; color: #718096; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-      Best regards,<br><strong>Amazon Review Tracker</strong>
-    </p>
-  </div>
-</div>`;
-
-    await sgMail.send({
-        to: userEmail,
-        from: { email: senderEmail, name: "Amazon Review Tracker" },
-        subject,
-        text,
-        html,
+    const payload = JSON.stringify({
+        title: `⏰ Stuck in "${statusLabel}"`,
+        body: `${product.item} has been in "${statusLabel}" for ${days} days.`,
+        url: "/products",
+        tag: `stuck-${productRef.id}`,
     });
+
+    let sent = 0;
+    for (const subDoc of subsSnapshot.docs) {
+        const sub = subDoc.data() as { endpoint: string; keys: { p256dh: string; auth: string } };
+        try {
+            await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
+            sent++;
+        } catch (err: any) {
+            if (err?.statusCode === 404 || err?.statusCode === 410) {
+                await subDoc.ref.delete();
+            } else {
+                logger.error(`Push send failed for user ${userId}:`, err);
+            }
+        }
+    }
+
+    if (sent > 0) {
+        await productRef.set({ lastStuckNotifiedAt: new Date().toISOString() }, { merge: true });
+    }
+    return sent > 0;
 }
 
 // Helper function to send return window email
