@@ -1,7 +1,13 @@
 import { Product } from '../types/Product';
 import { PayPalTransaction } from '../types/PayPalTransaction';
 import { getProductStatusType } from './productStatus';
-import { getAmountDiffFromBand, getRefundConfidence } from './refundUtils';
+import {
+  getAmountDiffFromBand,
+  getExpectedReceivedForProduct,
+  getProductRefundExpectation,
+  getRefundConfidence,
+  hasRefundExpectation,
+} from './refundUtils';
 
 export interface PayPalMatchSuggestion {
   product: Product;
@@ -39,7 +45,11 @@ export function getPayPalMatchSuggestions(
 
   const scored = candidates.map((product) => {
     const paid = product.paid ?? 0;
-    const amountDiff = getAmountDiffFromBand(paid, targetAmount, product.tax);
+    const expectation = getProductRefundExpectation(product);
+    const expectedReceived = getExpectedReceivedForProduct(product);
+    const amountDiff = hasRefundExpectation(expectation) || expectedReceived != null
+      ? getAmountDiffFromBand(paid, targetAmount, expectation.taxAmount, expectedReceived)
+      : getAmountDiffFromBand(paid, targetAmount, product.tax);
     let score = amountDiff;
 
     const status = getProductStatusType(product);
@@ -52,7 +62,9 @@ export function getPayPalMatchSuggestions(
     const itemLower = (product.item || '').toLowerCase();
     if (itemLower && nameLower.includes(itemLower.slice(0, 20))) score *= 0.3;
 
-    const confidence = getRefundConfidence(paid, targetAmount, product.tax);
+    const confidence = hasRefundExpectation(expectation) || expectedReceived != null
+      ? getRefundConfidence(paid, targetAmount, expectation.taxAmount, expectedReceived)
+      : getRefundConfidence(paid, targetAmount, product.tax);
 
     return { product, score, amountDiff, confidence };
   });

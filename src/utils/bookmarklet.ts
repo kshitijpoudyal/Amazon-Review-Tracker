@@ -1,6 +1,6 @@
 /**
  * Retailer bookmarklets scrape order pages and redirect into the Review Tracker PWA
- * with a URL fragment payload (#import=…). Clipboard copy remains as fallback.
+ * with a URL fragment payload (#import=…). JSON is also copied to the clipboard.
  */
 
 import { getAppOrigin } from './importHandoff';
@@ -55,6 +55,7 @@ export function parseBookmarkletClipboard(text: string): BookmarkletPayload {
       orderDate: '',
       orderNumber: orderIdMatch[1],
       orderTotal: null,
+      tax: null,
       productName: '',
       productUrl: '',
       imageUrl: '',
@@ -71,6 +72,7 @@ export function parseBookmarkletClipboard(text: string): BookmarkletPayload {
         orderDate: '',
         orderNumber: wayfairOrderMatch[1],
         orderTotal: null,
+        tax: null,
         productName: '',
         productUrl: '',
         imageUrl: '',
@@ -86,6 +88,7 @@ export function parseBookmarkletClipboard(text: string): BookmarkletPayload {
         orderDate: '',
         orderNumber: walmartOrderMatch[1],
         orderTotal: null,
+        tax: null,
         productName: '',
         productUrl: '',
         imageUrl: '',
@@ -100,6 +103,7 @@ export function parseBookmarkletClipboard(text: string): BookmarkletPayload {
       orderDate: '',
       orderNumber: bareWalmartMatch[1],
       orderTotal: null,
+      tax: null,
       productName: '',
       productUrl: '',
       imageUrl: '',
@@ -113,6 +117,7 @@ export function parseBookmarkletClipboard(text: string): BookmarkletPayload {
       orderDate: '',
       orderNumber: bareWayfairMatch[0],
       orderTotal: null,
+      tax: null,
       productName: '',
       productUrl: '',
       imageUrl: '',

@@ -12,6 +12,7 @@ const samplePayload: BookmarkletPayload = {
   orderDate: 'January 5, 2026',
   orderNumber: '111-4351533-8979462',
   orderTotal: 42.99,
+  tax: 3.52,
   productName: 'Test Product',
   productUrl: 'https://www.amazon.com/dp/B012345678',
   imageUrl: 'https://m.media-amazon.com/images/I/test.jpg',
@@ -46,6 +47,16 @@ describe('bookmarklet parsing', () => {
     const parsed = parseBookmarkletClipboard(JSON.stringify(samplePayload));
     expect(parsed.orderNumber).toBe(samplePayload.orderNumber);
     expect(parsed.retailer).toBe('amazon');
+    expect(parsed.tax).toBe(3.52);
+  });
+
+  it('normalizes alternate tax field names from JSON', () => {
+    const normalized = normalizeBookmarkletPayload({
+      orderNumber: '111-4351533-8979462',
+      orderTotal: 42.99,
+      estimatedTax: '3.52',
+    });
+    expect(normalized.tax).toBe(3.52);
   });
 
   it('normalizes multi-product payload to first product fields', () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Product, DEFAULT_REVIEW_MEDIA_TYPE, ReviewMediaType } from "../../types/Product";
+import { Product, DEFAULT_REVIEW_MEDIA_TYPE, RefundExpectation, ReviewMediaType } from "../../types/Product";
 import { typography } from '../../utils/typography';
 import { Modal } from "../common";
 import { useVendors } from "../../hooks/useVendors";
@@ -12,6 +12,8 @@ import {
 import { ProductFormQuickImportSection } from "./ProductFormQuickImportSection";
 import { BookmarkletSetupPanel } from "./BookmarkletSetupPanel";
 import { ProductFormProductDetailsSection } from "./ProductFormProductDetailsSection";
+import { ProductFormRefundExpectationSection } from "./ProductFormRefundExpectationSection";
+import { updateProductPaid } from "./productFormUtils";
 import { ProductFormReviewRequirementSection } from "./ProductFormReviewRequirementSection";
 import { formFooterCancelClass, formFooterPrimaryClass } from "./productFormStyles";
 
@@ -176,7 +178,16 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           mode="add"
           nameRequired
           paidRequired
-          onPaidChange={(value) => handleInputChange('paid', value === '' ? null : parseFloat(value))}
+          onPaidChange={(value) =>
+            setNewProduct(prev => updateProductPaid(prev, value))
+          }
+        />
+
+        <ProductFormRefundExpectationSection
+          product={newProduct}
+          onChange={(expectation: RefundExpectation) =>
+            setNewProduct(prev => ({ ...prev, refundExpectation: expectation }))
+          }
         />
       </div>
     </form>

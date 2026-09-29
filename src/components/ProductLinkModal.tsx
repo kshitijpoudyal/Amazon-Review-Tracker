@@ -13,6 +13,11 @@ import ConfirmDeleteModal from './common/ConfirmDeleteModal';
 import { getProductStatus, isVoid, isRefundPending } from '../utils/productStatus';
 import { formatCurrency } from '../utils/currency';
 import { getPayPalMatchSuggestions } from '../utils/paypalMatchSuggestions';
+import {
+  getExpectedReceivedForProduct,
+  hasRefundExpectation,
+  getProductRefundExpectation,
+} from '../utils/refundUtils';
 import { getBadgeClasses } from '../utils/colors';
 import { typography } from '../utils/typography';
 import {
@@ -62,9 +67,25 @@ function formatTransactionDate(dateStr: string): string {
   return dateStr;
 }
 
-function absolutePaidDifference(paid: number | null | undefined, transactionAmount: number): number | null {
-  if (paid == null) return null;
-  return Math.abs(paid - transactionAmount);
+function formatProductAmountLine(product: Product, transactionTotal?: number): string {
+  const paidLabel = product.paid != null ? formatCurrency(product.paid) : '—';
+  const expected = getExpectedReceivedForProduct(product);
+  const expectation = getProductRefundExpectation(product);
+  const parts = [`Paid ${paidLabel}`];
+
+  if (hasRefundExpectation(expectation) && expected != null) {
+    parts.push(`Expected ${formatCurrency(expected)}`);
+  }
+
+  if (transactionTotal != null) {
+    const compareAmount =
+      hasRefundExpectation(expectation) && expected != null ? expected : product.paid;
+    if (compareAmount != null) {
+      parts.push(`Difference ${formatCurrency(Math.abs(compareAmount - transactionTotal))}`);
+    }
+  }
+
+  return parts.join(' · ');
 }
 
 function equalSplitAmounts(productIds: string[], netReceived: number): Record<string, string> {
@@ -348,7 +369,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
           </div>
 
           <p className={`${typography.caption} tabular-nums mt-0.5 text-[#43474e]`}>
-            Paid {product.paid != null ? formatCurrency(product.paid) : '—'}
+            {formatProductAmountLine(product)}
             {' · Received '}
             {product.received != null && product.received !== 0 ? (
               <span className="text-[#006a68]">{formatCurrency(product.received)}</span>
@@ -471,10 +492,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
             Linked {transactionLinkedProducts.length === 1 ? 'product' : 'products'}
           </p>
           <div className="space-y-1.5">
-            {transactionLinkedProducts.map((product) => {
-              const diff = absolutePaidDifference(product.paid, transaction.total);
-
-              return (
+            {transactionLinkedProducts.map((product) => (
                 <div
                   key={product.id}
                   className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-[#006a68]/35 bg-[#006a68]/10"
@@ -485,16 +503,12 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                       {product.item}
                     </p>
                     <p className={`${typography.caption} tabular-nums text-[#43474e] mt-0.5`}>
-                      Paid {product.paid != null ? formatCurrency(product.paid) : '—'}
-                      {diff != null && (
-                        <> · Difference {formatCurrency(diff)}</>
-                      )}
+                      {formatProductAmountLine(product, transaction.total)}
                     </p>
                   </div>
                   <CheckIcon className="w-4 h-4 text-[#006a68] shrink-0" aria-hidden="true" />
                 </div>
-              );
-            })}
+            ))}
           </div>
         </div>
       ) : (
@@ -508,7 +522,6 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
               {matchSuggestions.map(({ product }) => {
                 const id = product.id || '';
                 const isSelected = tempSelectedIds.includes(id);
-                const diff = absolutePaidDifference(product.paid, transaction.total);
 
                 return (
                   <button
@@ -527,10 +540,7 @@ export const ProductLinkModal: React.FC<ProductLinkModalProps> = ({
                         {product.item}
                       </p>
                       <p className={`${typography.caption} tabular-nums text-[#43474e] mt-0.5`}>
-                        Paid {product.paid != null ? formatCurrency(product.paid) : '—'}
-                        {diff != null && (
-                          <> · Difference {formatCurrency(diff)}</>
-                        )}
+                        {formatProductAmountLine(product, transaction.total)}
                       </p>
                     </div>
                     {isSelected && (

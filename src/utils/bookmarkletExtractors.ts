@@ -20,7 +20,19 @@ function extractOrderTotal(){
   if(summary){var st=fromText(summary.innerText||'');if(st!=null)return st;}
   return fromText(document.body.innerText||'');
 }
+function extractOrderTax(){
+  var patterns=[/Estimated tax(?: to be collected)?[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/Sales tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/(?:^|\\n)\\s*Tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/im];
+  function fromText(text){
+    if(!text)return null;
+    for(var i=0;i<patterns.length;i++){var m=text.match(patterns[i]);if(m)return parseFloat(m[1].replace(/,/g,''));}
+    return null;
+  }
+  var summary=document.querySelector('[data-component="chargeSummary"],[data-component="orderSummary"],[data-component="orderInfo"]');
+  if(summary){var st=fromText(summary.innerText||'');if(st!=null)return st;}
+  return fromText(document.body.innerText||'');
+}
 var ot=extractOrderTotal();
+var otx=extractOrderTax();
 function isImgPlaceholder(src){
   if(!src)return true;
   return /\\.gif(\\?|$)/i.test(src)||/transparent|spacer|pixel|data:image/i.test(src);
@@ -106,7 +118,7 @@ if(!products.length){
   if(tl2)pushProductFromLink(tl2);
 }
 var first=products[0]||{productName:'',productUrl:'',imageUrl:''};
-var p={retailer:'amazon',orderDate:od,orderNumber:on,orderTotal:ot,productName:first.productName,productUrl:first.productUrl,imageUrl:first.imageUrl,products:products};
+var p={retailer:'amazon',orderDate:od,orderNumber:on,orderTotal:ot,tax:otx,productName:first.productName,productUrl:first.productUrl,imageUrl:first.imageUrl,products:products};
 __rtHandoff(p,ACCENT);
 `;
 
@@ -258,6 +270,16 @@ function extractTotalPrice(scope){
   }
   return null;
 }
+function extractOrderTax(scope){
+  if(!scope)return null;
+  var text=scope===document?document.body.innerText:scope.innerText;
+  var patterns=[/Estimated tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/Sales tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/i,/(?:^|\\n)\\s*Tax[:\\s]*\\$?\\s*([\\d,]+\\.\\d{2})/im];
+  for(var i=0;i<patterns.length;i++){
+    var m=text.match(patterns[i]);
+    if(m)return parseFloat(m[1].replace(/,/g,''));
+  }
+  return null;
+}
 function extractOrderMeta(scope){
   var text=scope===document?document.body.innerText:scope.innerText;
   var dm=text.match(/Ordered On:\\s*([A-Za-z]+\\s+\\d{1,2},?\\s*\\d{4})/i);
@@ -265,7 +287,7 @@ function extractOrderMeta(scope){
   var orderNumber=onm?onm[1]:'';
   if(!orderNumber){var um=location.href.match(/order(?:Id|ID|Number)[=\\/](\\d{8,})/i);if(um)orderNumber=um[1];}
   if(!orderNumber){var om=location.href.match(/\\/(\\d{10,})(?:[\\/?#]|$)/);if(om)orderNumber=om[1];}
-  return {orderDate:dm?dm[1].trim():'',orderNumber:orderNumber,orderTotal:extractTotalPrice(scope)};
+  return {orderDate:dm?dm[1].trim():'',orderNumber:orderNumber,orderTotal:extractTotalPrice(scope),tax:extractOrderTax(scope)};
 }
 var drawer=findDrawerRoot();
 var orderCount=(document.body.innerText.match(/Wayfair Order #/g)||[]).length;
@@ -278,7 +300,8 @@ if(!drawer&&orderCount>1){
   var meta=extractOrderMeta(orderCard||productScope);
   var orderTotal=prod.orderTotal;
   if(orderTotal==null){orderTotal=extractTotalPrice(drawer)||extractTotalPrice(orderCard)||meta.orderTotal;}
-  var p={retailer:'wayfair',orderDate:meta.orderDate,orderNumber:meta.orderNumber,orderTotal:orderTotal,productName:prod.productName,productUrl:prod.productUrl,imageUrl:prod.imageUrl,products:prod.products};
+  var orderTax=extractOrderTax(drawer)||extractOrderTax(orderCard)||meta.tax;
+  var p={retailer:'wayfair',orderDate:meta.orderDate,orderNumber:meta.orderNumber,orderTotal:orderTotal,tax:orderTax,productName:prod.productName,productUrl:prod.productUrl,imageUrl:prod.imageUrl,products:prod.products};
   __rtHandoff(p,ACCENT);
 }
 `;
@@ -307,7 +330,7 @@ function walk(obj,fn,depth){
   return false;
 }
 function extractOrderMetaFromNextData(data){
-  var result={orderDate:'',orderNumber:'',orderTotal:null};
+  var result={orderDate:'',orderNumber:'',orderTotal:null,tax:null};
   if(!data)return result;
   walk(data,function(node){
     if(!node||typeof node!=='object'||Array.isArray(node))return false;
@@ -318,23 +341,28 @@ function extractOrderMetaFromNextData(data){
     var total=node.orderTotal||node.grandTotal||node.total;
     if(typeof total==='number'&&total>0)result.orderTotal=total;
     if(total&&typeof total==='object'){if(typeof total.value==='number')result.orderTotal=total.value;if(typeof total.displayValue==='string'){var tm=total.displayValue.match(/([\\d,]+\\.\\d{2})/);if(tm)result.orderTotal=parseFloat(tm[1].replace(/,/g,''));}}
+    var tax=node.tax||node.salesTax||node.estimatedTax||node.orderTax;
+    if(typeof tax==='number'&&tax>0)result.tax=tax;
+    if(tax&&typeof tax==='object'){if(typeof tax.value==='number')result.tax=tax.value;if(typeof tax.displayValue==='string'){var txm=tax.displayValue.match(/([\\d,]+\\.\\d{2})/);if(txm)result.tax=parseFloat(txm[1].replace(/,/g,''));}}
     return false;
   },0);
   return result;
 }
 function extractOrderMetaFromDom(){
   var root=document.querySelector('.print-bill-body')||document.querySelector('[data-testid="orderInfoCard"]')||document;
-  var orderDate='',orderNumber='',orderTotal=null;
+  var orderDate='',orderNumber='',orderTotal=null,orderTax=null;
   var dateEl=root.querySelector('.print-bill-date,[data-testid="orderDate"]');
   if(dateEl){var dm=(dateEl.textContent||'').match(/([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})/);if(dm)orderDate=dm[1].replace(/,\\s*/,', ').trim();}
   var idEl=root.querySelector('.print-bill-bar-id,[data-testid="orderNumber"]');
   if(idEl){var im=(idEl.textContent||'').match(/(\\d{7}-\\d{8})/);if(im)orderNumber=im[1];}
   var totalEl=root.querySelector('.bill-order-total-payment,[data-testid="orderTotal"]');
   if(totalEl){var tm=(totalEl.textContent||'').match(/\\$([\\d,]+\\.\\d{2})/);if(tm)orderTotal=parseFloat(tm[1].replace(/,/g,''));}
-  return {orderDate:orderDate,orderNumber:orderNumber,orderTotal:orderTotal};
+  var taxEl=root.querySelector('[data-testid="orderTax"],[data-automation-id="order-tax"]');
+  if(taxEl){var txm=(taxEl.textContent||'').match(/\\$([\\d,]+\\.\\d{2})/);if(txm)orderTax=parseFloat(txm[1].replace(/,/g,''));}
+  return {orderDate:orderDate,orderNumber:orderNumber,orderTotal:orderTotal,tax:orderTax};
 }
 function extractFromText(text){
-  var orderDate='',orderNumber='',orderTotal=null;
+  var orderDate='',orderNumber='',orderTotal=null,orderTax=null;
   var dm=text.match(/([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})\\s+order/i);
   if(dm)orderDate=dm[1].replace(/,\\s*/,', ').trim();
   var onm=text.match(/Order\\s*#\\s*(\\d{7}-\\d{8})/i);
@@ -343,7 +371,9 @@ function extractFromText(text){
   if(!orderNumber){var um=location.href.match(/order[=\\/](\\d{7}-\\d{8})/i);if(um)orderNumber=um[1];}
   var totals=[...text.matchAll(/(?:^|\\n)\\s*Total\\s*\\$?\\s*([\\d,]+\\.\\d{2})/gim)];
   if(totals.length){orderTotal=parseFloat(totals[totals.length-1][1].replace(/,/g,''));}
-  return {orderDate:orderDate,orderNumber:orderNumber,orderTotal:orderTotal};
+  var taxm=text.match(/(?:^|\\n)\\s*Tax\\s*\\$?\\s*([\\d,]+\\.\\d{2})/im);
+  if(taxm){orderTax=parseFloat(taxm[1].replace(/,/g,''));}
+  return {orderDate:orderDate,orderNumber:orderNumber,orderTotal:orderTotal,tax:orderTax};
 }
 function isProductImage(src){
   if(!src)return false;
@@ -393,6 +423,6 @@ var nextData=extractOrderMetaFromNextData(parseNextData());
 var textMeta=extractFromText(document.body.innerText);
 var prods=extractProductsFromDom();
 var first=prods[0]||{productName:'',productUrl:'',imageUrl:''};
-var p={retailer:'walmart',orderDate:domOrder.orderDate||nextData.orderDate||textMeta.orderDate,orderNumber:domOrder.orderNumber||nextData.orderNumber||textMeta.orderNumber,orderTotal:domOrder.orderTotal!=null?domOrder.orderTotal:(nextData.orderTotal!=null?nextData.orderTotal:textMeta.orderTotal),productName:first.productName,productUrl:first.productUrl,imageUrl:first.imageUrl,products:prods};
+var p={retailer:'walmart',orderDate:domOrder.orderDate||nextData.orderDate||textMeta.orderDate,orderNumber:domOrder.orderNumber||nextData.orderNumber||textMeta.orderNumber,orderTotal:domOrder.orderTotal!=null?domOrder.orderTotal:(nextData.orderTotal!=null?nextData.orderTotal:textMeta.orderTotal),tax:domOrder.tax!=null?domOrder.tax:(nextData.tax!=null?nextData.tax:textMeta.tax),productName:first.productName,productUrl:first.productUrl,imageUrl:first.imageUrl,products:prods};
 __rtHandoff(p,ACCENT);
 `;

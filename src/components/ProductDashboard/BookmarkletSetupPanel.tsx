@@ -50,7 +50,7 @@ export const BookmarkletSetupPanel: React.FC = () => {
         <div className={`mt-3 text-xs ${colors.text.muted} space-y-3 pl-4 border-l-2 border-[rgba(196,198,207,0.3)]`}>
           <p className="leading-relaxed">
             Shortcuts extract order data and <strong>open this app automatically</strong> with an import preview.
-            Manual copy/paste remains as fallback if redirect fails.
+            Order JSON is copied to your clipboard automatically when you run a bookmark.
           </p>
           <div className="hidden sm:block">
             <p className={`font-semibold text-xs ${colors.text.secondary} mb-1`}>Desktop — drag to bookmarks bar</p>
@@ -106,7 +106,7 @@ export const BookmarkletSetupPanel: React.FC = () => {
                 <strong>iPhone Safari:</strong> tap the share/bookmarks icon → run your saved shortcut
               </li>
               <li>The app opens with an import preview — confirm to add the product</li>
-              <li className="text-[#74777f]">If redirect fails, use Copy JSON in the fallback overlay → Import from Clipboard</li>
+              <li className="text-[#74777f]">If redirect fails, use Import from Clipboard in the app (JSON is copied automatically)</li>
             </ol>
 
             {[

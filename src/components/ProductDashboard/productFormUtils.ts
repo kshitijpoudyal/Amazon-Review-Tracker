@@ -1,5 +1,6 @@
-import { Product } from '../../types/Product';
+import { DEFAULT_REFUND_EXPECTATION, Product } from '../../types/Product';
 import { parseBookmarkletClipboard } from '../../utils/bookmarklet';
+import { getDefaultPayPalFee, getProductRefundExpectation } from '../../utils/refundUtils';
 import { importButtonBaseClass } from './productFormStyles';
 
 export type ImportStatus = 'idle' | 'success' | 'url-only' | 'error';
@@ -35,7 +36,7 @@ export function applyBookmarkletPayload(
   prev: Product,
   data: ReturnType<typeof parseBookmarkletClipboard>,
 ): Product {
-  return {
+  let updated: Product = {
     ...prev,
     item: data.productName || prev.item,
     url: data.productUrl || prev.url,
@@ -45,6 +46,15 @@ export function applyBookmarkletPayload(
     orderDate: data.orderDate ? formatDateForInput(data.orderDate) : prev.orderDate,
     ...(data.retailer ?? prev.retailer ? { retailer: data.retailer ?? prev.retailer } : {}),
   };
+
+  if (data.tax != null) {
+    updated = { ...updated, tax: data.tax };
+    if (updated.refundExpectation == null) {
+      updated = { ...updated, refundExpectation: { ...DEFAULT_REFUND_EXPECTATION } };
+    }
+  }
+
+  return updated;
 }
 
 export function getClipboardImportLabel(status: ImportStatus): { icon: string; text: string } {
@@ -71,4 +81,49 @@ export function updateProductNumbers(
     updated.delta = null;
   }
   return updated;
+}
+
+function parseOptionalAmount(value: string): number | null {
+  if (value.trim() === '') return null;
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function updateProductPaid(product: Product, value: string): Product {
+  const updated = updateProductNumbers(product, 'paid', value);
+  const expectation = getProductRefundExpectation(updated);
+  if (!expectation.excludePayPalFee) return updated;
+  return {
+    ...updated,
+    refundExpectation: {
+      ...expectation,
+      paypalFeeAmount: getDefaultPayPalFee(updated.paid),
+    },
+  };
+}
+
+export function updateProductTax(product: Product, value: string): Product {
+  const parsed = parseOptionalAmount(value);
+  let updated: Product = { ...product, tax: parsed };
+  if (updated.refundExpectation == null) {
+    updated = { ...updated, refundExpectation: { ...DEFAULT_REFUND_EXPECTATION } };
+  }
+
+  const expectation = getProductRefundExpectation(updated);
+  if (!expectation.excludeTax) return updated;
+
+  const priorTax = product.tax;
+  const shouldSyncAmount =
+    expectation.taxAmount == null ||
+    (priorTax != null && expectation.taxAmount === priorTax);
+
+  if (!shouldSyncAmount) return updated;
+
+  return {
+    ...updated,
+    refundExpectation: {
+      ...expectation,
+      taxAmount: parsed,
+    },
+  };
 }

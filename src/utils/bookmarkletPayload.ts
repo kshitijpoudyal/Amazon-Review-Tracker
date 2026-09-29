@@ -11,10 +11,32 @@ export interface BookmarkletPayload {
   orderDate: string;
   orderNumber: string;
   orderTotal: number | null;
+  tax: number | null;
   productName: string;
   productUrl: string;
   imageUrl: string;
   products?: BookmarkletProduct[];
+}
+
+export function parseBookmarkletMoney(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.round(value * 100) / 100;
+  }
+  if (typeof value === 'string') {
+    const match = value.match(/([\d,]+\.\d{2})/);
+    if (match) {
+      const parsed = parseFloat(match[1].replace(/,/g, ''));
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const record = value as { value?: unknown; displayValue?: unknown };
+    if (record.value != null) return parseBookmarkletMoney(record.value);
+    if (typeof record.displayValue === 'string') {
+      return parseBookmarkletMoney(record.displayValue);
+    }
+  }
+  return null;
 }
 
 function inferRetailer(payload: Partial<BookmarkletPayload>): BookmarkletPayload['retailer'] {
@@ -41,7 +63,10 @@ export function normalizeBookmarkletPayload(raw: unknown): BookmarkletPayload {
     retailer: inferRetailer(parsed),
     orderDate: parsed.orderDate ?? '',
     orderNumber: parsed.orderNumber ?? '',
-    orderTotal: parsed.orderTotal ?? null,
+    orderTotal: parseBookmarkletMoney(parsed.orderTotal),
+    tax: parseBookmarkletMoney(
+      parsed.tax ?? (parsed as { orderTax?: unknown }).orderTax ?? (parsed as { estimatedTax?: unknown }).estimatedTax
+    ),
     productName: parsed.productName ?? first?.productName ?? '',
     productUrl: parsed.productUrl ?? first?.productUrl ?? '',
     imageUrl: parsed.imageUrl ?? first?.imageUrl ?? '',
@@ -58,6 +83,7 @@ export function bookmarkletPayloadToProductFields(
   orderDate: string;
   orderNumber: string;
   orderTotal: number | null;
+  tax: number | null;
   retailer?: BookmarkletPayload['retailer'];
 } {
   const item = data.products?.[productIndex];
@@ -65,6 +91,7 @@ export function bookmarkletPayloadToProductFields(
     orderDate: data.orderDate,
     orderNumber: data.orderNumber,
     orderTotal: data.orderTotal,
+    tax: data.tax,
     retailer: data.retailer,
     productName: item?.productName || data.productName,
     productUrl: item?.productUrl || data.productUrl,

@@ -9,6 +9,24 @@ export interface Vendor {
   isActive: boolean;
 }
 
+export interface RefundExpectation {
+  excludeTax: boolean;
+  taxAmount: number | null;
+  customDeduction: number | null;
+  excludePayPalFee: boolean;
+  paypalFeeAmount: number | null;
+  notes?: string;
+}
+
+export const DEFAULT_REFUND_EXPECTATION: RefundExpectation = {
+  excludeTax: false,
+  taxAmount: null,
+  customDeduction: null,
+  excludePayPalFee: false,
+  paypalFeeAmount: null,
+  notes: '',
+};
+
 export interface Product {
   id?: string; // Firebase document ID
   item: string;
@@ -26,8 +44,11 @@ export interface Product {
   paid: number | null;
   received: number | null;
   delta: number | null;
+  /** Sales tax paid on the order; pre-fills expected refund tax exclusion. */
   tax?: number | null;
+  /** @deprecated Use refundExpectation.notes */
   refundNotes?: string;
+  refundExpectation?: RefundExpectation | null;
   paypalTransactionIds?: string[];
   refundReceivedAt?: string; // ISO date when PayPal refund was linked
   isVoid?: boolean;

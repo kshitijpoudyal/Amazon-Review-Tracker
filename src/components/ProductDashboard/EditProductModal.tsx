@@ -11,7 +11,10 @@ import {
   formatDateForInput,
   ImportStatus,
   updateProductNumbers,
+  updateProductPaid,
 } from './productFormUtils';
+import { RefundExpectation } from '../../types/Product';
+import { ProductFormRefundExpectationSection } from './ProductFormRefundExpectationSection';
 import { ProductFormQuickImportSection } from './ProductFormQuickImportSection';
 import { ProductFormReviewJourneySection } from './ProductFormReviewJourneySection';
 import { ProductFormProductDetailsSection } from './ProductFormProductDetailsSection';
@@ -184,9 +187,16 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         mode="edit"
       />
 
+      <ProductFormRefundExpectationSection
+        product={editedProduct}
+        onChange={(expectation: RefundExpectation) =>
+          setEditedProduct(prev => ({ ...prev, refundExpectation: expectation }))
+        }
+      />
+
       <ProductFormFinancialsSection
         product={editedProduct}
-        onPaidChange={(value) => setEditedProduct(prev => updateProductNumbers(prev, 'paid', value))}
+        onPaidChange={(value) => setEditedProduct(prev => updateProductPaid(prev, value))}
         onReceivedChange={(value) => setEditedProduct(prev => updateProductNumbers(prev, 'received', value))}
         onResetDelta={() => setEditedProduct(prev => ({ ...prev, delta: null, received: null }))}
       />
