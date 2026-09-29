@@ -5,6 +5,7 @@ import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowDownTrayIcon, Cog6ToothIcon 
 import { User } from 'firebase/auth';
 import { typography } from '../../utils/typography';
 import { colors } from '../../utils/colors';
+import { APP_VERSION } from '../../utils/version';
 
 interface AppHeaderProps {
     user: User;
@@ -124,6 +125,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                       <div className="absolute right-0 mt-2 w-52 rounded-xl bg-white shadow-lg ring-1 ring-black/5 z-50 overflow-hidden">
                         <div className="px-4 py-3 border-b border-gray-100">
                           <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                          <p className="text-xs text-gray-300 mt-0.5">v{APP_VERSION}</p>
                         </div>
                         {installPrompt && (
                           <button
@@ -215,7 +217,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                                 </a>
                             </div>
                         </div>
-                        <div className="pt-4 text-center">
+                        <div className="pt-4 text-center space-y-1">
                             <a
                                 href="https://www.kshitijstudio.com"
                                 target="_blank"
@@ -224,6 +226,7 @@ export default function AppHeader({ user, onLogout }: AppHeaderProps) {
                             >
                                 Powered by KshitijStudio
                             </a>
+                            <p className={`${typography.caption} text-white/50`}>v{APP_VERSION}</p>
                         </div>
                     </div>
                 </DialogPanel>
