@@ -14,8 +14,9 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { PayPalTransaction, PayPalTransactionData } from '../types/PayPalTransaction';
-import { ProductLinkOptions } from '../types/Product';
+import { Product, ProductLinkOptions } from '../types/Product';
 import { getPayPalProductShare } from '../utils/paypalProductShare';
+import { getProductStatusType } from '../utils/productStatus';
 
 // ─── Cache helpers ──────────────────────────────────────────────────────────
 const CACHE_VERSION = 'v1';
@@ -152,24 +153,39 @@ export const PayPalTransactionsProvider: React.FC<{ userId?: string; children: R
       if (productSnap.exists()) {
         const productData = productSnap.data();
         const paid = productData.paid || 0;
+        const currentStatus = productData.lastStatus;
+
+        // Recompute lastStatus/statusChangedAt from the fields being written here —
+        // the same bookkeeping saveProductToFirebase does on a manual edit. Without
+        // this, a product completed via PayPal-linking keeps whatever stale status
+        // it had before, and the backend's stuck-item check keeps firing on it.
+        const withStatus = (fields: Record<string, unknown>): Record<string, unknown> => {
+          const merged = { ...productData, ...fields } as Product;
+          const newStatus = getProductStatusType(merged);
+          return {
+            ...fields,
+            lastStatus: newStatus,
+            ...(newStatus !== currentStatus && { statusChangedAt: new Date().toISOString() }),
+          };
+        };
 
         if (productData.isVoid) {
-          await updateDoc(productRef, {
+          await updateDoc(productRef, withStatus({
             received: 0,
             delta: paid !== 0 ? -paid : null,
             updatedAt: serverTimestamp(),
-          });
+          }));
           return;
         }
 
         if (linkedTransactions.length === 0) {
-          await updateDoc(productRef, {
+          await updateDoc(productRef, withStatus({
             received: null,
             delta: null,
             paypalTransactionIds: null,
             refundReceivedAt: null,
             updatedAt: serverTimestamp()
-          });
+          }));
         } else {
           const totalReceived = linkedTransactions.reduce((sum, transaction) => {
             return sum + getPayPalProductShare(transaction, productId);
@@ -196,7 +212,7 @@ export const PayPalTransactionsProvider: React.FC<{ userId?: string; children: R
             updates.reviewSSSent = true;
           }
 
-          await updateDoc(productRef, updates);
+          await updateDoc(productRef, withStatus(updates));
         }
       }
     } catch (err) {

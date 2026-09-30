@@ -12,9 +12,9 @@ export const GmailIntegration: React.FC = () => {
 
   return (
     <section className={`${colors.card.background} rounded-2xl ${colors.card.border} ${colors.card.shadow} overflow-hidden`}>
-      <div className="p-6 md:p-8">
+      <div className="p-4 sm:p-6 md:p-8">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-          <div className="flex items-start gap-4 max-w-2xl">
+          <div className="flex items-start gap-4 max-w-2xl min-w-0">
             <div className="w-12 h-12 rounded-xl bg-[#ba1a1a]/8 text-[#ba1a1a] border border-[#ba1a1a]/20 flex items-center justify-center shrink-0">
               <EnvelopeIcon className="w-6 h-6" />
             </div>
@@ -63,7 +63,7 @@ export const GmailIntegration: React.FC = () => {
           {connectUrl && (
             <a
               href={connectUrl}
-              className={`inline-block shrink-0 ${connected ? colors.button.secondary : colors.button.primary} px-6 py-2.5 rounded-xl font-medium text-sm text-center transition-colors`}
+              className={`block w-full lg:w-auto lg:inline-block shrink-0 ${connected ? colors.button.secondary : colors.button.primary} px-6 py-2.5 rounded-xl font-medium text-sm text-center transition-colors`}
             >
               {connected ? 'Reconnect Gmail' : 'Connect Gmail'}
             </a>

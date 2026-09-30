@@ -14,7 +14,6 @@ import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { useVendors } from '../hooks/useVendors';
 import { usePayPalTransactions } from '../hooks/usePayPalTransactions';
 import { StatusFilter, DeltaFilter, VendorFilter, Product } from '../types/Product';
-import { VendorAdminUtils } from '../components/VendorAdminUtils';
 import NextActionsStrip from '../components/ProductDashboard/NextActionsStrip';
 import GettingStartedPanel from '../components/ProductDashboard/GettingStartedPanel';
 import { ParsedProductImport } from '../utils/productCSVParser';
@@ -24,7 +23,6 @@ import {
   DashboardError,
   DashboardSection,
   FilterControlConfig,
-  EmailReminderPanel,
   PullToRefresh,
   useToast
 } from '../components/common';
@@ -48,7 +46,6 @@ const ProductPage: React.FC = () => {
   const { showToast } = useToast();
   
   const urlParams = new URLSearchParams(window.location.search);
-  const showAdminUtils = urlParams.get('admin') === 'true';
   const urlStatus = urlParams.get('status') ?? '';
 
   // Dashboard state management
@@ -268,13 +265,6 @@ const ProductPage: React.FC = () => {
         unlinkedPayPalCount={unlinkedPayPalStats.count}
         unlinkedPayPalAmount={unlinkedPayPalStats.amount}
       />
-      
-      {showAdminUtils && (
-        <DashboardSection>
-          <EmailReminderPanel />
-          <VendorAdminUtils />
-        </DashboardSection>
-      )}
 
       <Toolbar
         actions={actions}

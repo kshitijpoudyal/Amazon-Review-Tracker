@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
 import { vendorService } from '../firebase/vendorService';
 import { backfillProductsWithVendor } from '../utils/migrations/productVendorMigration';
 import { useAuth } from '../hooks/useAuth';
 import { colors } from '../utils/colors';
+import { typography } from '../utils/typography';
 
 /**
  * Admin utility component for managing vendor setup and migrations
@@ -30,10 +32,10 @@ export const VendorAdminUtils: React.FC = () => {
       setLoading(true);
       showMessage('Initializing vendors...', 'info');
       await vendorService.initializeVendors(user.uid);
-      
+
       showMessage('Backfilling products with vendors...', 'info');
       await backfillProductsWithVendor(user.uid);
-      
+
       showMessage('Vendor setup completed successfully!', 'success');
     } catch (error) {
       console.error('Error during full setup:', error);
@@ -44,57 +46,55 @@ export const VendorAdminUtils: React.FC = () => {
   };
 
   const getMessageClasses = () => {
-    const baseClasses = 'p-4 rounded-lg mb-4';
     switch (messageType) {
       case 'success':
-        return `${baseClasses} bg-green-50 text-green-800 border border-green-200`;
+        return 'bg-green-50 text-green-800 border border-green-200';
       case 'error':
-        return `${baseClasses} bg-red-50 text-red-800 border border-red-200`;
+        return 'bg-red-50 text-red-800 border border-red-200';
       case 'info':
       default:
-        return `${baseClasses} bg-blue-50 text-blue-800 border border-blue-200`;
+        return 'bg-blue-50 text-blue-800 border border-blue-200';
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Vendor Setup & Migration Tools</h2>
-      
-      {message && (
-        <div className={getMessageClasses()}>
-          {message}
-        </div>
-      )}
+    <section className={`${colors.card.background} rounded-2xl ${colors.card.border} ${colors.card.shadow} overflow-hidden`}>
+      <div className="p-4 sm:p-6 md:p-8">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#43474e]/8 text-[#43474e] border border-[#43474e]/20 flex items-center justify-center shrink-0">
+            <WrenchScrewdriverIcon className="w-6 h-6" />
+          </div>
+          <div className="flex-1 min-w-0 space-y-2">
+            <h2 className={typography.sectionTitle}>Onboarding and Migrations</h2>
+            <p className={typography.caption}>
+              Initializes default vendors and backfills vendor info on existing products. Safe to run
+              multiple times — it won&apos;t duplicate vendors or overwrite existing vendor assignments.
+            </p>
 
-      <div className="space-y-4">
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="font-semibold text-gray-900 mb-2">What these tools do:</h3>
-          <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-            <li><strong>Run Full Setup:</strong> Initializes default vendors and backfills vendor info on existing products</li>
-          </ul>
+            {message && (
+              <div className={`p-3 rounded-xl text-sm ${getMessageClasses()}`}>
+                {message}
+              </div>
+            )}
+
+            {!user && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-3 rounded-xl text-sm">
+                Please log in to use the migration tools.
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="mt-6 pt-5 border-t border-[rgba(196,198,207,0.15)] flex justify-end">
           <button
             onClick={handleRunFullSetup}
             disabled={loading || !user}
-            className={`${colors.button.indigo} px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`${colors.button.primary} w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {loading ? 'Processing...' : 'Run Full Setup (Recommended)'}
           </button>
         </div>
-
-        {!user && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-lg">
-            Please log in to use the migration tools.
-          </div>
-        )}
-
-        <div className="text-xs text-gray-500 mt-4">
-          <strong>Note:</strong> These tools are safe to run multiple times. 
-          They will not duplicate vendors or overwrite existing vendor assignments.
-        </div>
       </div>
-    </div>
+    </section>
   );
 };

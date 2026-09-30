@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { TruckIcon, PencilIcon, TrashIcon, ArrowUturnLeftIcon, PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { TruckIcon, PencilIcon, TrashIcon, PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useVendors } from '../../hooks/useVendors';
 import { typography } from '../../utils/typography';
 import { colors, getBadgeClasses } from '../../utils/colors';
+import { Modal } from '../common';
+import { Vendor } from '../../types/Product';
 
 const inputClass = `px-3.5 py-2.5 rounded-xl text-sm ${colors.form.input.base}`;
 
@@ -25,8 +27,9 @@ const formatCreatedAt = (iso: string) => {
 };
 
 export const VendorSettings: React.FC = () => {
-  const { vendors, loading, error, addVendor, updateVendor, deactivateVendor } = useVendors();
+  const { activeVendors, loading, error, addVendor, updateVendor, deactivateVendor } = useVendors();
 
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [newVendorName, setNewVendorName] = useState('');
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
@@ -35,13 +38,26 @@ export const VendorSettings: React.FC = () => {
   const [editingName, setEditingName] = useState('');
   const [editError, setEditError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const [removeTarget, setRemoveTarget] = useState<Vendor | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const isDuplicateName = (name: string, excludeId?: string) =>
-    vendors.some(v => v.id !== excludeId && v.name.trim().toLowerCase() === name.trim().toLowerCase());
+    activeVendors.some(v => v.id !== excludeId && v.name.trim().toLowerCase() === name.trim().toLowerCase());
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const openAddModal = () => {
+    setNewVendorName('');
+    setAddError(null);
+    setIsAddOpen(true);
+  };
+
+  const closeAddModal = () => {
+    if (adding) return;
+    setIsAddOpen(false);
+  };
+
+  const handleAdd = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     const name = newVendorName.trim();
     if (!name) {
       setAddError('Vendor name is required.');
@@ -56,6 +72,7 @@ export const VendorSettings: React.FC = () => {
       setAddError(null);
       await addVendor({ name, createdAt: new Date().toISOString(), isActive: true });
       setNewVendorName('');
+      setIsAddOpen(false);
     } catch (err) {
       setAddError('Failed to add vendor. Please try again.');
     } finally {
@@ -98,94 +115,67 @@ export const VendorSettings: React.FC = () => {
     }
   };
 
-  const toggleActive = async (id: string, isActive: boolean) => {
+  const confirmRemove = async () => {
+    if (!removeTarget) return;
     try {
-      setTogglingId(id);
-      if (isActive) {
-        await deactivateVendor(id);
-      } else {
-        await updateVendor(id, { isActive: true });
-      }
+      setRemoving(true);
+      await deactivateVendor(removeTarget.id);
+      setRemoveTarget(null);
     } finally {
-      setTogglingId(null);
+      setRemoving(false);
     }
   };
 
-  const sortedVendors = [...vendors].sort((a, b) => {
-    if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  });
+  const sortedVendors = [...activeVendors].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <section className={`${colors.card.background} rounded-2xl ${colors.card.border} ${colors.card.shadow} overflow-hidden`}>
-      <div className="p-6 md:p-8 border-b border-[rgba(196,198,207,0.15)]">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#022448]/8 text-[#022448] border border-[#022448]/15 flex items-center justify-center shrink-0">
-            <TruckIcon className="w-6 h-6" />
-          </div>
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className={typography.sectionTitle}>Vendors</h2>
-              {!loading && (
-                <span className={getBadgeClasses('order-placed')}>
-                  {vendors.length} {vendors.length === 1 ? 'vendor' : 'vendors'}
-                </span>
-              )}
+      <div className="p-4 sm:p-6 md:p-8 border-b border-[rgba(196,198,207,0.15)]">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="w-12 h-12 rounded-xl bg-[#022448]/8 text-[#022448] border border-[#022448]/15 flex items-center justify-center shrink-0">
+              <TruckIcon className="w-6 h-6" />
             </div>
-            <p className={typography.caption}>
-              Manage the vendors available when adding or editing products. Removing a vendor keeps it
-              on past products but hides it from new selections.
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleAdd} className="mt-6 flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <input
-              type="text"
-              value={newVendorName}
-              onChange={e => {
-                setNewVendorName(e.target.value);
-                if (addError) setAddError(null);
-              }}
-              placeholder="Enter new vendor name..."
-              className={`w-full ${inputClass}`}
-              disabled={adding}
-            />
-            {addError && <p className="text-red-700 text-sm mt-1">{addError}</p>}
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className={typography.sectionTitle}>Vendors</h2>
+                {!loading && (
+                  <span className={getBadgeClasses('order-placed')}>
+                    {activeVendors.length} {activeVendors.length === 1 ? 'vendor' : 'vendors'}
+                  </span>
+                )}
+              </div>
+              <p className={typography.caption}>
+                Manage the vendors available when adding or editing products. Removing a vendor keeps it
+                on past products but hides it from new selections.
+              </p>
+            </div>
           </div>
           <button
-            type="submit"
-            disabled={adding}
-            className={`${colors.button.primary} px-5 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shrink-0`}
+            onClick={openAddModal}
+            className={`${colors.button.primary} px-4 py-2.5 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-1.5 shrink-0`}
           >
             <PlusIcon className="w-4 h-4" />
-            {adding ? 'Adding...' : 'Add vendor'}
+            Add vendor
           </button>
-        </form>
+        </div>
 
-        {editError && (
-          <div className="mt-3 bg-red-50 border border-red-200 text-red-800 p-3 rounded-xl text-sm">{editError}</div>
-        )}
         {error && (
           <div className="mt-3 bg-red-50 border border-red-200 text-red-800 p-3 rounded-xl text-sm">{error}</div>
         )}
       </div>
 
+      {editError && (
+        <div className="mx-4 sm:mx-6 md:mx-8 mt-4 bg-red-50 border border-red-200 text-red-800 p-3 rounded-xl text-sm">{editError}</div>
+      )}
+
       {loading ? (
         <p className={`${typography.caption} p-6`}>Loading vendors...</p>
       ) : sortedVendors.length === 0 ? (
-        <p className={`${typography.caption} p-6`}>No vendors yet. Add one above.</p>
+        <p className={`${typography.caption} p-6`}>No vendors yet. Add one to get started.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
-            <thead className={`${colors.background.gradient}`}>
-              <tr>
-                <th className={`py-3 px-6 ${typography.tableHeader}`} scope="col">Vendor</th>
-                <th className={`py-3 px-6 ${typography.tableHeader}`} scope="col">Status</th>
-                <th className={`py-3 px-6 text-right ${typography.tableHeader}`} scope="col">Actions</th>
-              </tr>
-            </thead>
             <tbody className="divide-y divide-[rgba(196,198,207,0.15)]">
               {sortedVendors.map((vendor, index) => {
                 const createdLabel = formatCreatedAt(vendor.createdAt);
@@ -193,14 +183,14 @@ export const VendorSettings: React.FC = () => {
 
                 return (
                   <tr key={vendor.id} className="hover:bg-[#eae8e2]/40 transition-colors">
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-4 sm:px-6">
                       {isEditing ? (
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
                             value={editingName}
                             onChange={e => setEditingName(e.target.value)}
-                            className={inputClass}
+                            className={`min-w-0 flex-1 ${inputClass}`}
                             autoFocus
                             disabled={savingId === vendor.id}
                           />
@@ -226,8 +216,8 @@ export const VendorSettings: React.FC = () => {
                           <div className={`w-9 h-9 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${AVATAR_TINTS[index % AVATAR_TINTS.length]}`}>
                             {initialsFor(vendor.name)}
                           </div>
-                          <div>
-                            <span className={`font-semibold ${vendor.isActive ? 'text-[#1b1c19]' : `${colors.text.muted} line-through`}`}>
+                          <div className="min-w-0">
+                            <span className="font-semibold text-[#1b1c19] block truncate">
                               {vendor.name}
                             </span>
                             {createdLabel && (
@@ -237,12 +227,7 @@ export const VendorSettings: React.FC = () => {
                         </div>
                       )}
                     </td>
-                    <td className="py-4 px-6">
-                      <span className={getBadgeClasses(vendor.isActive ? 'complete' : 'void')}>
-                        {vendor.isActive ? 'Active' : 'Removed'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
+                    <td className="py-4 px-4 sm:px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => startEditing(vendor.id, vendor.name)}
@@ -252,13 +237,12 @@ export const VendorSettings: React.FC = () => {
                           <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => toggleActive(vendor.id, vendor.isActive)}
-                          disabled={togglingId === vendor.id}
-                          aria-label={vendor.isActive ? `Remove ${vendor.name}` : `Restore ${vendor.name}`}
-                          title={vendor.isActive ? 'Remove vendor' : 'Restore vendor'}
-                          className={`${vendor.isActive ? colors.button.danger : colors.button.secondary} p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed`}
+                          onClick={() => setRemoveTarget(vendor)}
+                          aria-label={`Remove ${vendor.name}`}
+                          title="Remove vendor"
+                          className={`${colors.button.danger} p-2 rounded-full`}
                         >
-                          {vendor.isActive ? <TrashIcon className="w-4 h-4" /> : <ArrowUturnLeftIcon className="w-4 h-4" />}
+                          <TrashIcon className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -269,6 +253,90 @@ export const VendorSettings: React.FC = () => {
           </table>
         </div>
       )}
+
+      {/* Add vendor modal */}
+      <Modal
+        isOpen={isAddOpen}
+        onClose={closeAddModal}
+        title="Add vendor"
+        size="sm"
+        body={
+          <div className="p-4 sm:p-6 space-y-2">
+            <input
+              type="text"
+              value={newVendorName}
+              onChange={e => {
+                setNewVendorName(e.target.value);
+                if (addError) setAddError(null);
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAdd();
+              }}
+              placeholder="Enter vendor name..."
+              className={`w-full ${inputClass}`}
+              autoFocus
+              disabled={adding}
+            />
+            {addError && <p className="text-red-700 text-sm">{addError}</p>}
+          </div>
+        }
+        footer={
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={closeAddModal}
+              disabled={adding}
+              className={`${colors.button.secondary} px-4 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAdd()}
+              disabled={adding}
+              className={`${colors.button.primary} px-4 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {adding ? 'Adding...' : 'Add vendor'}
+            </button>
+          </div>
+        }
+      />
+
+      {/* Remove confirmation modal */}
+      <Modal
+        isOpen={!!removeTarget}
+        onClose={() => !removing && setRemoveTarget(null)}
+        title="Remove vendor"
+        size="sm"
+        body={
+          <div className="p-4 sm:p-6">
+            <p className={typography.body}>
+              Remove <span className="font-semibold">{removeTarget?.name}</span>? It&apos;ll stay on past
+              products but disappear from vendor selection for new ones. You can&apos;t undo this from here.
+            </p>
+          </div>
+        }
+        footer={
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setRemoveTarget(null)}
+              disabled={removing}
+              className={`${colors.button.secondary} px-4 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmRemove}
+              disabled={removing}
+              className={`${colors.button.dangerSolid} px-4 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {removing ? 'Removing...' : 'Remove vendor'}
+            </button>
+          </div>
+        }
+      />
     </section>
   );
 };
